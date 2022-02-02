@@ -1,0 +1,38 @@
+---
+title: "F2020_SWISS1_tests"
+author: "Rachel Havranek"
+date: "11/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+rosti <- read_csv("Fall_2020_SWISS_tests.csv")
+
+rosti <- rosti %>% mutate (
+  h2o_in = 11590,
+  d18O_in = -13.17,
+  d2h_in = -112.5,
+  d18O_diff = d18O_in - wet_test_d180,
+  d2H_diff = d2h_in - wet_test_d2H
+)
+```
+
+```{r}
+rosti_plot <- rosti %>% 
+  pivot_longer(c(dry_test_1, dry_test_2, d18O_diff, d2H_diff)) %>% 
+  ggplot () +
+  aes (x = Port, y = value)+
+  geom_point() +
+  facet_wrap(~name, scales = "free")+
+  theme_bw()
+```
+

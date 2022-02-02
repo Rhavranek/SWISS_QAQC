@@ -1,0 +1,694 @@
+---
+title: "QAQC of Toblerone"
+author: "Rachel Havranek"
+date: "`r format(Sys.Date(), '%d %b %Y')`"
+output:
+  html_document: 
+    df_print: paged # omit to disable paged data table output
+    css: stylesheet.css # omit if no need for custom stylesheet
+    number_sections: yes # change to no for unnumbered sections
+    toc: yes # change to no to disable table of contents
+    toc_float: true # change to false to keep toc at the top
+    toc_depth: 3 # change to specify which headings to include in toc
+    code_folding: show # change to hide to hide code by default
+editor_options:
+  chunk_output_type: console # change to inline to show output inline
+---
+# Setup
+### Libraries and Functions
+```{r setup, echo = TRUE, message=FALSE, warning=FALSE}
+# load libraries
+library(tidyverse) 
+library(latex2exp)
+
+library(data.table)
+library (lubridate)
+library(plotly)
+library(fs)
+
+# source all relevant scripting files
+source(file.path("scripts", "plotting_functions.R"))
+source(file.path("scripts", "flask_ave.R"))
+source(file.path ("scripts", "Eriks_functions.R"))
+
+# global knitting options for automatic saving of all plots as .png and .pdf
+knitr::opts_chunk$set(
+  dev = c("png", "pdf"), fig.keep = "all",
+  dev.args = list(pdf = list(encoding = "WinAnsi", useDingbats = FALSE)),
+  fig.path = file.path("fig_output", paste0(gsub("\\.[Rr]md", "", knitr::current_input()), "_"))
+)
+```
+
+### Load Data 
+If you have added new data then uncomment the top part (tbl, currentdate, saveRDS). If there is no new data, then just read in the most recent RDS file in data_raw
+
+```{r}
+tbl <-
+    list.files ("data", pattern = "*.dat", recursive = T, full.names = T) %>%
+    map_df(~read_table2(.)) %>%
+    select(1, 2, 17, 18, 19)
+
+currentdate <- Sys.Date()
+saveRDS(tbl, paste("data/TobleroneData", currentdate,".RDS"))
+
+tbl <- readRDS("data/TobleroneData 2021-05-10 .RDS") #manually change this file to be the most recent version
+```
+
+
+# Dry air test #1 - March 1, 2021
+
+```{r}
+#Filter the data frame
+data_030121 <- `tbl` %>%  
+  filter(DATE == "2021-03-01") %>% 
+    mutate(UTC = hms(TIME)) %>% #by using the lubridate hms, it makes the UTC time filterable with dplyr
+      filter (UTC > "22H 13M 00S" & UTC < "23H 35M 00S")
+  
+data_030121$seconds <- seq(1, as.numeric(count(data_030121))) #I don't understand why this can't be %>% on
+
+
+
+#this is a nice plot to play with time periods
+waterconcentration <- data_030121 %>% 
+  filter(UTC > "23H 24M 00S" & UTC < "23H 27M 00S") %>% 
+  ggplot() + 
+  aes(UTC, H2O)+
+  geom_point()+
+  scale_x_time()
+
+ggplotly(waterconcentration, dynamicTicks = TRUE)
+
+
+
+
+#Build the Data Frame
+DryAirResults_030121 <- data_030121 %>% 
+  filter(UTC > "22H 13M 00S" & UTC < "22H 16M 00S") %>% 
+    flask_out_ave() %>% 
+      mutate(Flask = 2)
+
+DryAirResults_030121 <- DryAirResults_030121 %>% 
+  bind_rows(
+    data_030121 %>% 
+      filter(UTC > "22H 18M 00S" & UTC < "22H 21M 00S") %>%
+        flask_out_ave() %>% 
+          mutate(Flask = 3)
+    )
+
+DryAirResults_030121 <- DryAirResults_030121 %>% 
+  bind_rows(
+    data_030121 %>% 
+      filter(UTC > "22H 25M 00S" & UTC < "22H 27M 15S") %>%  
+        flask_out_ave() %>% 
+          mutate(Flask = 4)
+    )
+
+#Flask 5 had broken and wasn't tested here
+
+DryAirResults_030121 <- DryAirResults_030121 %>% 
+  bind_rows(
+    data_030121 %>% 
+      filter(UTC > "22H 30M 00S" & UTC < "22H 33M 00S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 6)
+    )
+
+DryAirResults_030121 <- DryAirResults_030121 %>% 
+  bind_rows(
+    data_030121 %>% 
+      filter(UTC > "22H 36M 00S" & UTC < "22H 39M 00S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 7)
+    )
+
+DryAirResults_030121 <- DryAirResults_030121 %>% 
+  bind_rows(
+    data_030121 %>% 
+      filter(UTC > "22H 41M 30S" & UTC < "22H 45M 00S") %>%
+        flask_out_ave() %>% 
+          mutate(Flask = 8)
+    )
+
+DryAirResults_030121 <- DryAirResults_030121 %>% 
+  bind_rows(
+    data_030121 %>% 
+      filter(UTC > "22H 47M 00S" & UTC < "22H 50M 00S") %>%
+        flask_out_ave() %>% 
+          mutate(Flask = 9)
+    )
+
+DryAirResults_030121 <- DryAirResults_030121 %>% 
+  bind_rows(
+    data_030121 %>% 
+      filter(UTC > "22H 51M 00S" & UTC < "22H 53M 00S") %>%
+        flask_out_ave() %>% 
+          mutate(Flask = 10)
+    )
+
+DryAirResults_030121 <- DryAirResults_030121 %>% 
+  bind_rows(
+    data_030121 %>% 
+      filter(UTC > "22H 56M 30S" & UTC < "22H 59M 30S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 11)
+    )
+
+DryAirResults_030121 <- DryAirResults_030121 %>% 
+  bind_rows(
+    data_030121 %>% 
+      filter(UTC > "23H 03M 00S" & UTC < "23H 06M 00S") %>%
+        flask_out_ave() %>% 
+          mutate(Flask = 12)
+    )
+
+DryAirResults_030121 <- DryAirResults_030121 %>% 
+  bind_rows(
+    data_030121 %>% 
+      filter(UTC > "23H 11M 00S" & UTC < "23H 14M 00S") %>%
+        flask_out_ave() %>% 
+          mutate(Flask = 13)
+    )
+
+DryAirResults_030121 <- DryAirResults_030121 %>% 
+  bind_rows(
+    data_030121 %>% 
+      filter(UTC > "23H 17M 00S" & UTC < "23H 20M 00S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 14)
+    )
+
+DryAirResults_030121 <- DryAirResults_030121 %>% 
+  bind_rows(
+    data_030121 %>% 
+      filter(UTC > "23H 24M 00S" & UTC < "23H 27M 00S") %>%
+        flask_out_ave() %>% 
+          mutate(Flask = 15)
+    )
+
+DryAirResults_030121 <- DryAirResults_030121 %>% 
+  bind_rows(
+    data_030121 %>% 
+      filter(UTC > "23H 30M 00S" & UTC < "23H 33M 00S") %>%
+        flask_out_ave() %>% 
+          mutate(Flask = 16)
+    )
+
+
+
+DryAir_030121_plot <- DryAirResults_030121 %>% 
+  ggplot ()+
+  aes(x = Flask, y = H2O_out, size = 2)+
+  geom_point(color = "blue") +
+  geom_hline(aes(yintercept = 250))+
+  scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16))
+
+ggplotly(DryAir_030121_plot)
+```
+
+In response to this test: 
+* 7 - broken while tryign to tighten
+* 9 - valco side tightened (top and bottom), 9T 1/4 turn, 9B left alone
+* 10 - 10T stainless steel was only finger tight, tightened both sides, tightened top and bottom on valco valve
+* 11 - Tightened top and bottom on valco valve side, 11b tephlon tightened by 1/4 turn, 11t tightened by 1/4 turn
+* 14 - Valco side tightened, 14T titghtened by 1/4 turn, might have been broken in this process (be careful!)
+
+March 3 and 4, 2021 - 
+* flask 5 replaced
+* flask 7 replaced w/ new tubes that have more give 
+* refilled with dry air 
+
+# Dry Air test #2 - March 13, 2021
+```{r}
+data_031321 <- `tbl` %>%  
+  filter(DATE == "2021-03-13") %>% 
+    mutate(UTC = hms(TIME)) %>% #by using the lubridate hms, it makes the UTC time filterable with dplyr
+      filter (UTC > "15H 56M 47S" & UTC < "17H 13M 05S")
+  
+#data_031321$seconds <- seq(1, as.numeric(count(data_030121))) #I don't understand why this can't be %>% on
+
+
+
+#this is a nice plot to play with time periods
+waterconcentration <- data_031321 %>% 
+  ggplot() + 
+  aes(UTC, H2O)+
+  geom_point()+
+  scale_x_time()
+
+ggplotly(waterconcentration, dynamicTicks = TRUE)
+
+
+
+#Build the data frame
+DryAirResults_031321 <- data_031321 %>% 
+  filter(UTC > "15H 58M 40S" & UTC < "16H 01M 40S") %>% 
+    flask_out_ave() %>% 
+      mutate(Flask = 2)
+
+DryAirResults_031321 <- DryAirResults_031321 %>% 
+  bind_rows(
+    data_031321 %>% 
+      filter(UTC > "16H 03M 40S" & UTC < "16H 06M 40S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 3)
+    )
+
+DryAirResults_031321 <- DryAirResults_031321 %>% 
+  bind_rows(
+    data_031321 %>% 
+      filter(UTC > "16H 08M 40S" & UTC < "16H 11M 40S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 4)
+    )
+
+DryAirResults_031321 <- DryAirResults_031321 %>% 
+  bind_rows(
+    data_031321 %>% 
+      filter(UTC > "16H 13M 40S" & UTC < "16H 16M 40S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 5)
+    )
+
+DryAirResults_031321 <- DryAirResults_031321 %>% 
+  bind_rows(
+    data_031321 %>% 
+      filter(UTC > "16H 18M 40S" & UTC < "16H 21M 40S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 6)
+    )
+
+DryAirResults_031321 <- DryAirResults_031321 %>% 
+  bind_rows(
+    data_031321 %>% 
+      filter(UTC > "16H 23M 40S" & UTC < "16H 26M 40S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 7)
+    )
+
+DryAirResults_031321 <- DryAirResults_031321 %>% 
+  bind_rows(
+    data_031321 %>% 
+      filter(UTC > "16H 28M 40S" & UTC < "16H 31M 40S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 8)
+    )
+
+DryAirResults_031321 <- DryAirResults_031321 %>% 
+  bind_rows(
+    data_031321 %>% 
+      filter(UTC > "16H 33M 40S" & UTC < "16H 36M 40S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 9)
+    )
+
+DryAirResults_031321 <- DryAirResults_031321 %>% 
+  bind_rows(
+    data_031321 %>% 
+      filter(UTC > "16H 38M 40S" & UTC < "16H 41M 40S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 10)
+    )
+
+DryAirResults_031321 <- DryAirResults_031321 %>% 
+  bind_rows(
+    data_031321 %>% 
+      filter(UTC > "16H 43M 40S" & UTC < "16H 46M 40S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 11)
+    )
+
+DryAirResults_031321 <- DryAirResults_031321 %>% 
+  bind_rows(
+    data_031321 %>% 
+      filter(UTC > "16H 48M 40S" & UTC < "16H 51M 40S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 12)
+    )
+
+DryAirResults_031321 <- DryAirResults_031321 %>% 
+  bind_rows(
+    data_031321 %>% 
+      filter(UTC > "16H 53M 40S" & UTC < "16H 56M 40S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 13)
+    )
+
+DryAirResults_031321 <- DryAirResults_031321 %>% 
+  bind_rows(
+    data_031321 %>% 
+      filter(UTC > "16H 58M 40S" & UTC < "17H 01M 40S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 14)
+    )
+
+DryAirResults_031321 <- DryAirResults_031321 %>% 
+  bind_rows(
+    data_031321 %>% 
+      filter(UTC > "17H 03M 40S" & UTC < "17H 06M 40S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 15)
+    )
+
+DryAirResults_031321 <- DryAirResults_031321 %>% 
+  bind_rows(
+    data_031321 %>% 
+      filter(UTC > "17H 08M 40S" & UTC < "17H 11M 40S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 16)
+    )
+
+DryAir_031321_plot <- DryAirResults_031321 %>% 
+  ggplot ()+
+  aes(x = Flask, y = H2O_out, size = 2)+
+  geom_point(color = "blue") +
+  geom_hline(aes(yintercept = 250))+
+  scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16))
+
+ggplotly(DryAir_031321_plot)
+```
+
+Impressions of this test/Actions taken:
+* I need to figure out a better way to transition into the start of the test, because I keep pulling atm into port 2 at the start. 
+* 5 - Tightened both valco valve ports, glass on 5T 1/8 turn, glass 5b tiny turn
+* 11 - broken :( 
+
+# Water Vapor test 
+### Water Vapor In - March 16, 2021
+Replaced flask 11. 
+```{r}
+data031621 <- tbl %>% 
+  filter(DATE == "2021-03-16") %>% 
+    mutate(UTC = hms(TIME)) %>% 
+      filter (UTC > "15H 45M 00S"  & UTC < "22H 00M 00S")
+
+#this is a nice plot to play with time periods
+waterconcentration <- data031621 %>% 
+  filter(UTC > "17H 14M 00S" & UTC < "17H 19M 00S") %>% 
+  ggplot() + 
+  aes(UTC, Delta_D_H)+
+  geom_point()+
+  scale_x_time()
+
+ggplotly(waterconcentration, dynamicTicks = TRUE)
+
+tob_vaporin <- data031621 %>% 
+  filter(UTC > "16H 20M 00S" & UTC < "16H 25M 00S") %>%
+    flask_out_ave() %>% 
+      mutate(Flask = 2)
+
+tob_vaporin <-  tob_vaporin %>% 
+  bind_rows(data031621 %>% 
+      filter(UTC > "16H 38M 00S" & UTC < "16H 43M 00S") %>%        
+        flask_out_ave() %>% 
+          mutate(Flask = 3)
+  )  
+    
+tob_vaporin <-  tob_vaporin %>% 
+  bind_rows(data031621 %>% 
+      filter(UTC > "16H 56M 00S" & UTC < "17H 01M 00S") %>%       
+        flask_out_ave() %>% 
+          mutate(Flask = 4)
+  )  
+
+tob_vaporin <-  tob_vaporin %>% 
+  bind_rows(data031621 %>% 
+      filter(UTC > "17H 14M 00S" & UTC < "17H 19M 00S") %>%       
+        flask_out_ave() %>% 
+          mutate(Flask = 5)
+  ) 
+
+tob_vaporin <-  tob_vaporin %>% 
+  bind_rows(data031621 %>% 
+      filter(UTC > "17H 32M 00S" & UTC < "17H 37M 00S") %>%      
+        flask_out_ave() %>% 
+          mutate(Flask = 6)
+  ) 
+
+tob_vaporin <-  tob_vaporin %>% 
+  bind_rows(data031621 %>% 
+      filter(UTC > "18H 42M 50S" & UTC < "18H 47M 50S") %>%      
+        flask_out_ave() %>% 
+          mutate(Flask = 7)
+  ) 
+
+tob_vaporin <-  tob_vaporin %>% 
+  bind_rows(data031621 %>% 
+      filter(UTC > "19H 00M 50S" & UTC < "19H 05M 50S") %>%    
+        flask_out_ave() %>% 
+          mutate(Flask = 8)
+  ) 
+
+tob_vaporin <-  tob_vaporin %>% 
+  bind_rows(data031621 %>% 
+      filter(UTC > "19H 18M 50S" & UTC < "19H 23M 50S") %>%    
+        flask_out_ave() %>% 
+          mutate(Flask = 9)
+  ) 
+
+tob_vaporin <-  tob_vaporin %>% 
+  bind_rows(data031621 %>% 
+      filter(UTC > "19H 36M 30S" & UTC < "19H 41M 30S") %>%   
+        flask_out_ave() %>% 
+          mutate(Flask = 10)
+  ) 
+
+tob_vaporin <-  tob_vaporin %>% 
+  bind_rows(data031621 %>% 
+      filter(UTC > "20H 04M 15S" & UTC < "20H 09M 15S") %>%
+        flask_out_ave() %>% 
+          mutate(Flask = 12)
+  ) 
+
+tob_vaporin <-  tob_vaporin %>% 
+  bind_rows(data031621 %>% 
+      filter(UTC > "20H 22M 15S" & UTC < "20H 27M 15S") %>%
+        flask_out_ave() %>% 
+          mutate(Flask = 13)
+  ) 
+
+tob_vaporin <-  tob_vaporin %>% 
+  bind_rows(data031621 %>% 
+      filter(UTC > "20H 40M 15S" & UTC < "20H 45M 15S") %>%
+        flask_out_ave() %>% 
+          mutate(Flask = 14)
+  ) 
+
+tob_vaporin <-  tob_vaporin %>% 
+  bind_rows(data031621 %>% 
+      filter(UTC > "20H 58M 15S" & UTC < "21H 03M 15S") %>%
+        flask_out_ave() %>% 
+          mutate(Flask = 15)
+  ) 
+
+tob_vaporin <-  tob_vaporin %>% 
+  bind_rows(data031621 %>% 
+      filter(UTC > "21H 16M 15S" & UTC < "21H 21M 15S") %>%
+        flask_out_ave() %>% 
+          mutate(Flask = 16)
+  ) 
+
+tob_vaporin <-  tob_vaporin %>% 
+  bind_rows(data031621 %>% 
+      filter(UTC > "21H 37M 15S" & UTC < "21H 42M 15S") %>%
+        flask_out_ave() %>% 
+          mutate(Flask = 11)
+  ) 
+
+tob_vaporin <- tob_vaporin %>% 
+  mutate(datatype = "Vapor In")
+```
+
+### Water Vapor Out - March 25, 2021 
+
+```{r}
+data032521 <- tbl %>% 
+  filter(DATE == "2021-03-25") %>% 
+    mutate(UTC = hms(TIME)) %>% 
+      filter(UTC > "20H 14M 00S" & UTC < "21H 39M 40S")
+
+#this is a nice plot to play with time periods
+waterconcentration <- data032521 %>% 
+  ggplot() + 
+  aes(UTC, H2O)+
+  geom_point()+
+  scale_x_time()
+
+ggplotly(waterconcentration, dynamicTicks = TRUE)
+
+tob_vaporout <- data032521 %>% 
+  filter(UTC > "20H 17M 30S" & UTC < "20H 19M 10S") %>% 
+    flask_out_ave() %>% 
+      mutate(Flask = 2)
+
+tob_vaporout <-  tob_vaporout %>% 
+  bind_rows(data032521 %>% 
+      filter(UTC > "20H 22M 30S" & UTC < "20H 24M 10S") %>%         
+        flask_out_ave() %>% 
+          mutate(Flask = 3)
+  )  
+
+tob_vaporout <-  tob_vaporout %>% 
+  bind_rows(data032521 %>% 
+      filter(UTC > "20H 27M 30S" & UTC < "20H 29M 10S") %>%         
+        flask_out_ave() %>% 
+          mutate(Flask = 4)
+  )  
+
+tob_vaporout <-  tob_vaporout %>% 
+  bind_rows(data032521 %>% 
+      filter(UTC > "20H 32M 30S" & UTC < "20H 34M 10S") %>%         
+        flask_out_ave() %>% 
+          mutate(Flask = 5)
+  )  
+
+tob_vaporout <-  tob_vaporout %>% 
+  bind_rows(data032521 %>% 
+      filter(UTC > "20H 37M 30S" & UTC < "20H 39M 10S") %>%         
+        flask_out_ave() %>% 
+          mutate(Flask = 6)
+  ) 
+
+tob_vaporout <-  tob_vaporout %>% 
+  bind_rows(data032521 %>% 
+      filter(UTC > "20H 42M 30S" & UTC < "20H 44M 10S") %>%         
+        flask_out_ave() %>% 
+          mutate(Flask = 7)
+  ) 
+
+tob_vaporout <-  tob_vaporout %>% 
+  bind_rows(data032521 %>% 
+      filter(UTC > "20H 47M 30S" & UTC < "20H 49M 10S") %>%         
+        flask_out_ave() %>% 
+          mutate(Flask = 8)
+  ) 
+
+tob_vaporout <-  tob_vaporout %>% 
+  bind_rows(data032521 %>% 
+      filter(UTC > "20H 52M 30S" & UTC < "20H 54M 10S") %>%         
+        flask_out_ave() %>% 
+          mutate(Flask = 9)
+  ) 
+
+tob_vaporout <-  tob_vaporout %>% 
+  bind_rows(data032521 %>% 
+      filter(UTC > "20H 57M 30S" & UTC < "20H 59M 10S") %>%         
+        flask_out_ave() %>% 
+          mutate(Flask = 10)
+  ) 
+
+tob_vaporout <-  tob_vaporout %>% 
+  bind_rows(data032521 %>% 
+      filter(UTC > "21H 02M 30S" & UTC < "21H 04M 10S") %>%         
+        flask_out_ave() %>% 
+          mutate(Flask = 11)
+  ) 
+
+tob_vaporout <-  tob_vaporout %>% 
+  bind_rows(data032521 %>% 
+      filter(UTC > "21H 07M 30S" & UTC < "21H 09M 10S") %>%         
+        flask_out_ave() %>% 
+          mutate(Flask = 12)
+  ) 
+
+tob_vaporout <-  tob_vaporout %>% 
+  bind_rows(data032521 %>% 
+      filter(UTC > "21H 12M 30S" & UTC < "21H 14M 10S") %>%         
+        flask_out_ave() %>% 
+          mutate(Flask = 13)
+  ) 
+
+tob_vaporout <-  tob_vaporout %>% 
+  bind_rows(data032521 %>% 
+      filter(UTC > "21H 17M 30S" & UTC < "21H 19M 10S") %>%         
+        flask_out_ave() %>% 
+          mutate(Flask = 14)
+  ) 
+
+tob_vaporout <-  tob_vaporout %>% 
+  bind_rows(data032521 %>% 
+      filter(UTC > "21H 22M 30S" & UTC < "21H 24M 10S") %>%         
+        flask_out_ave() %>% 
+          mutate(Flask = 15)
+  ) 
+
+tob_vaporout <-  tob_vaporout %>% 
+  bind_rows(data032521 %>% 
+      filter(UTC > "21H 27M 30S" & UTC < "21H 29M 10S") %>%         
+        flask_out_ave() %>% 
+          mutate(Flask = 16)
+  ) 
+
+tob_vaporout <- tob_vaporout %>% 
+  mutate(datatype = "Vapor Out")
+```
+
+## Water Vapor Comparison 
+```{r}
+Tob_comparison <- left_join(tob_vaporin, tob_vaporout, by = "Flask") %>% 
+  mutate(
+    H2O_diff = H2O_out.y - H2O_out.x,
+    d18O_diff = d180_out.y - d180_out.x,
+    d2H_diff = d2H_out.y - d2H_out.x
+  )
+
+compare_plot <- Tob_comparison %>% select(Flask, H2O_diff, d18O_diff, d2H_diff) %>% 
+  pivot_longer(cols = c(H2O_diff, d18O_diff, d2H_diff))  %>% 
+      ggplot()+
+        aes(Flask, value)+
+        geom_point()+
+        facet_wrap(~name, scales = "free")
+           
+ggplotly(compare_plot, dynamicTicks = TRUE)
+```
+
+
+
+
+
+
+
+#### Stuff from Erik Oerter
+
+```{r}
+#Trim to the desired part    
+ggplotly(waterconcentration, dynamicTicks = TRUE)   
+
+data_030121$h2o_slope <- h2o_slope(data = data_030121, window = 12) 
+
+
+```
+
+
+
+```{r}
+# data_030121 <- data_030121 %>% 
+#   mutate(h2o_slope = h2o_slope(data_030121, 12))
+# 	#using the h2o_slope function, this creates a column in the data2 dataframe 
+# 	#with the slope of h2O v. seconds for a moving window of the given length. 
+# 
+# cutoff <- 10
+# 	#set the slope cutoff you want to use to determine your peaks
+# setback <- 30
+# 	#set the number of values you want to remove from the end of your peak
+# peak_length <- 90
+# 	#set the number of seconds you want to average values for on your peak
+# minimum <- 0 
+# 	#set the minimum H2O concentration you want to use to determine your peaks
+# peaks <- data_030121[abs(data_030121$h2o_slope) < cutoff & data_030121$H2O > minimum ,]
+# 	#subsets the dataframe by your cutoff and minimum values
+# end <- c(which(diff(peaks$seconds) >30), nrow(peaks)) 
+# 	#determines the second at which each peak ends
+# last <- peaks$seconds[end]-setback 
+# 	#creates a vector that will be the ending cutoff second for each peak
+# 	#including the setback
+# first <- last-peak_length
+# 	#creates a vector that will be the beginning cutoff for each peak
+# peaknumber <- numeric(nrow(data_030121)) #empty vector to populate with peak numbers to append to data_030121
+# for (i in 1:length(last)){ 
+#     peaknumber[(first[i]):(last[(i)])] = i}
+# 	#populates peaknumber vector so that it can be appended to data_030121 to indicate which rows belong to
+# 	#each peak
+# data_030121$peaknumber <- peaknumber
+# 	#appends peaknumber to data_030121 as column peaknumber
+```
+

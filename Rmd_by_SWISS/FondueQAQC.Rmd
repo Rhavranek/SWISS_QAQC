@@ -1,0 +1,648 @@
+---
+title: "Fondue QAQC"
+author: "Rachel Havranek"
+date: "`r format(Sys.Date(), '%d %b %Y')`"
+output:
+  html_document: 
+    df_print: paged # omit to disable paged data table output
+    css: stylesheet.css # omit if no need for custom stylesheet
+    number_sections: yes # change to no for unnumbered sections
+    toc: yes # change to no to disable table of contents
+    toc_float: true # change to false to keep toc at the top
+    toc_depth: 3 # change to specify which headings to include in toc
+    code_folding: show # change to hide to hide code by default
+---
+
+```{r setup, echo = TRUE, message=FALSE, warning=FALSE}
+# load libraries
+library(tidyverse) 
+library(latex2exp)
+
+library(data.table)
+library (lubridate)
+library(plotly)
+library(fs)
+
+# source all relevant scripting files
+source(file.path("scripts", "plotting_functions.R"))
+source(file.path("scripts", "flask_ave.R"))
+source(file.path ("scripts", "Eriks_functions.R"))
+
+# global knitting options for automatic saving of all plots as .png and .pdf
+knitr::opts_chunk$set(
+  dev = c("png", "pdf"), fig.keep = "all",
+  dev.args = list(pdf = list(encoding = "WinAnsi", useDingbats = FALSE)),
+  fig.path = file.path("fig_output", paste0(gsub("\\.[Rr]md", "", knitr::current_input()), "_"))
+)
+```
+
+
+# Load Data - 
+This only needs to be run when there is new data, otherwise it will be much faster to load the RDS file in the last, commented line. 
+```{r load data}
+# tbl <-
+#     list.files ("data_raw", pattern = "*.dat", recursive = T, full.names = T) %>% 
+#     map_df(~read_table2(.)) %>% 
+#     select(1, 2, 17, 18, 19)
+# 
+# currentdate <- Sys.Date()
+# saveRDS(tbl, paste("data_raw/FondueData", currentdate,".RDS"))
+
+
+tbl <- readRDS("data_raw/FondueData 2021-04-12 .RDS") #put latest file name here
+```
+
+# Dry Air Test - 
+Air out of flasks on 03-01-2021
+```{r}
+data030121 <- tbl %>% filter (DATE == "2021-03-01") %>% 
+  mutate(UTC = hms(TIME)) %>% #uses the lubridate to replicate the time, but makes it filterable 
+  filter (UTC > "20H 10M 00S" & UTC < "21H 30M 00S")  
+
+data030121$seconds<- seq(1, as.numeric(count(data030121)))    
+
+dryair_concentration <- data030121 %>% 
+  ggplot()+
+  aes(TIME, H2O) +
+  geom_point()
+
+ggplotly(dryair_concentration, dynamicTicks = TRUE)
+
+dryair_results <- data030121 %>% 
+  filter(UTC > "20H 13M 20S" & UTC < "20H 15M 00S") %>% 
+    summarise(
+      Flask = 2,
+      SD = sd(H2O),
+      H2O = mean(H2O)
+    )
+
+dryair_results <- dryair_results %>% bind_rows(
+  data030121 %>% 
+  filter(UTC > "20H 17M 40S" & UTC < "20H 20M 00S") %>% 
+    summarise(
+      Flask = 3,
+      SD = sd(H2O),
+      H2O = mean(H2O)
+    )
+)
+
+dryair_results <- dryair_results %>% bind_rows(
+  data030121 %>% 
+  filter(UTC > "20H 23M 20S" & UTC < "20H 25M 00S") %>% 
+    summarise(
+      Flask = 4,
+      SD = sd(H2O),
+      H2O = mean(H2O)
+    )
+)
+
+dryair_results <- dryair_results %>% bind_rows(
+  data030121 %>% 
+  filter(UTC > "20H 29M 00S" & UTC < "20H 30M 40S") %>% 
+    summarise(
+      Flask = 5,
+      SD = sd(H2O),
+      H2O = mean(H2O)
+    )
+)
+
+dryair_results <- dryair_results %>% bind_rows(
+  data030121 %>% 
+  filter(UTC > "20H 35M 40S" & UTC < "20H 37M 00S") %>% 
+    summarise(
+      Flask = 6,
+      SD = sd(H2O),
+      H2O = mean(H2O)
+    )
+)
+
+dryair_results <- dryair_results %>% bind_rows(
+  data030121 %>% 
+  filter(UTC > "20H 41M 00S" & UTC < "20H 42M 40S") %>% 
+    summarise(
+      Flask = 7,
+      SD = sd(H2O),
+      H2O = mean(H2O)
+    )
+)
+
+dryair_results <- dryair_results %>% bind_rows(
+  data030121 %>% 
+  filter(UTC > "20H 46M 20S" & UTC < "20H 48M 00S") %>% 
+    summarise(
+      Flask = 8,
+      SD = sd(H2O),
+      H2O = mean(H2O)
+    )
+)
+
+dryair_results <- dryair_results %>% bind_rows(
+  data030121 %>% 
+  filter(UTC > "20H 52M 00S" & UTC < "20H 53M 40S") %>% 
+    summarise(
+      Flask = 9,
+      SD = sd(H2O),
+      H2O = mean(H2O)
+    )
+)
+
+dryair_results <- dryair_results %>% bind_rows(
+  data030121 %>% 
+  filter(UTC > "20H 56M 20S" & UTC < "20H 58M 00S") %>% 
+    summarise(
+      Flask = 10,
+      SD = sd(H2O),
+      H2O = mean(H2O)
+    )
+)
+
+dryair_results <- dryair_results %>% bind_rows(
+  data030121 %>% 
+  filter(UTC > "21H 03M 00S" & UTC < "21H 04M 40S") %>% 
+    summarise(
+      Flask = 11,
+      SD = sd(H2O),
+      H2O = mean(H2O)
+    )
+)
+
+dryair_results <- dryair_results %>% bind_rows(
+  data030121 %>% 
+   filter(UTC > "21H 10M 20S" & UTC < "21H 12M 00S") %>% 
+    summarise(
+      Flask = 12,
+      SD = sd(H2O),
+      H2O = mean(H2O)
+    )
+)
+
+dryair_results <- dryair_results %>% bind_rows(
+  data030121 %>% 
+   filter(UTC > "21H 15M 20S" & UTC < "21H 17M 00S") %>% 
+    summarise(
+      Flask = 13,
+      SD = sd(H2O),
+      H2O = mean(H2O)
+    )
+)
+
+dryair_results <- dryair_results %>% bind_rows(
+  data030121 %>% 
+   filter(UTC > "21H 20M 20S" & UTC < "21H 22M 00S") %>% 
+    summarise(
+      Flask = 15,
+      SD = sd(H2O),
+      H2O = mean(H2O)
+    )
+)
+
+dryair_results <- dryair_results %>% bind_rows(
+  data030121 %>% 
+   filter(UTC > "21H 26M 20S" & UTC < "21H 28M 00S") %>% 
+    summarise(
+      Flask = 16,
+      SD = sd(H2O),
+      H2O = mean(H2O)
+    )
+)
+
+dryair_results <- dryair_results  %>% mutate (Color = ifelse(H2O > 250, "red", "black"))
+
+dryair_plot <- dryair_results %>% ggplot()+
+  aes(Flask, H2O, color = Color, size = 3)+
+  geom_point() +
+  scale_color_identity()
+
+dryair_plot
+```
+
+In response to these results:
+*port 3 - tightened valco side both top and bottom, tightened glass side on 3T (1/2 - 3/4 turn)
+*port 7 - tightened valco side both top and bottom, tightened glass side on 7B, SS side on 7B
+*port 8 - nothing (missed it)
+*port 11 - tightened valco side both top and bottom, 1/8th turn on 11T glass, 1/8th turn on 11B glass
+
+# Water Vapor Test 
+## Water Vapor In 
+March 7, 2021 
+
+```{r}
+data030721 <- tbl %>% filter (DATE == "2021-03-07" | DATE == "2021-03-08") %>% 
+  mutate(UTC = (paste(DATE, TIME) %>% ymd_hms())) %>% #uses the lubridate to replicate the time, but makes it filterable 
+  filter (UTC > "2021-03-07 09:45:00" & UTC < "2021-03-07 20:25:00")  # it is doing a weird thing where its autoconverting times again
+
+data030721$seconds<- seq(1, as.numeric(count(data030721))) 
+
+vaporin_concentration <- data030721 %>% 
+  ggplot()+
+  aes(UTC, H2O) +
+  geom_point()
+
+vaporin_concentration
+
+  playplot <- data030721 %>%
+    filter(UTC > "2021-03-07 14:00:00" & UTC < "2021-03-07 16:00:00") %>%
+    ggplot()+
+    aes(UTC, H2O) +
+    geom_point()
+
+  ggplotly(playplot, dynamicTicks = TRUE)
+
+  d18Oplayplot <- data030721 %>%
+   filter(UTC > "2021-03-07 14:00:00" & UTC < "2021-03-07 16:00:00") %>%
+    ggplot()+
+    aes(UTC, Delta_18_16) +
+    geom_point()
+
+  ggplotly(d18Oplayplot, dynamicTicks = TRUE)
+
+fondue_vaporin <- data030721 %>% 
+   filter(UTC > "2021-03-07 13:33:00" & UTC < "2021-03-07 13:40:00") %>%
+    summarise(
+      Flask = 2,
+      SD = sd(H2O),
+      H2O = mean(H2O),
+      SD_18O = sd (Delta_18_16),
+      d180 = mean (Delta_18_16),
+      SD_2H = sd(Delta_D_H),
+      d2H = mean(Delta_D_H)
+    )
+
+
+fondue_vaporin <- fondue_vaporin %>% bind_rows(
+  data030721 %>% 
+   filter(UTC > "2021-03-07 13:47:00" & UTC < "2021-03-07 13:57:00") %>%
+    summarise(
+      Flask = 3,
+      SD = sd(H2O),
+      H2O = mean(H2O),
+      SD_18O = sd (Delta_18_16),
+      d180 = mean (Delta_18_16),
+      SD_2H = sd(Delta_D_H),
+      d2H = mean(Delta_D_H)
+    )
+)
+
+fondue_vaporin <- fondue_vaporin %>% bind_rows(
+  data030721 %>% 
+   filter(UTC > "2021-03-07 14:34:00" & UTC < "2021-03-07 14:44:00") %>%
+    summarise(
+      Flask = 4,
+      SD = sd(H2O),
+      H2O = mean(H2O),
+      SD_18O = sd (Delta_18_16),
+      d180 = mean (Delta_18_16),
+      SD_2H = sd(Delta_D_H),
+      d2H = mean(Delta_D_H)
+    )
+)
+
+
+fondue_vaporin <- fondue_vaporin %>% bind_rows(
+  data030721 %>% 
+   filter(UTC > "2021-03-07 15:11:00" & UTC < "2021-03-07 15:21:00") %>%
+    summarise(
+      Flask = 5,
+      SD = 0,
+      H2O = 0,
+      SD_18O = 0.21,
+      d180 = 0.26,
+      SD_2H = 0.6,
+      d2H = 0.8
+    )
+)
+
+fondue_vaporin <- fondue_vaporin %>% bind_rows(
+  data030721 %>% 
+   filter(UTC > "2021-03-07 15:11:00" & UTC < "2021-03-07 15:21:00") %>%
+    summarise(
+      Flask = 6,
+      SD = sd(H2O),
+      H2O = mean(H2O),
+      SD_18O = sd (Delta_18_16),
+      d180 = mean (Delta_18_16),
+      SD_2H = sd(Delta_D_H),
+      d2H = mean(Delta_D_H)
+    )
+)
+
+fondue_vaporin <- fondue_vaporin %>% bind_rows(
+  data030721 %>% 
+   filter(UTC > "2021-03-07 15:37:00" & UTC < "2021-03-07 15:47:00") %>%
+    summarise(
+      Flask = 7,
+      SD = sd(H2O),
+      H2O = mean(H2O),
+      SD_18O = sd (Delta_18_16),
+      d180 = mean (Delta_18_16),
+      SD_2H = sd(Delta_D_H),
+      d2H = mean(Delta_D_H)
+    )
+)
+
+fondue_vaporin <- fondue_vaporin %>% bind_rows(
+  data030721 %>% 
+   filter(UTC > "2021-03-07 16:40:00" & UTC < "2021-03-07 16:47:00") %>%
+    summarise(
+      Flask = 8,
+      SD = sd(H2O),
+      H2O = mean(H2O),
+      SD_18O = sd (Delta_18_16),
+      d180 = mean (Delta_18_16),
+      SD_2H = sd(Delta_D_H),
+      d2H = mean(Delta_D_H)
+    )
+)
+
+
+fondue_vaporin <- fondue_vaporin %>%  bind_rows(
+  data030721 %>% 
+  filter(UTC > "2021-03-07 16:55:00" & UTC < "2021-03-07 17:05:00") %>%
+    summarise(
+        Flask = 9,
+        SD = sd(H2O),
+        H2O = mean(H2O),
+        SD_18O = sd (Delta_18_16),
+        d180 = mean (Delta_18_16),
+        SD_2H = sd(Delta_D_H),
+        d2H = mean(Delta_D_H)
+      )
+)
+
+fondue_vaporin <- fondue_vaporin %>% bind_rows(
+  data030721 %>% 
+  filter(UTC > "2021-03-07 17:13:00" & UTC < "2021-03-07 17:23:00") %>%
+    summarise(
+        Flask = 10,
+        SD = sd(H2O),
+        H2O = mean(H2O),
+        SD_18O = sd (Delta_18_16),
+        d180 = mean (Delta_18_16),
+        SD_2H = sd(Delta_D_H),
+        d2H = mean(Delta_D_H)
+      )
+)
+
+fondue_vaporin <- fondue_vaporin %>% bind_rows(
+  data030721 %>% 
+    filter(UTC > "2021-03-07 17:31:30" & UTC < "2021-03-07 17:41:30") %>%
+      summarise(
+          Flask = 11,
+          SD = sd(H2O),
+          H2O = mean(H2O),
+          SD_18O = sd (Delta_18_16),
+          d180 = mean (Delta_18_16),
+          SD_2H = sd(Delta_D_H),
+          d2H = mean(Delta_D_H)
+        )
+)
+
+fondue_vaporin <- fondue_vaporin %>% bind_rows(
+  data030721 %>% 
+  filter(UTC > "2021-03-07 17:49:30" & UTC < "2021-03-07 17:59:30") %>%
+    summarise(
+        Flask = 12,
+        SD = sd(H2O),
+        H2O = mean(H2O),
+        SD_18O = sd (Delta_18_16),
+        d180 = mean (Delta_18_16),
+        SD_2H = sd(Delta_D_H),
+        d2H = mean(Delta_D_H)
+      )
+)
+
+fondue_vaporin <- fondue_vaporin %>% bind_rows(
+  data030721 %>% 
+  filter(UTC > "2021-03-07 18:07:00" & UTC < "2021-03-07 18:17:00") %>%
+    summarise(
+        Flask = 13,
+        SD = sd(H2O),
+        H2O = mean(H2O),
+        SD_18O = sd (Delta_18_16),
+        d180 = mean (Delta_18_16),
+        SD_2H = sd(Delta_D_H),
+        d2H = mean(Delta_D_H)
+      )
+)
+
+fondue_vaporin <- fondue_vaporin %>% bind_rows(
+  data030721 %>% 
+  filter(UTC > "2021-03-07 18:35:00" & UTC < "2021-03-07 18:45:00") %>%
+    summarise(
+        Flask = 14,
+        SD = sd(H2O),
+        H2O = mean(H2O),
+        SD_18O = sd (Delta_18_16),
+        d180 = mean (Delta_18_16),
+        SD_2H = sd(Delta_D_H),
+        d2H = mean(Delta_D_H)
+      )
+)
+
+fondue_vaporin <- fondue_vaporin %>% bind_rows(
+  data030721 %>% 
+  filter(UTC > "2021-03-07 18:52:30" & UTC < "2021-03-07 19:02:30") %>%
+    summarise(
+        Flask = 15,
+        SD = sd(H2O),
+        H2O = mean(H2O),
+        SD_18O = sd (Delta_18_16),
+        d180 = mean (Delta_18_16),
+        SD_2H = sd(Delta_D_H),
+        d2H = mean(Delta_D_H)
+      )
+)
+
+fondue_vaporin <- fondue_vaporin %>% bind_rows(
+  data030721 %>% 
+  filter(UTC > "2021-03-07 19:12:30" & UTC < "2021-03-07 19:22:30") %>%
+    summarise(
+        Flask = 16,
+        SD = sd(H2O),
+        H2O = mean(H2O),
+        SD_18O = sd (Delta_18_16),
+        d180 = mean (Delta_18_16),
+        SD_2H = sd(Delta_D_H),
+        d2H = mean(Delta_D_H)
+      )
+)
+
+fondue_vaporin <- fondue_vaporin %>% 
+  mutate(
+    date = 030721,
+    datatype = "VaporIn"
+  )
+
+```
+
+note to self: on 4/13: I've filtered the right time period, and so now I have to look at the water concentration plot, and pull out the right time periods for each flask 
+
+## Water Vapor Out
+March 21, 2021
+```{r}
+data032121 <- tbl %>%
+  filter (DATE == "2021-03-21") %>% 
+    mutate(UTC = hms(TIME)) %>% #uses the lubridate to replicate the time, but makes it filterable 
+      filter (UTC > "16H 40M 00S" & UTC < "18H 20M 00S") 
+
+vaporout_concentration <- data032121 %>% 
+  ggplot()+
+  aes(TIME, H2O) +
+  geom_point()
+
+ggplotly(vaporout_concentration, dynamicTicks = TRUE)
+
+
+vaporout <- data032121 %>% 
+  filter (UTC > "16H 41M 00S" & UTC < "16H 44M 00S") %>% 
+    flask_out_ave() %>% 
+      mutate(Flask = 2)
+
+vaporout <- vaporout %>% 
+  bind_rows(
+    data032121 %>% 
+      filter (UTC > "16H 46M 00S" & UTC < "16H 49M 00S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 3)
+  )
+
+vaporout <- vaporout %>% 
+  bind_rows(
+    data032121 %>% 
+      filter (UTC > "16H 51M 00S" & UTC < "16H 54M 00S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 4)
+  )    
+
+
+vaporout <- vaporout %>% 
+  bind_rows(
+    data032121 %>% 
+      filter (UTC > "16H 56M 00S" & UTC < "16H 59M 00S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 5)
+  ) 
+
+vaporout <- vaporout %>% 
+  bind_rows(
+    data032121 %>% 
+      filter (UTC > "17H 01M 00S" & UTC < "17H 04M 00S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 6)
+  )
+
+vaporout <- vaporout %>% 
+  bind_rows(
+    data032121 %>% 
+      filter (UTC > "17H 06M 00S" & UTC < "17H 09M 00S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 7)
+  )
+
+vaporout <- vaporout %>% 
+  bind_rows(
+    data032121 %>% 
+      filter (UTC > "17H 11M 00S" & UTC < "17H 14M 00S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 8)
+  )
+
+vaporout <- vaporout %>% 
+  bind_rows(
+    data032121 %>% 
+      filter (UTC > "17H 16M 00S" & UTC < "17H 19M 00S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 9)
+  )
+
+vaporout <- vaporout %>% 
+  bind_rows(
+    data032121 %>% 
+      filter (UTC > "17H 21M 00S" & UTC < "17H 24M 00S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 10)
+  )
+
+vaporout <- vaporout %>% 
+  bind_rows(
+    data032121 %>% 
+      filter (UTC > "17H 26M 00S" & UTC < "17H 29M 00S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 11)
+  )
+
+vaporout <- vaporout %>% 
+  bind_rows(
+    data032121 %>% 
+      filter (UTC > "17H 31M 00S" & UTC < "17H 34M 00S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 12)
+  )
+
+vaporout <- vaporout %>% 
+  bind_rows(
+    data032121 %>% 
+      filter (UTC > "17H 36M 00S" & UTC < "17H 39M 00S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 13)
+  )
+
+vaporout <- vaporout %>% 
+  bind_rows(
+    data032121 %>% 
+      filter (UTC > "17H 41M 00S" & UTC < "17H 44M 00S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 14)
+  )
+
+vaporout <- vaporout %>% 
+  bind_rows(
+    data032121 %>% 
+      filter (UTC > "17H 46M 00S" & UTC < "17H 49M 00S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 15)
+  )
+
+vaporout <- vaporout %>% 
+  bind_rows(
+    data032121 %>% 
+      filter (UTC > "17H 51M 00S" & UTC < "17H 54M 00S") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 16)
+  )
+
+vaporout <- vaporout %>% 
+  mutate(
+    date = 032121,
+    datatype = "VaporIn"
+    )
+```
+
+## Compare in and out 
+```{r}
+fondue_comparison <- left_join(fondue_vaporin, vaporout, by = "Flask") %>% 
+  mutate(
+    H2O_diff = H2O_out - H2O,
+    d18O_diff = d180_out - d180,
+    d2H_diff = d2H_out - d2H
+  )
+
+compare_plot <- fondue_comparison %>% select(Flask, H2O_diff, d18O_diff, d2H_diff) %>% 
+  pivot_longer(cols = c(H2O_diff, d18O_diff, d2H_diff))  %>% 
+      ggplot()+
+        aes(Flask, value)+
+        geom_point()+
+        facet_wrap(~name, scales = "free")
+           
+ggplotly(compare_plot, dynamicTicks = TRUE)
+```
+
+Based on these plots: 
+  1. I am confused about flasks 6 --> surprised its so bad. but moves towards room quite a bit. 7 is essentially just room. 
+  1. I think flasks 3 and 8 are still leaking -> this makes sense because I didn't do anything with 8 and 3 turned a lot
+  1. I think I should try and heat the flasks because the hydrogen isotopes are so weird
+
+
+
+#Vapor Probe tests 
+March 17 and 18, 2021 
