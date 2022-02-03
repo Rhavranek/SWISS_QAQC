@@ -43,15 +43,15 @@ knitr::opts_chunk$set(
 If you have added new data then uncomment the top part (tbl, currentdate, saveRDS). If there is no new data, then just read in the most recent RDS file in data_raw
 
 ```{r}
-tbl <-
-    list.files ("data", pattern = "*.dat", recursive = T, full.names = T) %>%
-    map_df(~read_table2(.)) %>%
-    select(1, 2, 17, 18, 19)
+# tbl <-
+#     list.files ("data", pattern = "*.dat", recursive = T, full.names = T) %>%
+#     map_df(~read_table2(.)) %>%
+#     select(1, 2, 17, 18, 19)
+# 
+# currentdate <- Sys.Date()
+# saveRDS(tbl, paste("data/Data", currentdate,".RDS"))
 
-currentdate <- Sys.Date()
-saveRDS(tbl, paste("data/TobleroneData", currentdate,".RDS"))
-
-tbl <- readRDS("data/TobleroneData 2021-05-10 .RDS") #manually change this file to be the most recent version
+tbl <- readRDS("data/Data 2022-02-02 .RDS") #manually change this file to be the most recent version
 ```
 
 
