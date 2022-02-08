@@ -20,7 +20,7 @@ editor_options:
 # load libraries
 library(tidyverse) 
 library(latex2exp)
-
+library(viridis)
 library(data.table)
 library (lubridate)
 library(plotly)
@@ -809,9 +809,54 @@ DryAirResults_070521_plt <- DryAirResults_070521 %>%
 DryAirResults_070521_plt
 ```
 
+```{r use outlet valve to cut}
+
+outlet.cut <- data_070521 %>% 
+  filter(MDT > "2021-07-05 16:35:00" & MDT < "2021-07-05 17:05:00") %>% 
+  mutate(
+    seconds = row_number(),
+    tentimes = OutletValve-100 > as.numeric(c("", head(OutletValve, -1))),
+    tentimes = ifelse (is.na(tentimes), F, tentimes),
+    batch = cumsum(tentimes),
+    newbatch = as.character(batch)
+    )
+
+plt <- outlet.cut %>% 
+  ggplot()+
+  aes(x =MDT, y = OutletValve, color = newbatch) +
+  geom_point()
+  
+ggplotly(plt, dynamicTicks = TRUE)
+
+outlet_smart_aves <- outlet.cut %>% 
+  filter(batch > 1) %>% 
+  group_by(batch) %>% 
+   mutate(row = row_number(),
+          totalrows= n()) %>% 
+  filter(totalrows>100 & row > 90 & row < 271) %>% 
+  flask_out_ave() %>% 
+  mutate(
+    flask = c(13, 14, 15, 16)
+  )
 
 
 
+
+ 
+  summarise(
+    d13C = mean(H20)
+            )
+
+ # ungroup %>% 
+  #select(UTC, batch, -row, everything())
+
+
+```
+
+
+next step: 
+- take each batch and throw away the first 90 seconds
+- then, average shit for the following 180 seconds
 
 
 #### Stuff from Erik Oerter
@@ -842,7 +887,7 @@ data_030121$h2o_slope <- h2o_slope(data = data_030121, window = 12)
 # minimum <- 0 
 # 	#set the minimum H2O concentration you want to use to determine your peaks
 # peaks <- data_030121[abs(data_030121$h2o_slope) < cutoff & data_030121$H2O > minimum ,]
-# 	#subsets the dataframe by your cutoff and minimum values
+# %>%  	#subsets the dataframe by your cutoff and minimum values
 # end <- c(which(diff(peaks$seconds) >30), nrow(peaks)) 
 # 	#determines the second at which each peak ends
 # last <- peaks$seconds[end]-setback 
