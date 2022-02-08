@@ -52,15 +52,15 @@ outlet valve I have found is really helpful for identifying when the picarro fir
 #     select(1, 2, 15, 17, 18, 19)
 # 
 # currentdate <- Sys.Date()
-# saveRDS(tbl, paste("data/Data", currentdate,".RDS"))
+# saveRDS(tbl, "data/2021Data.RDS")
 
-tbl <- readRDS("data/Data 2022-02-03 .RDS") #manually change this file to be the most recent version
+tbl <- readRDS("data/2021Data.RDS") #manually change this file to be the most recent version
 ```
 
 
 # Dry air test #1 - March 1, 2021
 
-```{r}
+```{r dry.air.1.20210301}
 #Filter the data frame
 data_030121 <- `tbl` %>%  
   filter(DATE == "2021-03-01") %>% 
@@ -221,7 +221,7 @@ March 3 and 4, 2021 -
 * refilled with dry air 
 
 # Dry Air test #2 - March 13, 2021
-```{r}
+```{r dry.air.2.20210313}
 data_031321 <- `tbl` %>%  
   filter(DATE == "2021-03-13") %>% 
     mutate(UTC = hms(TIME)) %>% #by using the lubridate hms, it makes the UTC time filterable with dplyr
@@ -378,7 +378,7 @@ Impressions of this test/Actions taken:
 # Water Vapor test 
 ### Water Vapor In - March 16, 2021
 Replaced flask 11. 
-```{r}
+```{r water.vapor.1.20210316}
 data031621 <- tbl %>% 
   filter(DATE == "2021-03-16") %>% 
     mutate(UTC = hms(TIME)) %>% 
@@ -503,7 +503,7 @@ tob_vaporin <- tob_vaporin %>%
 
 ### Water Vapor Out - March 25, 2021 
 
-```{r}
+```{r water.vapor.1.20210325}
 data032521 <- tbl %>% 
   filter(DATE == "2021-03-25") %>% 
     mutate(UTC = hms(TIME)) %>% 
@@ -626,7 +626,7 @@ tob_vaporout <- tob_vaporout %>%
 ```
 
 ## Water Vapor Comparison 
-```{r}
+```{r water.vapor.1.plts}
 Tob_comparison <- left_join(tob_vaporin, tob_vaporout, by = "Flask") %>% 
   mutate(
     H2O_diff = H2O_out.y - H2O_out.x,
@@ -644,6 +644,170 @@ compare_plot <- Tob_comparison %>% select(Flask, H2O_diff, d18O_diff, d2H_diff) 
 ggplotly(compare_plot, dynamicTicks = TRUE)
 ```
 
+
+# Long Dry Air
+```{r 52day.dry.air.1}
+
+data_070521 <- `tbl` %>%  
+  filter(DATE == "2021-07-05") %>% 
+    mutate(
+        UTC = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"),
+        MDT = with_tz(UTC, tzone = "America/Denver")) %>% 
+      filter(MDT > "2021-07-05 14:00:00")
+
+#this is a nice plot to play with time periods
+waterconcentration <- data_070521 %>% 
+  filter(MDT > "2021-07-05 14:00:00" & MDT < "2021-07-05 17:05:00") %>% 
+    ggplot() + 
+      aes(UTC, H2O)+
+      geom_point()+
+      scale_x_time()
+
+ggplotly(waterconcentration, dynamicTicks = TRUE)
+
+
+OutletValve <- data_070521 %>% 
+  filter(MDT > "2021-07-05 16:00:00" & MDT < "2021-07-05 17:20:00") %>%
+    ggplot() + 
+      aes(UTC, OutletValve)+
+      geom_point()+
+      scale_x_time()
+
+ggplotly(OutletValve, dynamicTicks = TRUE)
+
+
+
+
+DryAirResults_070521 <- data_070521 %>% 
+  filter(MDT > "2021-07-05 14:04:40" & MDT < "2021-07-05 14:06:40") %>% 
+    flask_out_ave() %>% 
+      mutate(Flask = 2)
+
+#Flask three started at 14:16:30. flask was heated w/ heat gun
+DryAirResults_070521 <- DryAirResults_070521  %>% 
+  bind_rows(data_070521 %>%
+    filter(MDT > "2021-07-05 14:18:00" & MDT < "2021-07-05 14:21:00") %>% 
+      flask_out_ave() %>% 
+        mutate(Flask = 3)
+  )
+
+#Flask four started at 14:32:23. flask was heated w/ heat gun
+DryAirResults_070521 <- DryAirResults_070521  %>% 
+  bind_rows(data_070521 %>%
+    filter(MDT > "2021-07-05 14:33:53" & MDT < "2021-07-05 14:36:53") %>% 
+      flask_out_ave() %>% 
+        mutate(Flask = 4)
+  )
+
+#flask 5 started at 14:37:33 - started the zone for this one early because early end. Not heated.kick up @ end is real. 
+DryAirResults_070521 <- DryAirResults_070521  %>% 
+  bind_rows(data_070521 %>%
+    filter(MDT > "2021-07-05 14:38:53" & MDT < "2021-07-05 14:41:53") %>% 
+      flask_out_ave() %>% 
+        mutate(Flask = 5)
+  )
+
+#Flask 6 started at 14:42:40 based on outletvalve
+DryAirResults_070521 <- DryAirResults_070521  %>% 
+  bind_rows(data_070521 %>%
+    filter(MDT > "2021-07-05 14:44:10" & MDT < "2021-07-05 14:47:10") %>% 
+      flask_out_ave() %>% 
+        mutate(Flask = 6)
+  )
+
+#Flask 7 started at 14:47:34 based on outletvalve
+DryAirResults_070521 <- DryAirResults_070521  %>% 
+  bind_rows(data_070521 %>%
+    filter(MDT > "2021-07-05 14:49:04" & MDT < "2021-07-05 14:52:04") %>% 
+      flask_out_ave() %>% 
+        mutate(Flask = 7)
+  )
+
+#Flask 8 started at 14:53:08 based on outlet valve
+DryAirResults_070521 <- DryAirResults_070521  %>% 
+  bind_rows(data_070521 %>%
+    filter(MDT > "2021-07-05 14:54:38" & MDT < "2021-07-05 14:57:38") %>% 
+      flask_out_ave() %>% 
+        mutate(Flask = 8)
+  )
+
+
+#Flask 9 started at 16:08:12
+DryAirResults_070521 <- DryAirResults_070521  %>% 
+  bind_rows(data_070521 %>%
+    filter(MDT > "2021-07-05 16:09:42" & MDT < "2021-07-05 16:12:42") %>% 
+      flask_out_ave() %>% 
+        mutate(Flask = 9)
+  )
+
+
+#Flask 10 22:13:21
+DryAirResults_070521 <- DryAirResults_070521  %>% 
+  bind_rows(data_070521 %>%
+    filter(MDT > "2021-07-05 16:14:51" & MDT < "2021-07-05 16:17:51") %>% 
+      flask_out_ave() %>% 
+        mutate(Flask = 10)
+  )
+
+
+#Flask 11 22:18:09
+DryAirResults_070521 <- DryAirResults_070521  %>% 
+  bind_rows(data_070521 %>%
+    filter(MDT > "2021-07-05 16:19:39" & MDT < "2021-07-05 16:22:39") %>% 
+      flask_out_ave() %>% 
+        mutate(Flask = 11)
+  )
+
+#flask 12 22:23:12
+DryAirResults_070521 <- DryAirResults_070521  %>% 
+  bind_rows(data_070521 %>%
+    filter(MDT > "2021-07-05 16:24:42" & MDT < "2021-07-05 16:27:42") %>% 
+      flask_out_ave() %>% 
+        mutate(Flask = 12)
+  )
+
+#flask 13 38:14
+DryAirResults_070521 <- DryAirResults_070521  %>% 
+  bind_rows(data_070521 %>%
+    filter(MDT > "2021-07-05 16:39:44" & MDT < "2021-07-05 16:42:44") %>% 
+      flask_out_ave() %>% 
+        mutate(Flask = 13)
+  )
+
+#flask 14 45:19
+DryAirResults_070521 <- DryAirResults_070521  %>% 
+  bind_rows(data_070521 %>%
+    filter(MDT > "2021-07-05 16:46:49" & MDT < "2021-07-05 16:49:49") %>% 
+      flask_out_ave() %>% 
+        mutate(Flask = 14)
+  )
+
+#flask 15 52:36
+DryAirResults_070521 <- DryAirResults_070521  %>% 
+  bind_rows(data_070521 %>%
+    filter(MDT > "2021-07-05 16:54:06" & MDT < "2021-07-05 16:57:06") %>% 
+      flask_out_ave() %>% 
+        mutate(Flask = 15)
+  )
+
+#flask 16 00:25
+DryAirResults_070521 <- DryAirResults_070521  %>% 
+  bind_rows(data_070521 %>%
+    filter(MDT > "2021-07-05 17:01:55" & MDT < "2021-07-05 16:04:55") %>% 
+      flask_out_ave() %>% 
+        mutate(Flask = 16)
+  )
+
+DryAirResults_070521_plt <- DryAirResults_070521 %>% 
+  ggplot()+
+  aes(x = Flask, y = H2O_out, size = 2)+
+  geom_point(color = "blue") +
+  scale_y_continuous(limits =c(0, 3000), expand = c(0,0)) +
+  scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+  theme_figure()
+
+DryAirResults_070521_plt
+```
 
 
 
@@ -694,4 +858,12 @@ data_030121$h2o_slope <- h2o_slope(data = data_030121, window = 12)
 # data_030121$peaknumber <- peaknumber
 # 	#appends peaknumber to data_030121 as column peaknumber
 ```
+
+
+
+
+
+
+
+
 
