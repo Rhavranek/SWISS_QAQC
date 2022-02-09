@@ -30,6 +30,7 @@ library(fs)
 source(file.path("scripts", "plotting_functions.R"))
 source(file.path("scripts", "flask_ave.R"))
 source(file.path ("scripts", "Eriks_functions.R"))
+source(file.path ("scripts", "outlet_cut_functions.R"))
 
 # global knitting options for automatic saving of all plots as .png and .pdf
 knitr::opts_chunk$set(
@@ -793,7 +794,7 @@ DryAirResults_070521 <- DryAirResults_070521  %>%
 #flask 16 00:25
 DryAirResults_070521 <- DryAirResults_070521  %>% 
   bind_rows(data_070521 %>%
-    filter(MDT > "2021-07-05 17:01:55" & MDT < "2021-07-05 16:04:55") %>% 
+    filter(MDT > "2021-07-05 17:01:55" & MDT < "2021-07-05 17:04:55") %>% 
       flask_out_ave() %>% 
         mutate(Flask = 16)
   )
@@ -809,6 +810,8 @@ DryAirResults_070521_plt <- DryAirResults_070521 %>%
 DryAirResults_070521_plt
 ```
 
+
+# Functioning and automating flask cut-offs
 ```{r use outlet valve to cut}
 
 outlet.cut <- data_070521 %>% 
@@ -836,27 +839,45 @@ outlet_smart_aves <- outlet.cut %>%
   filter(totalrows>100 & row > 90 & row < 271) %>% 
   flask_out_ave() %>% 
   mutate(
-    flask = c(13, 14, 15, 16)
+    Flask = c(13, 14, 15, 16)
   )
+```
 
+```{r}
+outlet.function1 <- data_070521 %>% 
+  filter(MDT > "2021-07-05 16:35:00" & MDT < "2021-07-05 17:05:00") %>% 
+    outlet_batches()
 
+plt.outlet <- outlet.function1 %>% 
+  plt_outlet_batch()
 
+plt.outlet
 
- 
-  summarise(
-    d13C = mean(H20)
-            )
+outlet.function_aves <- outlet.function1 %>% 
+  filter(batch > 1) %>% 
+    flask_ave_outlet() %>% 
+      mutate(Flask = c(13, 14, 15, 16))
 
- # ungroup %>% 
-  #select(UTC, batch, -row, everything())
+```
 
+```{r}
+outletworks <-  ggplot()+
+  #hand-coded resutls
+  geom_point(data = DryAirResults_070521 %>% filter(Flask > 12), aes(x= Flask, y = H2O_out, color = "blue", size = 2))+
+  #what I wrote with Brett
+  geom_point(data = outlet_smart_aves, aes(x = Flask, y= H2O_out, color = "red", size = 2))+
+  #Everything shoved into functions
+  geom_point(data = outlet.function_aves,  aes(x = Flask, y= H2O_out, color = "green", size = 2))
+  theme_figure()
+
+outletworks
 
 ```
 
 
-next step: 
-- take each batch and throw away the first 90 seconds
-- then, average shit for the following 180 seconds
+
+
+
 
 
 #### Stuff from Erik Oerter

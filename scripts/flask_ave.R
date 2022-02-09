@@ -1,6 +1,6 @@
 flask_out_ave <- function (df) {
   poop <- df %>% summarise(
-    #FlaskNumber = FlaskNumber,
+    start_time = MDT[1],
     SDH2O_out = round(sd(H2O), 2),
     H2O_out = round(mean(H2O),2),
     SD_18O_out = round(sd (Delta_18_16),2),
