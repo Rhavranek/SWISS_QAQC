@@ -860,7 +860,7 @@ outlet.function_aves <- outlet.function1 %>%
 
 ```
 
-```{r}
+```{r compare methods of flask timing}
 outletworks <-  ggplot()+
   #hand-coded resutls
   geom_point(data = DryAirResults_070521 %>% filter(Flask > 12), aes(x= Flask, y = H2O_out, color = "blue", size = 2))+
@@ -874,14 +874,137 @@ outletworks
 
 ```
 
+#August 11 2021, Long Dry air
+August 11 2021 Notes
+Filled with Dry air on July 7, 2021, and then deployed in Nebraska
 
+(From lab journal): Because I know this code (arduino automation code) was wrong, this is essentially just a dry air test -> just did rapid fire dead end pull for 5 min/flask. "Unzipped" this box, meaning started with flask 16 and worked my way down to Flask 2 
+
+```{r 081121}
+#Filter tightly around the time period you measured flasks 
+data_081121 <- tbl %>% 
+  filter(DATE == "2021-08-11") %>% 
+    mutate(
+        UTC = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"),
+        MDT = with_tz(UTC, tzone = "America/Denver")) %>% 
+      filter(MDT > "2021-08-11 13:50:00" & MDT < "2021-08-11 15:09:30")
+
+waterconcentration <- data_081121 %>% 
+    ggplot() + 
+      aes(MDT, H2O)+
+      geom_point()+
+      scale_x_time()
+
+ggplotly(waterconcentration, dynamicTicks = TRUE)    
+
+OutletValve <- data_081121 %>% 
+    ggplot() + 
+      aes(UTC, OutletValve)+
+      geom_point()+
+      scale_x_time()
+
+ggplotly(OutletValve, dynamicTicks = TRUE)
+
+outlet_081121 <- data_081121 %>% 
+    outlet_batches()
+
+plt.outlet_081121 <- outlet_081121 %>% 
+  plt_outlet_batch()
+
+ggplotly(plt.outlet_081121)
+
+outlet.function_aves_0811121 <- outlet_081121 %>% 
+  filter(batch > 1) %>% 
+    flask_ave_outlet() %>% 
+      mutate(Flask = c(16, 15, 14, 13, 11.5, 10, 9, 8, 7, 6, 5, 4, 3, 2))
+
+#The automated code did a great job with all but flasks and 11 and 12 so I did those by hand 
+
+flask12_081121 <- data_081121 %>% 
+  filter(MDT > "2021-08-11 14:15:46" & MDT < "2021-08-11 14:18:46") %>% 
+    flask_out_ave() %>% 
+      mutate(
+        Flask = c(12),
+        start_time = as_datetime("2021-08-11 14:15:46")
+          )
+
+flask11_081121 <- data_081121 %>% 
+  filter(MDT > "2021-08-11 14:20:51" & MDT < "2021-08-11 14:23:51") %>% 
+    flask_out_ave() %>% 
+      mutate(
+        Flask = c(11),
+        start_time = as_datetime("2021-08-11 14:20:51")
+             )
+
+outlet.function_aves_0811121 <- outlet.function_aves_0811121 %>% 
+  filter (Flask != 11.5) %>% 
+  bind_rows(flask11_081121, flask12_081121)
+
+data_081121_plt <- outlet.function_aves_0811121 %>% 
+  ggplot()+
+  aes(x = Flask, y = H2O_out, size = 2)+
+  geom_point() +
+  scale_y_continuous(limits =c(0, 1500), expand = c(0,0)) +
+  scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+  theme_figure()
+
+data_081121_plt
+```
+
+# 7 Day Dry Air - August 22, 2021
+Filled with dry air on August 15, 2021 
+```{r 082221}
+data_082221 <- tbl %>% 
+  filter(DATE == "2021-08-22") %>% 
+    mutate(
+        UTC = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"),
+        MDT = with_tz(UTC, tzone = "America/Denver")) %>% 
+      filter(MDT > "2021-08-22 15:17:45" & MDT < "2021-08-22 16:33:19")
+
+#this is a nice plot to play with time periods
+waterconcentration <- data_082221 %>% 
+    ggplot() + 
+      aes(MDT, H2O)+
+      geom_point()+
+      scale_x_time()
+
+ggplotly(waterconcentration, dynamicTicks = TRUE)    
+
+OutletValve <- data_082221 %>% 
+    ggplot() + 
+      aes(UTC, OutletValve)+
+      geom_point()+
+      scale_x_time()
+
+ggplotly(OutletValve, dynamicTicks = TRUE)
+
+
+
+outlet_082221 <- data_082221 %>% 
+    outlet_batches()
+
+plt.outlet_082221 <- outlet_082221 %>% 
+  plt_outlet_batch()
+
+ggplotly(plt.outlet_082221)
+
+outlet.function_aves_082221 <- outlet_082221 %>% 
+    flask_ave_outlet() %>% 
+      mutate(Flask = c(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16))
+
+data_082221_plt <- outlet.function_aves_082221 %>% 
+  Flask_h2o_plt()
+
+data_082221_plt
+
+
+```
 
 
 
 
 
 #### Stuff from Erik Oerter
-
 ```{r}
 #Trim to the desired part    
 ggplotly(waterconcentration, dynamicTicks = TRUE)   
