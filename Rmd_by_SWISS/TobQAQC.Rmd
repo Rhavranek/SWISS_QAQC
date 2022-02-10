@@ -31,6 +31,7 @@ source(file.path("scripts", "plotting_functions.R"))
 source(file.path("scripts", "flask_ave.R"))
 source(file.path ("scripts", "Eriks_functions.R"))
 source(file.path ("scripts", "outlet_cut_functions.R"))
+source(file.path ("scripts", "flask_plts.R"))
 
 # global knitting options for automatic saving of all plots as .png and .pdf
 knitr::opts_chunk$set(
@@ -954,6 +955,7 @@ data_081121_plt
 # 7 Day Dry Air - August 22, 2021
 Filled with dry air on August 15, 2021 
 ```{r 082221}
+#filter this to tightly surround the analysis period
 data_082221 <- tbl %>% 
   filter(DATE == "2021-08-22") %>% 
     mutate(
@@ -961,7 +963,7 @@ data_082221 <- tbl %>%
         MDT = with_tz(UTC, tzone = "America/Denver")) %>% 
       filter(MDT > "2021-08-22 15:17:45" & MDT < "2021-08-22 16:33:19")
 
-#this is a nice plot to play with time periods
+#make sure everything looks good
 waterconcentration <- data_082221 %>% 
     ggplot() + 
       aes(MDT, H2O)+
@@ -970,6 +972,7 @@ waterconcentration <- data_082221 %>%
 
 ggplotly(waterconcentration, dynamicTicks = TRUE)    
 
+#pre-flag any samples that might not do well 
 OutletValve <- data_082221 %>% 
     ggplot() + 
       aes(UTC, OutletValve)+
@@ -979,7 +982,7 @@ OutletValve <- data_082221 %>%
 ggplotly(OutletValve, dynamicTicks = TRUE)
 
 
-
+#Cut the data up by outlet valve # & make sure that all of the flasks are separated
 outlet_082221 <- data_082221 %>% 
     outlet_batches()
 
@@ -988,21 +991,89 @@ plt.outlet_082221 <- outlet_082221 %>%
 
 ggplotly(plt.outlet_082221)
 
+#Average out all of the data and mutate on the order that flasks were measured in
 outlet.function_aves_082221 <- outlet_082221 %>% 
     flask_ave_outlet() %>% 
       mutate(Flask = c(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16))
 
+#Plot your data!
 data_082221_plt <- outlet.function_aves_082221 %>% 
   Flask_h2o_plt()
-
-data_082221_plt
-
 
 ```
 
 
 
+```{r 102821}
+#filter this to tightly surround the analysis period
+data_102821 <- tbl %>% 
+  filter(DATE == "2021-10-28") %>% 
+    mutate(
+        UTC = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"),
+        MDT = with_tz(UTC, tzone = "America/Denver")) %>% 
+      filter(MDT > "2021-10-28 08:56:00" & MDT < "2021-10-28 10:39:50")
 
+#make sure everything looks good
+waterconcentration <- data_102821 %>% 
+    ggplot() + 
+      aes(MDT, H2O)+
+      geom_point()+
+      scale_x_time()
+
+ggplotly(waterconcentration, dynamicTicks = TRUE)    
+
+#pre-flag any samples that might not do well 
+OutletValve <- data_102821 %>% 
+    ggplot() + 
+      aes(MDT, OutletValve)+
+      geom_point()+
+      scale_x_time()
+
+ggplotly(OutletValve, dynamicTicks = TRUE)
+
+
+#Cut the data up by outlet valve # & make sure that all of the flasks are separated
+outlet_102821 <- data_102821 %>% 
+    outlet_batches()
+
+plt.outlet_102821 <- outlet_102821 %>% 
+  plt_outlet_batch()
+
+ggplotly(plt.outlet_082221)
+
+plt_h20bybatch <- outlet_102821 %>% 
+  filter (newbatch != 0 & newbatch != 7 & newbatch != 14 & newbatch !=22 & newbatch != 34) %>% 
+  ggplot()+
+    aes (x = MDT, y = OutletValve, color = newbatch) +
+      geom_point() +
+      theme_figure()
+
+ggplotly(plt_h20bybatch)
+
+
+```
+
+This one was trickier than other examples because I ran dry air between flasks, and so you have to remove those batches. 
+
+Batches I'm removing:
+0
+7
+14
+22
+34
+
+
+```{r 102821 final plots}
+#Average out all of the data and mutate on the order that flasks were measured in
+outlet.function_aves_102821 <- outlet_102821 %>% 
+  filter (newbatch != 0 & newbatch != 7 & newbatch != 14 & newbatch !=22 & newbatch != 34) %>% 
+    flask_ave_outlet() %>% 
+      mutate(Flask = c(2, 3, 4, 5, 6, 7, 8, 9, 10))
+
+#Plot your data!
+data_102821_plt <- outlet.function_aves_102821 %>% 
+  Flask_h2o_plt()
+```
 
 #### Stuff from Erik Oerter
 ```{r}
