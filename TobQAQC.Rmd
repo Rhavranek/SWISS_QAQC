@@ -5,7 +5,6 @@ date: "`r format(Sys.Date(), '%d %b %Y')`"
 output:
   html_document: 
     df_print: paged # omit to disable paged data table output
-    css: stylesheet.css # omit if no need for custom stylesheet
     number_sections: yes # change to no for unnumbered sections
     toc: yes # change to no to disable table of contents
     toc_float: true # change to false to keep toc at the top
@@ -26,9 +25,11 @@ library (lubridate)
 library(plotly)
 library(fs)
 
+setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS_QAQC/")
+
 # source all relevant scripting files
-source(file.path("scripts", "plotting_functions.R"))
-source(file.path("scripts", "flask_ave.R"))
+source(file.path ("scripts", "plotting_functions.R"))
+source(file.path ("scripts", "flask_ave.R"))
 source(file.path ("scripts", "Eriks_functions.R"))
 source(file.path ("scripts", "outlet_cut_functions.R"))
 source(file.path ("scripts", "flask_plts.R"))
@@ -45,7 +46,8 @@ knitr::opts_chunk$set(
 If you have added new data then uncomment the top part (tbl, currentdate, saveRDS). If there is no new data, then just read in the most recent RDS file in data_raw
 
 Here I have selected date, time, outlet valve, H2O, d18O, and d2H
-outlet valve I have found is really helpful for identifying when the picarro first 'see's' the flask. Outlet valve reflects the amount of pressure and how hard the picarro either needs to either release excess pressure or pull vaccum to get the right volume for the cavity. I've started using high or low outlet valve at the start of a dry-flask run as a proxy for how well sealed it is. 
+
+Outlet valve I have found is really helpful for identifying when the picarro first 'see's' the flask. Outlet valve reflects the amount of pressure and how hard the picarro either needs to either release excess pressure or pull vaccum to get the right volume for the cavity. I've started using high or low outlet valve at the start of a dry-flask run as a proxy for how well sealed it is. 
 
 ```{r}
 # tbl <-
@@ -56,7 +58,9 @@ outlet valve I have found is really helpful for identifying when the picarro fir
 # currentdate <- Sys.Date()
 # saveRDS(tbl, "data/2021Data.RDS")
 
-tbl <- readRDS("data/2021Data.RDS") #manually change this file to be the most recent version
+
+tbl <- readRDS("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS_QAQC/data/2021Data.RDS")
+#tbl <- readRDS(file.path("data", "2021Data.RDS")) #manually change this file to be the most recent version
 ```
 
 
@@ -66,13 +70,12 @@ tbl <- readRDS("data/2021Data.RDS") #manually change this file to be the most re
 #Filter the data frame
 data_030121 <- `tbl` %>%  
   filter(DATE == "2021-03-01") %>% 
-    mutate(UTC = hms(TIME)) %>% #by using the lubridate hms, it makes the UTC time filterable with dplyr
+    mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
+           UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
+           MDT = with_tz(UTC_full, tzone = "America/Denver"),
+           seconds = row_number()) %>% 
       filter (UTC > "22H 13M 00S" & UTC < "23H 35M 00S")
   
-data_030121$seconds <- seq(1, as.numeric(count(data_030121))) #I don't understand why this can't be %>% on
-
-
-
 #this is a nice plot to play with time periods
 waterconcentration <- data_030121 %>% 
   filter(UTC > "23H 24M 00S" & UTC < "23H 27M 00S") %>% 
@@ -82,8 +85,6 @@ waterconcentration <- data_030121 %>%
   scale_x_time()
 
 ggplotly(waterconcentration, dynamicTicks = TRUE)
-
-
 
 
 #Build the Data Frame
@@ -226,13 +227,12 @@ March 3 and 4, 2021 -
 ```{r dry.air.2.20210313}
 data_031321 <- `tbl` %>%  
   filter(DATE == "2021-03-13") %>% 
-    mutate(UTC = hms(TIME)) %>% #by using the lubridate hms, it makes the UTC time filterable with dplyr
+    mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
+           UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
+           MDT = with_tz(UTC_full, tzone = "America/Denver"),
+           seconds = row_number()) %>% #by using the lubridate hms, it makes the UTC time filterable with dplyr
       filter (UTC > "15H 56M 47S" & UTC < "17H 13M 05S")
   
-#data_031321$seconds <- seq(1, as.numeric(count(data_030121))) #I don't understand why this can't be %>% on
-
-
-
 #this is a nice plot to play with time periods
 waterconcentration <- data_031321 %>% 
   ggplot() + 
@@ -241,8 +241,6 @@ waterconcentration <- data_031321 %>%
   scale_x_time()
 
 ggplotly(waterconcentration, dynamicTicks = TRUE)
-
-
 
 #Build the data frame
 DryAirResults_031321 <- data_031321 %>% 
@@ -383,7 +381,10 @@ Replaced flask 11.
 ```{r water.vapor.1.20210316}
 data031621 <- tbl %>% 
   filter(DATE == "2021-03-16") %>% 
-    mutate(UTC = hms(TIME)) %>% 
+    mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
+           UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
+           MDT = with_tz(UTC_full, tzone = "America/Denver"),
+           seconds = row_number()) %>% 
       filter (UTC > "15H 45M 00S"  & UTC < "22H 00M 00S")
 
 #this is a nice plot to play with time periods
@@ -508,8 +509,13 @@ tob_vaporin <- tob_vaporin %>%
 ```{r water.vapor.1.20210325}
 data032521 <- tbl %>% 
   filter(DATE == "2021-03-25") %>% 
-    mutate(UTC = hms(TIME)) %>% 
-      filter(UTC > "20H 14M 00S" & UTC < "21H 39M 40S")
+    mutate(
+      UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
+      UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
+      MDT = with_tz(UTC_full, tzone = "America/Denver"),
+      seconds = row_number()
+      )%>% 
+        filter(UTC > "20H 14M 00S" & UTC < "21H 39M 40S")
 
 #this is a nice plot to play with time periods
 waterconcentration <- data032521 %>% 

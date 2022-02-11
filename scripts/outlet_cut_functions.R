@@ -18,7 +18,7 @@ plt_outlet_batch <- function(df) {
       geom_point() +
       theme_figure()
   
-  return(plt)
+  print(plt)
 }
 
 flask_ave_outlet <- function (df) {
