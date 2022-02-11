@@ -231,7 +231,7 @@ In response to these results:
 ## Water Vapor In 
 March 7, 2021 
 
-```{r}
+```{r 030721 water vapor in}
 data_030721 <- tbl %>% 
   filter(DATE == "2021-03-07" | DATE == "2021-03-08") %>% 
     mutate(
@@ -385,7 +385,7 @@ fondue_vaporin <- fondue_vaporin %>%
 
 ## Water Vapor Out
 March 21, 2021
-```{r}
+```{r 032121 water vapor out}
 data032121 <- tbl %>%
   filter (DATE == "2021-03-21") %>% 
     mutate(
@@ -410,17 +410,17 @@ flask_ave_032121 <- flask_ave_outlet(outlet_032121) %>%
     Flask = c(2, 3, 4, 5, 6, 7,8,9,10,11,12,13,14,15,16)
   )
 
-
-
 ```
 
+These data were hand averaged while taking the data. That data can be found on Rachel's laptop in PhD 2020 -2021/Fall_2020_SWISS_tests. I compared the 'autoreduced' data with the hand averaged data. They were quite close (within SD) fpr h20 concentration and d18O. For d2H they were usually close except for the flasks that had a really high SD(2+ per mil).
+
 ## Compare in and out 
-```{r}
-fondue_comparison <- left_join(fondue_vaporin, vaporout, by = "Flask") %>% 
+```{r h2o hold test results}
+fondue_comparison <- left_join(fondue_vaporin, flask_ave_032121, by = "Flask") %>% 
   mutate(
-    H2O_diff = H2O_out - H2O,
-    d18O_diff = d180_out - d180,
-    d2H_diff = d2H_out - d2H
+    H2O_diff = H2O_out.y- H2O_out.x,
+    d18O_diff = d180_out.y - d180_out.x,
+    d2H_diff = d2H_out.y - d2H_out.x
   )
 
 compare_plot <- fondue_comparison %>% select(Flask, H2O_diff, d18O_diff, d2H_diff) %>% 
@@ -428,7 +428,8 @@ compare_plot <- fondue_comparison %>% select(Flask, H2O_diff, d18O_diff, d2H_dif
       ggplot()+
         aes(Flask, value)+
         geom_point()+
-        facet_wrap(~name, scales = "free")
+        facet_wrap(~name, scales = "free")+
+  theme_figure()
            
 ggplotly(compare_plot, dynamicTicks = TRUE)
 ```
@@ -438,7 +439,167 @@ Based on these plots:
   1. I think flasks 3 and 8 are still leaking -> this makes sense because I didn't do anything with 8 and 3 turned a lot
   1. I think I should try and heat the flasks because the hydrogen isotopes are so weird
 
+# 40 day dry air 
+```{r 072021}
+data_072021 <- tbl %>%
+  filter (DATE == "2021-07-20") %>% 
+    mutate(
+      UTC = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"),
+      MDT = with_tz(UTC, tzone = "US/Mountain"),
+      seconds = row_number()
+    ) %>%
+      filter (MDT < "2021-07-20 16:58:15")
+
+outlet_072021 <- outlet_batches(data_072021)
+outlet_plt_072021 <- plt_outlet_batch(
+  outlet_072021 %>% 
+    filter(newbatch != 0 & newbatch != 7 & newbatch != 19 & newbatch != 26 & newbatch !=33 & newbatch != 38 & newbatch != 44)
+  ) 
+  
+ggplotly(outlet_plt_072021, dynamicTicks = TRUE)
+
+flask_ave_072021 <-  flask_ave_outlet(outlet_072021) %>% 
+  filter(batch != 0 & batch != 7 & batch != 19 & batch != 26 & batch !=33 & batch != 38 & batch != 44) %>% 
+  mutate(Flask = c(16, 15, 14, 13, 12, 11, 10))
+```
+
+```{r 072121}
+data_072121 <- tbl %>%
+  filter (DATE == "2021-07-21") %>% 
+    mutate(
+      UTC = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"),
+      MDT = with_tz(UTC, tzone = "US/Mountain"),
+      seconds = row_number()
+    ) %>% 
+  filter (MDT > "2021-07-21 09:06:54" & MDT < "2021-07-21 12:06:28")
+
+outlet_072121 <- outlet_batches(data_072121)
+outlet_plt_072121 <- plt_outlet_batch(outlet_072121)
+ggplotly(outlet_plt_072121)
+
+flask_ave_072121 <-  flask_ave_outlet(
+  outlet_072121 %>% 
+    filter(batch!=0 & batch!=8 & batch!=16 & batch !=25 & batch!=33 & batch !=41 & batch!=48 & batch !=57 )) %>% 
+  mutate(Flask = c(9,8,7,6,5,4,3,2))
+```
+
+```{r 40 day dry air}
+dryair_40day <- bind_rows(flask_ave_072021, flask_ave_072121) %>% 
+  Flask_h2o_plt()
+```
+
+# 7 Day Dry Air 
+```{r 072821}
+data_072821 <- tbl %>%
+  filter (DATE == "2021-07-28") %>% 
+    mutate(
+      UTC = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"),
+      MDT = with_tz(UTC, tzone = "US/Mountain"),
+      seconds = row_number()
+    ) %>%
+      filter (MDT > "2021-07-28 10:50:42"  & MDT < "2021-07-28 12:07:10") 
+
+vaporout_concentration <- data_072821 %>% 
+  ggplot()+
+  aes(MDT, H2O) +
+  geom_point()
+
+ggplotly(vaporout_concentration, dynamicTicks = TRUE)
+
+outlet_072821 <- outlet_batches(data_072821)
+outlet_plt_072821 <- plt_outlet_batch(outlet_072821)
+
+flask_ave_072821 <- flask_ave_outlet(outlet_072821) %>% 
+  mutate(
+    Flask = c(2, 3, 4, 5, 6, 7,8,9,10,11,12,13,14,15,16)
+  )
+
+flask_ave_072821_plt <- Flask_h2o_plt(flask_ave_072821)
+
+```
+
+```{r 090821}
+data_090821 <- tbl %>% 
+  filter(DATE == "2021-09-08") %>% 
+    mutate(
+      UTC = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"),
+      MDT = with_tz(UTC, tzone = "US/Mountain"),
+      seconds = row_number()
+    ) %>% 
+        filter (MDT > "2021-09-08 09:00:00" & MDT < "2021-09-08 11:21:33") %>% 
+          outlet_batches()
+
+vaporout_concentration <- data_090821 %>% 
+  ggplot()+
+  aes(MDT, H2O) +
+  geom_point()
+
+ggplotly(vaporout_concentration, dynamicTicks = TRUE)
+
+outlet_plt_090821 <-plt_outlet_batch(data_090821)
+ggplotly(outlet_plt_090821, dynamicTicks = TRUE)
+
+#flask 3 is gonna be a problem 
+flask3_090821 <- data_090821 %>% 
+  filter (MDT > "2021-09-08 11:10:35" & MDT < "2021-09-08 11:13:35") %>% 
+  flask_out_ave() %>% 
+  mutate(Flask = 3)
+
+flask_ave_090821 <- data_090821 %>% 
+  filter(batch != 0 & batch !=7 & batch!=16 & batch!=24 & batch !=32) %>% 
+  flask_ave_outlet() %>% 
+  mutate(Flask = c(16,15,14,13,12,11,10,9,8,7,6,5,4,2))  %>% 
+  bind_rows(flask3_090821)
+
+plt_flasks_090821 <- flask_ave_090821 %>% Flask_h2o_plt()
+```
+
+#43 day dry air test
+Deployed at Briggsdale, including nights w/ freezing temps
+```{r 102821}
+data_102821 <- tbl %>% 
+  filter(DATE == "2021-10-28") %>% 
+    mutate(
+      UTC = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"),
+      MDT = with_tz(UTC, tzone = "US/Mountain"),
+      seconds = row_number()
+    ) %>% 
+        filter (MDT > "2021-10-28 14:23:28" & MDT < "2021-10-28 16:00:30") %>% 
+          outlet_batches()
+
+vaporout_concentration <- data_102821 %>% 
+  ggplot()+
+  aes(MDT, H2O) +
+  geom_point()
+
+ggplotly(vaporout_concentration, dynamicTicks = TRUE)
+
+outlet_plt_102821 <-data_102821 %>% 
+  filter(newbatch != 16 & newbatch!=8) %>% 
+  plt_outlet_batch()
+
+ggplotly(outlet_plt_102821, dynamicTicks = TRUE)
+
+flask12_102821 <- data_102821 %>% 
+  filter(MDT > "2021-10-28 15:51:00" & MDT < "2021-10-28 15:54:00") %>% 
+  flask_out_ave() %>% 
+  mutate(Flask = 12)
+
+flask_ave_102821 <- data_102821 %>% 
+  filter(batch != 16 & batch!=8  & batch !=33) %>% 
+    flask_ave_outlet() %>% 
+      mutate(Flask = c(2,3,4,5,6,7,8,9,10,11,13)) %>% 
+        bind_rows(flask12_102821)
+
+plt_flasks_102821 <- Flask_h2o_plt(flask_ave_102821)
+```
 
 
-#Vapor Probe tests 
-March 17 and 18, 2021 
+
+
+
+
+
+
+
+
