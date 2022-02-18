@@ -18,7 +18,7 @@ plt_outlet_batch <- function(df) {
       geom_point() +
       theme_figure()
   
-  print(plt)
+  ggplotly(plt, dynamicTicks = TRUE)
 }
 
 flask_ave_outlet <- function (df) {

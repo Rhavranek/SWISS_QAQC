@@ -1,0 +1,208 @@
+---
+title: "QAQC of Lindt"
+author: "Rachel Havranek"
+date: "`r format(Sys.Date(), '%d %b %Y')`"
+output:
+  html_document: 
+    df_print: paged # omit to disable paged data table output
+    number_sections: yes # change to no for unnumbered sections
+    toc: yes # change to no to disable table of contents
+    toc_float: true # change to false to keep toc at the top
+    toc_depth: 3 # change to specify which headings to include in toc
+    code_folding: show # change to hide to hide code by default
+editor_options:
+  chunk_output_type: console # change to inline to show output inline
+---
+
+#Setup
+```{r setup, echo = TRUE, message=FALSE, warning=FALSE}
+# load libraries
+library(tidyverse) 
+library(latex2exp)
+library(viridis)
+library(data.table)
+library (lubridate)
+library(plotly)
+library(fs)
+
+setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS_QAQC/")
+
+# source all relevant scripting files
+source(file.path ("scripts", "plotting_functions.R"))
+source(file.path ("scripts", "flask_ave.R"))
+source(file.path ("scripts", "Eriks_functions.R"))
+source(file.path ("scripts", "outlet_cut_functions.R"))
+source(file.path ("scripts", "Rachels_custom_plots.R"))
+
+# global knitting options for automatic saving of all plots as .png and .pdf
+knitr::opts_chunk$set(
+  dev = c("png", "pdf"), fig.keep = "all",
+  dev.args = list(pdf = list(encoding = "WinAnsi", useDingbats = FALSE)),
+  fig.path = file.path("fig_output", paste0(gsub("\\.[Rr]md", "", knitr::current_input()), "_"))
+)
+
+#load data
+tbl <- readRDS(file.path("data", "2021Data.RDS"))
+```
+
+#Dry Air 1
+```{r 061621}
+data_061621 <- tbl %>% 
+  filter(DATE == "2021-06-16") %>% 
+    mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
+           UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
+           MDT = with_tz(UTC_full, tzone = "America/Denver"),
+           seconds = row_number()) %>% 
+      filter(MDT > "2021-06-16 14:59:25" & MDT < "2021-06-16 16:15:00" )
+
+#use these two plots to honein on the timing
+WaterConcentration_plt(data_061621)
+OutletValve_plt(data_061621)
+
+#cut up the data
+data_061621 <- data_061621 %>% 
+  outlet_batches()
+
+plt_outlet_batch(data_061621)
+
+flask6_061621 <- data_061621 %>% 
+  filter (MDT > "2021-06-16 15:22:24" & MDT < "2021-06-16 16:25:10" ) %>% 
+    flask_out_ave() %>% 
+      mutate(Flask = 6)
+
+flask_ave_061621 <- data_061621 %>% 
+  flask_ave_outlet() %>% 
+    mutate(Flask = c(2,3,4,5,7,8,9,10,11,12,13,14,15,16)) %>% 
+      bind_rows(flask6_061621)
+
+flask_ave_061621_plt <- Flask_h2o_plt(flask_ave_061621)
+```
+
+#Dry Air 2
+```{r 070421}
+data_070421 <- tbl %>% 
+  filter(DATE == "2021-07-04") %>% 
+    mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
+           UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
+           MDT = with_tz(UTC_full, tzone = "America/Denver"),
+           seconds = row_number()) %>% 
+      filter(MDT > "2021-07-04 12:01:52" & MDT < "2021-07-04 13:22:22")
+
+
+WaterConcentration_plt(data_070421)
+OutletValve_plt(data_070421)
+
+flask12_070421 <- data_070421 %>% 
+  filter(MDT > "2021-07-04 12:53:22" & MDT < "2021-07-04 12:56:22") %>% 
+    flask_out_ave() %>% 
+      mutate(Flask = 12)
+
+flask2redo <- data_070421 %>% 
+  filter(MDT > "2021-07-04 13:18:00" & MDT < "2021-07-04 13:20:00") %>% 
+      flask_out_ave() %>% 
+        mutate(Flask = 2.1)
+
+flask4_070421 <- data_070421 %>%
+  filter(MDT > "2021-07-04 12:13:22" & MDT < "2021-07-04 12:16:22") %>% 
+    flask_out_ave() %>% 
+      mutate(Flask = 4)
+
+flask8_070421 <- data_070421 %>%
+  filter(MDT > "2021-07-04 12:33:22" & MDT < "2021-07-04 12:36:22") %>% 
+    flask_out_ave() %>% 
+      mutate(Flask = 8)
+
+data_070421 <- data_070421 %>% 
+  outlet_batches()
+
+plt_outlet_batch(data_070421)
+
+flask_ave_070421 <- data_070421 %>% 
+  filter(batch<41) %>% 
+  flask_ave_outlet() %>% 
+    mutate(Flask = c(2,3,5,6,7,9,10,11,13,14,15,16)) %>% 
+      bind_rows(flask12_070421, flask2redo, flask4_070421, flask8_070421)
+
+flask_ave_070421_plt <- Flask_h2o_plt(flask_ave_070421)
+```
+
+
+# Wate vapor 1
+note: "unzipped", started measuring at flask 16 
+```{r}
+data_081121 <- tbl %>% 
+  filter(DATE == "2021-08-11")  %>% 
+    mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
+           UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
+           MDT = with_tz(UTC_full, tzone = "America/Denver"),
+           seconds = row_number()) %>% 
+      filter(MDT > "2021-08-11 10:14:07" & MDT < "2021-08-11 12:50:38")
+
+WaterConcentration_plt(data_081121)
+OutletValve_plt(data_081121)
+
+data_081121 <- data_081121 %>% 
+  outlet_batches()
+
+plt_outlet_batch(data_081121)
+
+flask_ave_081121 <- data_081121 %>% 
+  flask_ave_outlet() %>% 
+    filter(H2O_out > 500) %>% 
+      filter (batch != 130) %>% 
+        mutate(Flask = c(16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6,5,4,3,2))
+  
+
+plt_081121 <- flask_ave_081121 %>% 
+  pivot_longer(cols = c(d180_out, d2H_out)) %>% 
+    ggplot()+
+    aes(x = Flask, y = value, size = 2) +
+    facet_wrap (~name,scales = "free") +
+    geom_point()+
+    scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    theme_figure()
+
+print(plt_081121)
+```
+now, figure out how to make pivot longer make TWO new columns (one with the mean and one with the sd), then add geom_errorbar(ymax = mean + sd, ymin = mean - sd)
+
+# Dry air 3
+```{r}
+data_082521 <- tbl %>% 
+  filter (DATE == "2021-08-25")  %>% 
+    mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
+           UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
+           MDT = with_tz(UTC_full, tzone = "America/Denver"),
+           seconds = row_number()) %>% 
+      filter(MDT > "2021-08-25 16:15:45" & MDT < "2021-08-25 17:30:34")
+
+WaterConcentration_plt(data_082521)
+OutletValve_plt(data_082521)
+
+data_082521 <- data_082521 %>% 
+  outlet_batches()
+
+plt_outlet_batch(data_082521)
+
+flask4_082521 <- data_082521 %>% 
+  filter(MDT > "2021-08-25 16:27:15" & MDT < "2021-08-25 16:30:15") %>% 
+  flask_out_ave() %>% 
+  mutate(Flask = 4)
+
+flask12_082521 <- data_082521 %>% 
+  filter(MDT > "2021-08-25 17:07:15" & MDT < "2021-08-25 17:10:15") %>% 
+  flask_out_ave() %>% 
+  mutate(Flask = 12)
+
+flask_ave_082521 <- data_082521 %>% 
+  flask_ave_outlet() %>% 
+  mutate(Flask = c(2,3,5,6,7,8,9,10,11,13,14,15,16)) %>% 
+  bind_rows(flask4_082521, flask12_082521)
+
+
+flask_ave_082521_plt <- Flask_h2o_plt(flask_ave_082521)
+```
+
+
+
+

@@ -59,8 +59,8 @@ Outlet valve I have found is really helpful for identifying when the picarro fir
 # saveRDS(tbl, "data/2021Data.RDS")
 
 
-tbl <- readRDS("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS_QAQC/data/2021Data.RDS")
-#tbl <- readRDS(file.path("data", "2021Data.RDS")) #manually change this file to be the most recent version
+#tbl <- readRDS("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS_QAQC/data/2021Data.RDS")
+tbl <- readRDS(file.path("data", "2021Data.RDS")) #manually change this file to be the most recent version
 ```
 
 

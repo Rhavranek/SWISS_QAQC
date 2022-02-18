@@ -25,3 +25,24 @@ Flask_d18O_plt <- function (df) {
   
   print(plt)
 }
+
+OutletValve_plt <- function(df){
+  plt <- df %>% 
+    ggplot() + 
+    aes(x = MDT, y = OutletValve)+
+    geom_point()+
+    theme_figure()
+  
+  ggplotly(plt, dynamicTicks = TRUE)
+}
+  
+WaterConcentration_plt <- function(df){
+  plt <- df %>% 
+    ggplot() + 
+    aes(x = MDT, y= H2O)+
+    geom_point()+
+    theme_figure ()
+  
+  ggplotly(plt, dynamicTicks = TRUE)
+}
+  
