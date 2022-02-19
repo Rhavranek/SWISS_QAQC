@@ -45,7 +45,7 @@ knitr::opts_chunk$set(
 tbl <- readRDS(file.path("data", "2021Data.RDS"))
 ```
 
-#Dry Air 1
+# Dry Air 1
 ```{r 061621}
 data_061621 <- tbl %>% 
   filter(DATE == "2021-06-16") %>% 
@@ -78,7 +78,7 @@ flask_ave_061621 <- data_061621 %>%
 flask_ave_061621_plt <- Flask_h2o_plt(flask_ave_061621)
 ```
 
-#Dry Air 2
+# Dry Air 2
 ```{r 070421}
 data_070421 <- tbl %>% 
   filter(DATE == "2021-07-04") %>% 
@@ -129,6 +129,7 @@ flask_ave_070421_plt <- Flask_h2o_plt(flask_ave_070421)
 
 # Wate vapor 1
 note: "unzipped", started measuring at flask 16 
+Filled with Ygrette
 ```{r}
 data_081121 <- tbl %>% 
   filter(DATE == "2021-08-11")  %>% 

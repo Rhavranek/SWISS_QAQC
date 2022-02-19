@@ -1,0 +1,110 @@
+---
+title: "QAQC of Lindt"
+author: "Rachel Havranek"
+date: "`r format(Sys.Date(), '%d %b %Y')`"
+output:
+  html_document: 
+    df_print: paged # omit to disable paged data table output
+    number_sections: yes # change to no for unnumbered sections
+    toc: yes # change to no to disable table of contents
+    toc_float: true # change to false to keep toc at the top
+    toc_depth: 3 # change to specify which headings to include in toc
+    code_folding: show # change to hide to hide code by default
+editor_options:
+  chunk_output_type: console # change to inline to show output inline
+---
+
+#Setup
+```{r setup, echo = TRUE, message=FALSE, warning=FALSE}
+# load libraries
+library(tidyverse) 
+library(latex2exp)
+library(viridis)
+library(data.table)
+library (lubridate)
+library(plotly)
+library(fs)
+
+setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS_QAQC/")
+
+# source all relevant scripting files
+source(file.path ("scripts", "plotting_functions.R"))
+source(file.path ("scripts", "flask_ave.R"))
+source(file.path ("scripts", "Eriks_functions.R"))
+source(file.path ("scripts", "outlet_cut_functions.R"))
+source(file.path ("scripts", "Rachels_custom_plots.R"))
+
+# global knitting options for automatic saving of all plots as .png and .pdf
+knitr::opts_chunk$set(
+  dev = c("png", "pdf"), fig.keep = "all",
+  dev.args = list(pdf = list(encoding = "WinAnsi", useDingbats = FALSE)),
+  fig.path = file.path("fig_output", paste0(gsub("\\.[Rr]md", "", knitr::current_input()), "_"))
+)
+
+#load data
+tbl <- readRDS(file.path("data", "2021Data.RDS"))
+```
+
+
+# Dry Air 6/7/21 - 6/16/21 
+(started at 22:37:39)
+
+```{r}
+data_061621 <- tbl %>% 
+  filter(DATE == "2021-06-16") %>% 
+    mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
+           UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
+           MDT = with_tz(UTC_full, tzone = "America/Denver"),
+           seconds = row_number())
+```
+
+
+# Dry Air 6/22/21-7/4/21 
+(13:35:25)
+```{r}
+data_070421 <- tbl %>% 
+  filter(DATE == "2021-07-04") %>% 
+    mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
+           UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
+           MDT = with_tz(UTC_full, tzone = "America/Denver"),
+           seconds = row_number())
+```
+
+
+# Water Vapor: 7/19/2021 - 08/02/2021
+```{r}
+data_080221 <- tbl %>% 
+  filter(DATE == "2021-08-02")  %>% 
+    mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
+           UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
+           MDT = with_tz(UTC_full, tzone = "America/Denver"),
+           seconds = row_number())
+```
+
+
+
+# Dry Air: 8/15/2021 - 08/22/2021
+```{r}
+data_082221 <- tbl %>% 
+  filter(DATE == "2021-08-22")  %>% 
+    mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
+           UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
+           MDT = with_tz(UTC_full, tzone = "America/Denver"),
+           seconds = row_number())
+```
+
+
+
+# Dry Air: 08/25/2021 - 09/01/2021
+!! This chunk doesn't work - need to retrieve data !! 
+```{r}
+data_090121 <- tbl %>% 
+  filter(DATE == "2021-09-01")  %>% 
+    mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
+           UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
+           MDT = with_tz(UTC_full, tzone = "America/Denver"),
+           seconds = row_number())
+```
+
+
+
