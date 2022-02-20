@@ -148,8 +148,11 @@ plt_outlet_batch(data_080221)
 flask_aves_080221 <- flask_ave_outlet(data_080221) %>% 
   filter(H2O_out >1600) %>% 
     mutate(Flask = c(2:16))
-```
 
+Flask_isotopes_plt(flask_aves_080221)
+dual_isotope_plt(flask_aves_080221)
+```
+8 & 11 are still having a bad time 
 
 
 # Dry Air: 8/15/2021 - 08/22/2021
@@ -160,11 +163,34 @@ data_082221 <- tbl %>%
            UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
            MDT = with_tz(UTC_full, tzone = "America/Denver"),
            seconds = row_number())  %>% 
-      filter(MDT > "2021-08-22 11:30:00" & MDT < "2021-08-22 13:10:00")
+      filter(MDT > "2021-08-22 11:49:48" & MDT < "2021-08-22 13:05:17") %>% 
+  outlet_batches()
  
 WaterConcentration_plt(data_082221)
+OutletValve_plt(data_082221)
 
+plt_outlet_batch(data_082221)
+
+manual_flasks_082221 <- data_082221 %>% 
+  filter(MDT > "2021-08-22 12:06:21" & MDT < "2021-08-22 12:09:21") %>% 
+  flask_out_ave() %>% 
+  mutate(Flask = 5)
+
+manual_flasks_082221 <- manual_flasks_082221 %>% 
+  bind_rows(
+    data_082221 %>% 
+      filter(MDT > "2021-08-22 12:36:45" & MDT < "2021-08-22 12:39:45") %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 11)
+  )
+
+flask_aves_082221 <- flask_ave_outlet(data_082221) %>% 
+  mutate(Flask = c(2,3,4,6,7,8,9,10,12,13,14,15,16)) %>% 
+  bind_rows(manual_flasks_082221)
+
+Flask_h2o_plt(flask_aves_082221)
 ```
+5, 11, 12 still aren't great. 2 is also a bit of a worry. 
 
 
 
@@ -176,7 +202,30 @@ data_090121 <- tbl %>%
     mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
            UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
            MDT = with_tz(UTC_full, tzone = "America/Denver"),
-           seconds = row_number())
+           seconds = row_number()) %>% 
+      filter(MDT < "2021-09-01 11:10:00" & MDT > "2021-09-01 09:53:18") %>% 
+        outlet_batches()
+
+WaterConcentration_plt(data_090121)
+OutletValve_plt(data_090121)
+plt_outlet_batch(data_090121)
+
+manual_flasks_090121 <- data_090121 %>% 
+  filter(MDT > "2021-09-01 10:39:51" & MDT < "2021-09-01 10:42:51") %>% 
+  flask_out_ave() %>% mutate(Flask =11)
+
+manual_flasks_090121 <- manual_flasks_090121 %>% 
+  bind_rows(
+    data_090121 %>% 
+  filter(MDT > "2021-09-01 11:04:51" & MDT < "2021-09-01 11:07:51") %>% 
+  flask_out_ave() %>% mutate(Flask =16)
+  )
+
+flask_aves_090121 <- flask_ave_outlet(data_090121) %>% 
+  mutate(Flask = c(2:10, 12:15)) %>% 
+  bind_rows(manual_flasks_090121)
+
+Flask_h2o_plt(flask_aves_090121)
 ```
 
 
