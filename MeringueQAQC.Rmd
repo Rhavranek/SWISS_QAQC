@@ -42,6 +42,15 @@ knitr::opts_chunk$set(
 )
 
 #load data
+# tbl <-
+#     list.files ("data", pattern = "*.dat", recursive = T, full.names = T) %>%
+#     map_df(~read_table2(.)) %>%
+#     select(1, 2, 15, 17, 18, 19)
+# 
+# currentdate <- Sys.Date()
+# saveRDS(tbl, "data/2021Data.RDS")
+
+
 tbl <- readRDS(file.path("data", "2021Data.RDS"))
 ```
 
@@ -55,8 +64,34 @@ data_061621 <- tbl %>%
     mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
            UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
            MDT = with_tz(UTC_full, tzone = "America/Denver"),
-           seconds = row_number())
+           seconds = row_number()) %>% 
+    filter(MDT > "2021-06-16 16:37:35" & MDT <"2021-06-16 17:50:11")
+
+
+WaterConcentration_plt(data_061621)
+OutletValve_plt(data_061621)
+
+data_061621 <- outlet_batches(data_061621)
+plt_outlet_batch(data_061621)
+
+flask5_061621 <- data_061621 %>% 
+  filter (MDT > "2021-06-16 16:54:54" & MDT <"2021-06-16 16:57:54") %>% 
+    flask_out_ave() %>% 
+      mutate(Flask = 5)
+
+flask11_061521 <- data_061621 %>% 
+  filter (MDT > "2021-06-16 17:26:45" & MDT <"2021-06-16 17:27:59") %>% 
+    flask_out_ave() %>% 
+      mutate(Flask = 11)
+
+flask_aves_061621 <- flask_ave_outlet(data_061621) %>% 
+  mutate(Flask = c(2,3,4,6,7,8,9,10,12,13,14,15,16)) %>% 
+  bind_rows(flask5_061621, flask11_061521)
+
+Flask_h2o_plt(flask_aves_061621)
 ```
+From this test:
+6, 8, 11, 12 were targeted for repairs
 
 
 # Dry Air 6/22/21-7/4/21 
@@ -67,8 +102,33 @@ data_070421 <- tbl %>%
     mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
            UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
            MDT = with_tz(UTC_full, tzone = "America/Denver"),
-           seconds = row_number())
+           seconds = row_number()) %>% 
+      filter(MDT > "2021-07-04 13:35:27" & MDT < "2021-07-04 14:50:17")
+
+WaterConcentration_plt(data_070421)
+OutletValve_plt(data_070421)
+
+data_070421 <- outlet_batches(data_070421)
+plt_outlet_batch(data_070421)
+
+# flask5_070421 <- data_070421 %>% 
+#   filter(MDT >"2021-07-04 13:52:00" & MDT < "2021-07-04 13:55:00") %>% 
+#     flask_out_ave() %>% 
+#       mutate(Flask = 5)
+
+# flask11_070421 <- data_070421 %>% 
+#   filter(MDT >"2021-07-04 13:22:00" & MDT < "2021-07-04 13:25:00") %>% 
+#     flask_out_ave() %>% 
+#       mutate(Flask = 11)
+
+flask_aves_070421 <- flask_ave_outlet(data_070421) %>% 
+  mutate(Flask = c(2,3,4,5,6,7,8,9,10,11, 12,13,14,15,16)) 
+
+Flask_h2o_plt(flask_aves_070421)
 ```
+6, 8, 12 all got a lot better. 
+
+8,11,12 still have problems 
 
 
 # Water Vapor: 7/19/2021 - 08/02/2021
@@ -78,7 +138,16 @@ data_080221 <- tbl %>%
     mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
            UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
            MDT = with_tz(UTC_full, tzone = "America/Denver"),
-           seconds = row_number())
+           seconds = row_number()) %>% 
+      filter(MDT < "2021-08-02 14:56:50") %>% 
+        outlet_batches()
+
+WaterConcentration_plt(data_080221)
+plt_outlet_batch(data_080221)
+
+flask_aves_080221 <- flask_ave_outlet(data_080221) %>% 
+  filter(H2O_out >1600) %>% 
+    mutate(Flask = c(2:16))
 ```
 
 
@@ -90,13 +159,17 @@ data_082221 <- tbl %>%
     mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
            UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
            MDT = with_tz(UTC_full, tzone = "America/Denver"),
-           seconds = row_number())
+           seconds = row_number())  %>% 
+      filter(MDT > "2021-08-22 11:30:00" & MDT < "2021-08-22 13:10:00")
+ 
+WaterConcentration_plt(data_082221)
+
 ```
 
 
 
 # Dry Air: 08/25/2021 - 09/01/2021
-!! This chunk doesn't work - need to retrieve data !! 
+
 ```{r}
 data_090121 <- tbl %>% 
   filter(DATE == "2021-09-01")  %>% 
