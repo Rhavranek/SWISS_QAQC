@@ -91,6 +91,8 @@ Flask_h2o_plt(flask_aves_072721)
 # Water Vapor, August 1 - August 18, 2021 
  **INPUT VALUES**
  Here, I just picked three peaks, all about an hour apart, averaged their value for the last 2 minutes of filling. After seeing they were all well within error of each other, I averaged them and that's what I'm calling my 'input' value. 
+ 
+ Because I was also simultaneously testing the SMC code, every third flask was filled with dry air 
 ```{r input values}
 data_080121 <- tbl %>% 
   filter(DATE == "2021-08-01") %>% 
@@ -101,7 +103,6 @@ data_080121 <- tbl %>%
       filter(MDT > "2021-08-01 13:52:00") 
 
 WaterConcentration_plt(data_080121)
-OutletValve_plt(data_080121)
 
 
 inputvalue1 <- data_080121 %>% 
@@ -123,22 +124,107 @@ inputvalue1 <- inputvalue1 %>%
   flask_out_ave()
   )
 
-d18O_in_0801 <- round(mean(inputvalue1$d18O_out),2)
-SD_d18O_in <- round(mean(inputvalue1$SD_18O_out),2)
-d2H_in_0801 <- round(mean(inputvalue1$d2H_out),2)
-SD_d2H_in <- round(mean(inputvalue1$SD_2H_out ),2)
+refvalues_080121 <- tibble(
+  d18O_in_0801 = round(mean(inputvalue1$d18O_out),2),
+  SD_d18O_in = round(mean(inputvalue1$SD_18O_out),2),
+  d2H_in_0801 = round(mean(inputvalue1$d2H_out),2),
+  SD_d2H_in = round(mean(inputvalue1$SD_2H_out ),2)
+)
+
+refvalues_080121_plt <- refvalues_080121 %>% 
+  ggplot()+
+  aes(x = d18O_in_0801, y = d2H_in_0801 )+
+  geom_point(aes(color = "red", size = 2))+
+  geom_errorbar(aes(ymin = d2H_in_0801 - SD_d2H_in, ymax = d2H_in_0801 + SD_d2H_in), width = 0)+
+  geom_errorbarh(aes(xmin = d18O_in_0801 - SD_d18O_in, xmax = d18O_in_0801 + SD_d18O_in), height = 0)
+
+
 ```
 
+*unzipped this box*
 ```{r}
-data_080121 <- tbl %>% 
-  filter(DATE == "2021-08-01") %>% 
+data_081821 <- tbl %>% 
+  filter(DATE == "2021-08-18") %>% 
     mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
            UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
            MDT = with_tz(UTC_full, tzone = "America/Denver"),
-           seconds = row_number())
+           seconds = row_number()) %>% 
+      filter(MDT > "2021-08-18 10:33:00" & MDT <"2021-08-18 13:18:16") %>% 
+        outlet_batches()
+
+WaterConcentration_plt(data_081821)
+plt_outlet_batch(data_081821 %>% 
+                   filter(newbatch != 7 & 
+                          newbatch!=16 & 
+                          newbatch !=25 & 
+                          newbatch!=38 & 
+                          newbatch !=46 & 
+                          newbatch !=51 & 
+                          newbatch !=61 &
+                          newbatch !=73 &
+                          newbatch !=87 &
+                          newbatch !=99 &
+                          newbatch !=111 &
+                          newbatch !=119 )
+                 )
+
+flask_aves_081821 <- flask_ave_outlet(data_081821) %>% 
+  filter(batch != 7 & 
+           batch != 16 & 
+           batch != 25 & 
+           batch != 38 &
+           batch != 46 &
+           batch != 51 &
+           batch != 61 &
+           batch != 73 &
+           batch != 87 &
+           batch !=99 &
+           batch !=111 &
+           batch !=119 ) %>% 
+    mutate(Flask = c(16:12, 12, 11:2))
+
+Flask_h2o_plt(flask_aves_081821 %>% 
+                filter (H2O_out < 10000))
+
+dual_isotope_plt(flask_aves_081821 %>% 
+                   filter(H2O_out > 10000))
+
+
+plt_081821 <- flask_aves_081821 %>% 
+  filter(H2O_out >10000) %>% 
+    ggplot()+
+      aes(x = d18O_out, y = d2H_out)+
+      geom_point(aes(size =2, text = Flask )) +
+        geom_errorbar(aes(ymin = d2H_out + SD_2H_out, ymax = d2H_out - SD_2H_out))+
+        geom_errorbarh(aes(xmin = d18O_out + SD_18O_out, xmax = d18O_out - SD_18O_out)) +
+      geom_point(data = refvalues_080121, aes(x = d18O_in_0801, y = d2H_in_0801, color = "red", size = 2)) +
+        theme_figure()+
+        theme(
+          legend.position = "none"
+      )
+
+ggplotly( plt_081821)         
 ```
+2, 6, 10, 11, 12, all look bad. I'm not encouraged that they're all kind of bad though
 
-
+Did repairs on the 25th of august
 
 # Dry Air 2, August 25 - September 1, 2021 
+```{r}
+data_090121 <- tbl %>% 
+  filter(DATE == "2021-09-01") %>% 
+    mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
+           UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
+           MDT = with_tz(UTC_full, tzone = "America/Denver"),
+           seconds = row_number()) %>% 
+      filter(MDT > "2021-09-01 11:16:09" & MDT <"2021-09-01 12:32:21") %>% 
+        outlet_batches()
 
+WaterConcentration_plt(data_090121)
+plt_outlet_batch(data_090121)
+
+flask_aves_090121 <- flask_ave_outlet(data_090121) %>% 
+  mutate(Flask = c(2:16))
+Flask_h2o_plt(flask_aves_090121)
+```
+2, 6, 10, 11, 12 all still suck. 
