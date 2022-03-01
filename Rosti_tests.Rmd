@@ -1,28 +1,60 @@
 ---
-title: "F2020_SWISS1_tests"
+title: "Rosti QAQC"
 author: "Rachel Havranek"
-date: "11/10/2020"
-output: html_document
+date: "`r format(Sys.Date(), '%d %b %Y')`"
+output:
+  html_document: 
+    df_print: paged # omit to disable paged data table output
+    number_sections: no # change to no for unnumbered sections
+    toc: yes # change to no to disable table of contents
+    toc_float: true # change to false to keep toc at the top
+    toc_depth: 3 # change to specify which headings to include in toc
+    code_folding: show # change to hide to hide code by default
+editor_options:
+  chunk_output_type: console
 ---
+```{r setup, echo = TRUE, message=FALSE, warning=FALSE}
+# load libraries
+library(tidyverse) 
+library(latex2exp)
+library(viridis)
+library(data.table)
+library (lubridate)
+library(plotly)
+library(fs)
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+# source all relevant scripting files
+source(file.path("scripts", "plotting_functions.R"))
+source(file.path("scripts", "flask_ave.R"))
+source(file.path ("scripts", "Eriks_functions.R"))
+source(file.path ("scripts", "outlet_cut_functions.R"))
+source(file.path("scripts", "Rachels_custom_plots.R"))
+
+# global knitting options for automatic saving of all plots as .png and .pdf
+knitr::opts_chunk$set(
+  dev = c("png", "pdf"), fig.keep = "all",
+  dev.args = list(pdf = list(encoding = "WinAnsi", useDingbats = FALSE)),
+  fig.path = file.path("fig_output", paste0(gsub("\\.[Rr]md", "", knitr::current_input()), "_"))
+)
+
+#Load 2021 data
+tbl <- readRDS(file.path("data", "2021Data.RDS")) 
 ```
 
+# Fall 2020 Testing
+* During this round of testing, I had tephlon swagelok fittings w/ ptfe 1/8" tubing running from the flasks to the valco valve. Becuase of the results below, we decided to not use that. 
 
+* Because the main round of testing was done w/ the PTFE stuff, I think its probably best if I replicate again  
 ```{r}
-library(tidyverse)
-```
-
-```{r}
-rosti <- read_csv("Fall_2020_SWISS_tests.csv")
+rosti <- read_csv("data/Fall_2020_SWISS_tests.csv")
 
 rosti <- rosti %>% mutate (
   h2o_in = 11590,
   d18O_in = -13.17,
   d2h_in = -112.5,
   d18O_diff = d18O_in - wet_test_d180,
-  d2H_diff = d2h_in - wet_test_d2H
+  d2H_diff = d2h_in - wet_test_d2H,
+  toowet = ifelse(dry_test_1 > 2500 | dry_test_2 > 2500, TRUE, FALSE)
 )
 ```
 
@@ -32,7 +64,110 @@ rosti_plot <- rosti %>%
   ggplot () +
   aes (x = Port, y = value)+
   geom_point() +
-  facet_wrap(~name, scales = "free")+
+  facet_wrap(
+    ~name, 
+    scales = "free")+
   theme_bw()
+
+ggplotly(rosti_plot)
+
+DryAir_labs <- c("9-day dry air test", "27-day dry air test")
+names(DryAir_labs) <- c("dry_test_1", "dry_test_2")
+
+otherlab <- c ("H2O concentration")
+names(otherlab) <- c("value")
+
+rosti_dry <- rosti %>% 
+  pivot_longer(c(dry_test_1, dry_test_2)) %>% 
+  ggplot () +
+  aes(
+    x = Port, 
+    y = value, 
+    color = ifelse(value > 1000 , 'red', 'black') 
+  )+
+  geom_point(size = 3) +
+  geom_hline(yintercept = 1000)+
+  facet_wrap(
+    ~name,
+    labeller = labeller(name = DryAir_labs))+
+  theme_figure()+
+  theme(
+    legend.position = "none"
+  )
+
+ggplotly(rosti_dry)
 ```
+
+In May 2021 I put Rosti out in Briggsdale to do an early field-test deployment. What I learned after that deployment:
+1. The N2 tank ran out before I could do a full run-through
+1. The valco valve got misaligned. I had to 'train' the valco valve again back in the lab using the home button.
+1. Flasks 8, 9 , 10 were not ready for field deployment after I had replaced the tephlon with stainless steel, so those were of significant concern during the following dry air tests
+
+# 8 day Dry Air 
+```{r}
+data_072821 <- tbl %>% 
+  filter (DATE == "2021-07-28") %>% 
+    mutate(
+      UTC = hms(TIME),
+      UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
+      MDT = with_tz(UTC_full, tzone = "America/Denver"),
+      seconds = row_number()
+    ) %>% 
+      filter(MDT > "2021-07-28 09:21:37" & MDT < "2021-07-28 10:37:36") %>% 
+        outlet_batches()
+
+WaterConcentration_plt(data_072821)
+plt_outlet_batch(data_072821)
+
+manual_flasks_072821 <- data_072821 %>% 
+  filter(MDT > "2021-07-28 10:11:48" & MDT < "2021-07-28 10:16:42") %>% 
+  flask_ave_outlet() %>% 
+  mutate(Flask = 11)
+
+flask_aves_072821 <- flask_ave_outlet(data_072821) %>% 
+  mutate(Flask = c(2:10, 12:16)) %>% 
+  bind_rows(manual_flasks_072821)
+
+Flask_h2o_plt(flask_aves_072821) +
+  labs(title = "8 Day Dry Air Test")
+```
+
+8 and 10 are still problems, but 9 performed well. Flask 9 caused some pressure locking on the picarro. 
+
+# 7 Dry Air test 
+```{r}
+data_082221 <- tbl %>% 
+  filter (DATE == "2021-08-22") %>% 
+    mutate(
+      UTC = hms(TIME),
+      UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
+      MDT = with_tz(UTC_full, tzone = "America/Denver"),
+      seconds = row_number()
+    ) %>% 
+      filter(MDT > "2021-08-22 13:17:15" & MDT < "2021-08-22 14:34:10") %>% 
+        outlet_batches()
+
+WaterConcentration_plt(data_082221)
+plt_outlet_batch(data_082221)
+
+manual_flasks_082221 <- data_082221 %>% 
+  filter(MDT > "2021-08-22 13:37:15" & MDT < "2021-08-22 13:42:10") %>% 
+  flask_ave_outlet() %>% 
+  mutate(Flask = 6)
+
+manual_flasks_082221 <-  manual_flasks_082221 %>% 
+  bind_rows(
+    data_082221 %>% 
+      filter(MDT > "2021-08-22 14:27:15" & MDT < "2021-08-22 13:34:05") %>% 
+        flask_ave_outlet() %>% 
+          mutate(Flask = 16)
+  )
+
+flask_aves_082221 <- flask_ave_outlet(data_082221) %>% 
+  mutate(Flask = c(2:5, 7:15)) %>% 
+  bind_rows(manual_flasks_082221)
+
+Flask_h2o_plt(flask_aves_082221)
+```
+
 
