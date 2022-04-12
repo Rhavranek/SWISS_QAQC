@@ -58,7 +58,7 @@ tbl <- readRDS(file.path("data", "2021Data.RDS"))
 # Dry Air 6/7/21 - 6/16/21 
 (started at 22:37:39)
 
-```{r}
+```{r DryAir1}
 data_061621 <- tbl %>% 
   filter(DATE == "2021-06-16") %>% 
     mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
@@ -96,7 +96,7 @@ From this test:
 
 # Dry Air 6/22/21-7/4/21 
 (13:35:25)
-```{r}
+```{r DryAir2}
 data_070421 <- tbl %>% 
   filter(DATE == "2021-07-04") %>% 
     mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
@@ -133,6 +133,12 @@ Flask_h2o_plt(flask_aves_070421)
 
 # Water Vapor: 7/19/2021 - 08/02/2021
 ```{r}
+data_071922 <-  tbl %>% 
+  filter(DATE == "2021-07-19")
+```
+
+
+```{r 080221_H2O}
 data_080221 <- tbl %>% 
   filter(DATE == "2021-08-02")  %>% 
     mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
@@ -150,13 +156,16 @@ flask_aves_080221 <- flask_ave_outlet(data_080221) %>%
     mutate(Flask = c(2:16))
 
 Flask_isotopes_plt(flask_aves_080221)
-dual_isotope_plt(flask_aves_080221)
 ```
 8 & 11 are still having a bad time 
 
+```{r DualIsotope}
+dual_isotope_plt(flask_aves_080221)
+```
+
 
 # Dry Air: 8/15/2021 - 08/22/2021
-```{r}
+```{r DryAir3}
 data_082221 <- tbl %>% 
   filter(DATE == "2021-08-22")  %>% 
     mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
@@ -196,7 +205,7 @@ Flask_h2o_plt(flask_aves_082221)
 
 # Dry Air: 08/25/2021 - 09/01/2021
 
-```{r}
+```{r DryAir4}
 data_090121 <- tbl %>% 
   filter(DATE == "2021-09-01")  %>% 
     mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr

@@ -29,7 +29,7 @@ source(file.path("scripts", "plotting_functions.R"))
 source(file.path("scripts", "flask_ave.R"))
 source(file.path ("scripts", "Eriks_functions.R"))
 source(file.path ("scripts", "outlet_cut_functions.R"))
-source(file.path ("scripts", "flask_plts.R"))
+source(file.path ("scripts", "Rachels_custom_plots.R"))
 
 # global knitting options for automatic saving of all plots as .png and .pdf
 knitr::opts_chunk$set(
@@ -419,19 +419,52 @@ These data were hand averaged while taking the data. That data can be found on R
 fondue_comparison <- left_join(fondue_vaporin, flask_ave_032121, by = "Flask") %>% 
   mutate(
     H2O_diff = H2O_out.y- H2O_out.x,
-    d18O_diff = d180_out.y - d180_out.x,
+    d18O_diff = d18O_out.y - d18O_out.x,
     d2H_diff = d2H_out.y - d2H_out.x
   )
 
 compare_plot <- fondue_comparison %>% select(Flask, H2O_diff, d18O_diff, d2H_diff) %>% 
-  pivot_longer(cols = c(H2O_diff, d18O_diff, d2H_diff))  %>% 
+  pivot_longer(cols = c(H2O_diff, d18O_diff, d2H_diff))  %>%   
+    mutate(
+      # turn into ordered variable (factor) that keeps the order
+      
+      latex_name = as_factor(name) %>% fct_inorder()  %>% 
+        # introduce latex substitutions
+        fct_recode("$\\Delta H_2O$" = "H2O_diff",
+                   "$\\Delta \\delta^2H" = "d2H_diff",
+                   "$\\Delta \\delta^{18}O" = "d18O_diff")
+    ) %>% 
       ggplot()+
         aes(Flask, value)+
         geom_point()+
-        facet_wrap(~name, scales = "free")+
-  theme_figure()
+        scale_color_discrete(labels = latex_labeller) +
+        facet_wrap(~latex_name, labeller = latex_labeller, ncol = 1, scales = "free")+
+        scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+        theme_figure()
            
-ggplotly(compare_plot, dynamicTicks = TRUE)
+print(compare_plot)
+
+compareplt2 <- fondue_comparison %>% select(Flask, H2O_diff, d18O_diff, d2H_diff) %>% 
+  pivot_longer(cols = c(H2O_diff, d18O_diff, d2H_diff))  %>%   
+  filter(Flask != 6 & Flask != 7) %>% 
+    mutate(
+      # turn into ordered variable (factor) that keeps the order
+      
+      latex_name = as_factor(name) %>% fct_inorder()  %>% 
+        # introduce latex substitutions
+        fct_recode("$\\Delta H_2O$" = "H2O_diff",
+                   "$\\Delta \\delta^2H" = "d2H_diff",
+                   "$\\Delta \\delta^{18}O" = "d18O_diff")
+    ) %>% 
+      ggplot()+
+        aes(Flask, value)+
+        geom_point()+
+        scale_color_discrete(labels = latex_labeller) +
+        facet_wrap(~latex_name, labeller = latex_labeller, ncol = 1, scales = "free")+
+        scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+        theme_figure()
+
+print(compareplt2)
 ```
 
 Based on these plots: 

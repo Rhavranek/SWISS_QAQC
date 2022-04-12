@@ -69,6 +69,8 @@ rosti_plot <- rosti %>%
     scales = "free")+
   theme_bw()
 
+
+rosti_plot
 ggplotly(rosti_plot)
 
 DryAir_labs <- c("9-day dry air test", "27-day dry air test")

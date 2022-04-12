@@ -80,14 +80,14 @@ p2 <- mpg %>%
         "$\\left(\\frac{\\textbf{rear drv}}{\\beta^2}\\right)$" = "r",
         "$\\int_{\\infinity}\\sqrt[2]_{\\textbf{front drv}}$" = "f")
   ) %>% 
-  # start the plot
+  # start the plot 
   ggplot() + 
   aes(x = hwy, y = cty, color = latex_drv) + 
   geom_point() +
   # add latex to color, facet and axis labels
   scale_color_discrete(labels = latex_labeller) +
   facet_wrap(~latex_drv, labeller = latex_labeller, ncol = 1) +
-  labs(x = TeX("my x axis $\\delta^{42}X\\,\\[\U2030\\]$")) + 
+  labs(x = TeX("$my x axis \delta^{42}X\\,\\[\U2030\\]$")) + 
   # use theme_figure from the plotting_functions.R
   theme_figure(text_size = 16)
 p2

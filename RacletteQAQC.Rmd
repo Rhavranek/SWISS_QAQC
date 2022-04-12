@@ -203,7 +203,8 @@ plt_081821 <- flask_aves_081821 %>%
           legend.position = "none"
       )
 
-ggplotly( plt_081821)         
+ggplotly( plt_081821)        
+print(plt_081821)
 ```
 2, 6, 10, 11, 12, all look bad. I'm not encouraged that they're all kind of bad though
 
