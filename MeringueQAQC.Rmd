@@ -29,9 +29,7 @@ setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS
 
 # source all relevant scripting files
 source(file.path ("scripts", "plotting_functions.R"))
-source(file.path ("scripts", "flask_ave.R"))
-source(file.path ("scripts", "Eriks_functions.R"))
-source(file.path ("scripts", "outlet_cut_functions.R"))
+source(file.path ("scripts", "PicarroData_BreakUp.R"))
 source(file.path ("scripts", "Rachels_custom_plots.R"))
 
 # global knitting options for automatic saving of all plots as .png and .pdf
@@ -247,11 +245,12 @@ data_031722 <- tbl %>%
   filter(DATE == "2022-03-17" | DATE == "2022-03-18") %>% 
     BoulderTime() %>% 
       filter(MDT > "2022-03-17 11:31:00" & MDT < "2022-03-17 15:00:00") %>% 
-        outlet_batches()
+        outlet_batches() %>% 
+          h2o_batches()
   
 WaterConcentration_plt(data_031722) 
 OutletValve_plt(data_031722)
-  plt_outlet_batch(data_031722)
+plt_outlet_batch(data_031722)
 
 data_031722 <- data_031722 %>% 
   mutate(
