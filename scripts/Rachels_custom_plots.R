@@ -95,7 +95,7 @@ WaterConcentration_plt <- function(df){
   ggplotly(plt, dynamicTicks = TRUE)
 }
   
-h2o_batch_plt <- fucntion (df) {
+h2o_batch_plt <- function(df){
   plt <- df %>% 
     ggplot()+
     aes(x =MDT, y = H2O, color = H2O_Newbatch) +
