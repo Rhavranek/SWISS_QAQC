@@ -1,5 +1,5 @@
 ---
-title: "QAQC of Lindt"
+title: "QAQC of Meringue"
 author: "Rachel Havranek"
 date: "`r format(Sys.Date(), '%d %b %Y')`"
 output:
@@ -239,88 +239,109 @@ Flask_h2o_plt(flask_aves_090121)
 
 # 14 Day Water Vapor Tests 
 ## March 17 - March 31 
-
-```{r}
+#### in
+```{r March 17, 2022}
 data_031722 <- tbl %>% 
   filter(DATE == "2022-03-17" | DATE == "2022-03-18") %>% 
     BoulderTime() %>% 
-      filter(MDT > "2022-03-17 11:31:00" & MDT < "2022-03-17 15:00:00") %>% 
+      filter(MDT > "2022-03-17 11:31:00" & MDT < "2022-03-17 15:15:00") %>% 
         outlet_batches() %>% 
           h2o_batches()
   
-WaterConcentration_plt(data_031722) 
-OutletValve_plt(data_031722)
-plt_outlet_batch(data_031722)
+#From this series of plots its easy to see that using an h2o batch plot will be much easier here
+waterConcentration_plt(data_031722) 
+h2o_batch_plt(data_031722)
 
-data_031722 <- data_031722 %>% 
-  mutate(
-      seconds = row_number(),
-      waterdiff = H2O-100 > as.numeric(c("", head(H2O, -1))),
-      waterdiff = ifelse (is.na(waterdiff), F, waterdiff),
-      H2O_Batch = cumsum(waterdiff),
-      H2O_Newbatch = as.character(H2O_Batch)
-    )
+outletValve_plt(data_031722)
+outlet_batch_plt(data_031722)
+
+#double check that your groups are clean
+h2o_lastthreeminutes(data_031722)
   
- 
-  plt <- data_031722 %>% 
-    ggplot()+
-      aes(x =MDT, y = H2O, color = H2O_Newbatch) +
-      geom_point() +
-      theme_figure()+
-    theme(
-      legend.position = "none"
-    )
-  
- ggplotly(plt, dynamicTicks = TRUE)
-
-  print(plt)
-
-  
-wherecut <- data_031722 %>% 
-  filter (MDT > "2022-03-17 13:00:30" & MDT < "2022-03-17 14:30:30")
-
-plt2 <- wherecut %>% 
-  ggplot()+
-      aes(x =MDT, y = H2O, color = H2O_Newbatch) +
-      geom_point() +
-      theme_figure() +
-    theme(
-      legend.position = "none"
-    )
-    
-
-ggplotly(plt2, dynamicTicks = TRUE)
-
-#Based on this plot it took ~ 40 seconds to get to the bottom. So I'll cut off the last minute of a group 
-  
-
-wherecut <- wherecut %>% 
-  group_by(H2O_Batch) %>% 
+#need to average batches 75 & 540 by hand   
+flask3_031722 <- data_031722 %>% 
+  filter(H2O_Batch == 75) %>% 
+    group_by(H2O_Batch) %>% 
     mutate( 
       row = row_number(),
       totalrows= n()
+    ) %>% 
+    filter (totalrows > 100 & row < (totalrows - 85) & row > (totalrows - 310)) %>% 
+      flask_out_ave() %>% 
+        mutate(Flask = 3)
+
+#since this is the last flask, if i edit the data frame at all, this needs to be edited
+flask14_031722 <- data_031722 %>% 
+  filter(H2O_Batch == 540) %>% 
+    group_by(H2O_Batch) %>% 
+      mutate(
+        row = row_number(),
+        totalrows = n(),
       ) %>% 
-    filter (totalrows > 100)
+        filter(totalrows > 100 & row < (totalrows - 200) & row > (totalrows - 425)) %>% 
+        flask_out_ave() %>% 
+          mutate(Flask = 14)
+  
+flasks_031722 <- data_031722 %>% 
+  filter (H2O_Batch != 75 & H2O_Batch != 540) %>% 
+    flask_last3mintues() %>% 
+      mutate(Flask = c(2, 4:13)) %>% 
+        bind_rows(flask3_031722, flask14_031722)
+```
+### out 
+```{r March 31, 2022}
 
-plt3 <- wherecut %>% 
+data_033122_secondhalf <- tbl %>% 
+  filter(DATE == "2022-03-31") %>% 
+  BoulderTime()  %>% 
+    filter(MDT > "2022-03-31 13:30:00")  %>%
+      outlet_batches() %>% 
+        h2o_batches()
+
+waterConcentration_plt(data_033122_secondhalf)
+h2o_batch_plt(data_033122_secondhalf)
+
+h2O_FirstThreeMinutes(data_033122_secondhalf %>% filter(H2O > 5000))
+
+# I was curiosu if the way i cut up the data would change d18O averages at all 
+d18O_plt <- data_033122_secondhalf %>% 
   ggplot()+
-      aes(x =MDT, y = H2O, color = H2O_Newbatch) +
-      geom_point() +
-      theme_figure() +
-    theme(
-      legend.position = "none"
-    )
+  aes(x = MDT, y = Delta_18_16, color = H2O_Newbatch)+
+  geom_point() +
+  theme_figure()+
+  theme(legend.position = "none")
 
-ggplotly(plt3)
+ggplotly(d18O_plt, dynamicTicks = TRUE)
+
+# it doesn't!
+
+flasks_033122_secondhalf <- data_033122_secondhalf %>% 
+  filter(H2O > 1000) %>% 
+  flask_first3minutes() %>% 
+  mutate(Flask = c(9,8,7,6,5,4, 3, 2))
 
 
-wherecut <- wherecut %>% 
-  filter(row < (totalrows - 60)) %>% 
-  filter(row > (totalrows - 360))
+data_033122_firsthalf <- tbl %>% 
+  filter(DATE == "2022-03-31") %>% 
+  BoulderTime() %>% 
+  filter(MDT < "2022-03-31 12:10:00") %>% 
+  h2o_batches() %>% 
+  filter(H2O > 5000)
+
+
+waterConcentration_plt(data_033122_firsthalf)
+h2o_batch_plt(data_033122_firsthalf %>% 
+                filter(H2O_Batch!=45 &  H2O_Batch != 261 & H2O_Batch != 362 & H2O_Batch != 482))
+
+h2O_FirstThreeMinutes(data_033122_firsthalf %>% 
+                filter(H2O_Batch!=45 & H2O_Batch != 261 & H2O_Batch != 362 & H2O_Batch != 482))
+
 ```
 
+notes to Rachel: need to do flask 16 manually -- exclude batch 45. Should average from 9:43 - 9:46 
+the batches I've excluded are the re-measurements
 
-
+Ready to do averages, then diff them and plot
 
 
 
