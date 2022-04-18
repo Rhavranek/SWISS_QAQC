@@ -75,7 +75,7 @@ flask_last3mintues <- function(df) {
       ) %>% 
         filter (totalrows > 100) %>% 
           filter(row < (totalrows - 60)) %>% 
-            filter(row > (totalrows - 240)) %>% 
+            filter(row > (totalrows - 300)) %>% 
               flask_out_ave()
     
   return(flask.aves)  
@@ -89,8 +89,10 @@ flask_first3minutes <- function (df) {
         row = row_number(),
         totalrows= n()
       ) %>% 
-        filter(totalrows>100 & row > 90 & row < 271) %>% 
+    filter(totalrows>100 & row > 270 & row < 485) %>% 
           flask_out_ave()
+  
+  return(flask.aves)
 }
 
 

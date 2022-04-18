@@ -240,6 +240,8 @@ Flask_h2o_plt(flask_aves_090121)
 # 14 Day Water Vapor Tests 
 ## March 17 - March 31 
 #### in
+
+To do: correct for instrument drift 
 ```{r March 17, 2022}
 data_031722 <- tbl %>% 
   filter(DATE == "2022-03-17" | DATE == "2022-03-18") %>% 
@@ -289,6 +291,8 @@ flasks_031722 <- data_031722 %>%
         bind_rows(flask3_031722, flask14_031722)
 ```
 ### out 
+
+I am playing with my new averaging functions for the first time, so I did this in two chunks. I started with the second half of the day which was more straight forward, and then tackled the first half of the day. It's important to note that for flasks 16 - 13 I was using  a dry air pressure that was WAY too high for the Mass flow controller, and so there was a big influx of dry air into the flasks first thing. I used the step down from the vapor system mass flow controller to help with that problem, and that made my life WAY better. You can see how that problem shows up in the water concentration data in the first 2 minutes of each measurement. 
 ```{r March 31, 2022}
 
 data_033122_secondhalf <- tbl %>% 
@@ -336,12 +340,61 @@ h2o_batch_plt(data_033122_firsthalf %>%
 h2O_FirstThreeMinutes(data_033122_firsthalf %>% 
                 filter(H2O_Batch!=45 & H2O_Batch != 261 & H2O_Batch != 362 & H2O_Batch != 482))
 
+
+flasks_033122_firsthalf <- data_033122_firsthalf %>% 
+  filter(H2O_Batch!=45 & H2O_Batch != 261 & H2O_Batch != 362 & H2O_Batch != 482) %>% 
+    flask_first3minutes() %>% 
+      mutate(Flask = c(15,14,13,12,11,10))
+
+flask16_033122 <- data_033122_firsthalf %>% 
+  filter(MDT > "2022-03-31 09:43:00" & MDT < "2022-03-31 09:46:00") %>% 
+    flask_out_ave() %>% 
+      mutate(
+        H2O_Batch = 45,
+        Flask = 16
+      )
+   
+FlaskOut_033122 <- bind_rows(
+  flask16_033122,
+  flasks_033122_firsthalf,
+  flasks_033122_secondhalf
+)
+
 ```
 
-notes to Rachel: need to do flask 16 manually -- exclude batch 45. Should average from 9:43 - 9:46 
-the batches I've excluded are the re-measurements
+### diff
 
-Ready to do averages, then diff them and plot
+```{r}
+WVtest_results <- flasks_031722 %>% 
+  left_join(FlaskOut_033122, by = "Flask") %>% 
+    mutate(
+      d18O_diff = d18O_out.y - d18O_out.x,
+      d2H_diff =   d2H_out.y - d2H_out.x
+    )
 
+
+WVtest_results_plt <- WVtest_results %>% 
+  pivot_longer(cols = c(d18O_diff, d2H_diff)) %>% 
+    mutate(
+      # turn into ordered variable (factor) that keeps the order
+      
+      latex_name = as_factor(name) %>% fct_inorder()  %>% 
+        # introduce latex substitutions
+        fct_recode(
+                   "$\\Delta \\delta^2H" = "d2H_diff",
+                   "$\\Delta \\delta^{18}O" = "d18O_diff")
+    ) %>% 
+      ggplot()+
+        aes(x = Flask, y = value, size = 2) +
+        facet_wrap(~latex_name, labeller = latex_labeller, ncol = 1, scales = "free")+
+        geom_point()+
+        scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+        theme_figure()+
+        theme(
+          legend.position = "none"
+        )
+
+print(WVtest_results_plt)
+```
 
 

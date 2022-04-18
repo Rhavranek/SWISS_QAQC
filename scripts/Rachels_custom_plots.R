@@ -74,7 +74,7 @@ dual_isotope_plt <- function (df){
 }
 
 #plots outlet valve vs. time. useful for seeing if using outlet batches vs. h2o batches will work better
-OutletValve_plt <- function(df){
+outletValve_plt <- function(df){
   plt <- df %>% 
     ggplot() + 
     aes(x = MDT, y = OutletValve)+
@@ -85,7 +85,7 @@ OutletValve_plt <- function(df){
 }
   
 #plots water concentration through time 
-WaterConcentration_plt <- function(df){
+waterConcentration_plt <- function(df){
   plt <- df %>% 
     ggplot() + 
     aes(x = MDT, y= H2O)+
@@ -106,8 +106,54 @@ h2o_batch_plt <- function(df){
     )
   
   ggplotly(plt, dynamicTicks = TRUE)
-  print(plt)
+
 }
   
+h2o_LastThreeMinutes <- function (df){
+  groups <- df %>% 
+    group_by(H2O_Batch) %>% 
+    mutate( 
+      row = row_number(),
+      totalrows= n()
+    ) %>% 
+    filter (totalrows > 100) %>% 
+    filter(row < (totalrows - 60)) %>% 
+    filter(row > (totalrows - 300))
   
+  plt_groups <- groups %>% 
+    ggplot()+
+    aes(x =MDT, y = H2O, color = H2O_Newbatch) +
+    geom_point() +
+    theme_figure()+
+    theme(legend.position = "none")
+    
+  ggplotly(plt_groups, dynamicTicks = TRUE)
+}
   
+h2O_FirstThreeMinutes <- function(df){
+  groups <- df %>% 
+    group_by(H2O_Batch) %>% 
+    mutate( 
+      row = row_number(),
+      totalrows= n()
+    ) %>% 
+    filter(totalrows>100 & row > 270 & row < 485) 
+  
+  plt_groups <- groups %>% 
+    ggplot()+
+    aes(x =MDT, y = H2O, color = H2O_Newbatch) +
+    geom_point() +
+    theme_figure()+
+    theme(legend.position = "none")
+  
+  ggplotly(plt_groups, dynamicTicks = TRUE)
+  
+}  
+
+
+
+
+
+
+
+
