@@ -29,9 +29,7 @@ setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS
 
 # source all relevant scripting files
 source(file.path ("scripts", "plotting_functions.R"))
-source(file.path ("scripts", "flask_ave.R"))
-source(file.path ("scripts", "Eriks_functions.R"))
-source(file.path ("scripts", "outlet_cut_functions.R"))
+source(file.path ("scripts", "PicarroData_BreakUp.R"))
 source(file.path ("scripts", "Rachels_custom_plots.R"))
 
 # global knitting options for automatic saving of all plots as .png and .pdf
@@ -40,6 +38,7 @@ knitr::opts_chunk$set(
   dev.args = list(pdf = list(encoding = "WinAnsi", useDingbats = FALSE)),
   fig.path = file.path("fig_output", paste0(gsub("\\.[Rr]md", "", knitr::current_input()), "_"))
 )
+
 ```
 
 ### Load Data 
@@ -60,7 +59,8 @@ Outlet valve I have found is really helpful for identifying when the picarro fir
 
 
 #tbl <- readRDS("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS_QAQC/data/2021Data.RDS")
-tbl <- readRDS(file.path("data", "2021Data.RDS")) #manually change this file to be the most recent version
+tbl <- readRDS(file.path("data", "2021Data.RDS")) %>% 
+  bind_rows(readRDS(file.path("data","2022Data.RDS")))
 ```
 
 
@@ -1151,8 +1151,106 @@ data_030121$h2o_slope <- h2o_slope(data = data_030121, window = 12)
 ```
 
 
+# Water Vapor test 2 
+## March 19, 2022
+Flask 2 was not differentiated from flask 3, so I had to do that flask manually.
+
+I also did flask 5 manually becuase it was the only flask with a tail 
+
+```{r}
+data_031922 <- tbl %>% 
+  filter(DATE == "2022-03-19" | DATE == "2022-03-20") %>% 
+    BoulderTime() %>% 
+      filter (MDT > "2022-03-19 14:30:00" & MDT < "2022-03-19 18:45:00") %>% 
+        h2o_batches()
+
+waterConcentration_plt(data_031922)
+h2o_batch_plt(data_031922)
+
+#flask 2
+flask2_031922 <- data_031922 %>% 
+  filter(MDT > "2022-03-19 14:49:00" & MDT < "2022-03-19 14:52:00") %>% 
+  flask_out_ave() %>% 
+  mutate(
+    H2O_Batch = 12,
+    Flask = 2
+  )
 
 
+flask5_031922 <-  data_031922 %>% 
+  filter(MDT > "2022-03-19 15:37:40" & MDT < "2022-03-19 15:40:40") %>% 
+  flask_out_ave() %>% 
+  mutate(
+    H2O_Batch = 92,
+    Flask = 5
+  )
+
+h2o_batch_plt(flask5)
+
+h2o_LastThreeMinutes(data_031922 %>% filter(H2O_Batch != 92))
+
+flasks_031922 <- data_031922 %>% 
+  filter(H2O_Batch != 92) %>% 
+    flask_last3mintues() %>% 
+    mutate(Flask = c(1, 3,4,6:16)) %>% 
+    bind_rows(flask2_031922, flask5_031922)
+```
+
+## April 2, 2022
+flasks 15 & 16 were WEIRD. 
+
+I thinks its very possible based on the higher water concentration that there was condensation in the bev-a-line. 
+
+Overall this looks a little more offest that the other boxes. This one was not heated. But like the previous two boxes there seems to be a one per mil is difference in oxygen isotopes. These data have not been corrected for Picarro drift. 
+```{r}
+data_040222 <- tbl %>% 
+  filter(DATE == "2022-04-02" | DATE == "2022-04-03") %>% 
+    BoulderTime() %>% 
+      filter(MDT >"2022-04-02 17:25:00" & MDT < "2022-04-02 21:42:00") %>% 
+      h2o_batches()
+
+data_040222 %>% waterConcentration_plt()
+data_040222 %>% h2o_batch_plt()
+
+h2O_FirstThreeMinutes(data_040222 %>% filter(H2O>5000))
+
+flasks_040222 <- data_040222 %>% 
+  filter(H2O > 5000) %>% 
+  flask_first3minutes() %>% 
+  mutate(Flask = c(2:16))
+```
+## differences
+```{r}
+WVtest_results <- flasks_031922 %>% 
+  left_join(flasks_040222, by = "Flask") %>% 
+    mutate(
+      d18O_diff = d18O_out.y - d18O_out.x - 1,
+      d2H_diff =   d2H_out.y - d2H_out.x
+    )
+
+WVtest_results_plt <- WVtest_results %>% 
+  pivot_longer(cols = c(d18O_diff, d2H_diff)) %>% 
+    mutate(
+      # turn into ordered variable (factor) that keeps the order
+      
+      latex_name = as_factor(name) %>% fct_inorder()  %>% 
+        # introduce latex substitutions
+        fct_recode(
+                   "$\\Delta \\delta^2H" = "d2H_diff",
+                   "$\\Delta \\delta^{18}O" = "d18O_diff")
+    ) %>% 
+      ggplot()+
+        aes(x = Flask, y = value, size = 2) +
+        facet_wrap(~latex_name, labeller = latex_labeller, ncol = 1, scales = "free")+
+        geom_point()+
+        scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+        theme_figure()+
+        theme(
+          legend.position = "none"
+        )
+
+print(WVtest_results_plt)
+```
 
 
 

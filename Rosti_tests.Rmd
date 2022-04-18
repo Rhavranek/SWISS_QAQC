@@ -224,7 +224,7 @@ flask_aves_040222 <- data_040222 %>%
   mutate(Flask = c(2:16))
 ```
 
-## Differces
+## Differences
 ```{r}
 WVtest_results <- flask_aves_0311922 %>% 
   left_join(flask_aves_040222, by = "Flask") %>% 
