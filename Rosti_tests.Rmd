@@ -23,12 +23,12 @@ library (lubridate)
 library(plotly)
 library(fs)
 
+setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS_QAQC/")
+
 # source all relevant scripting files
-source(file.path("scripts", "plotting_functions.R"))
-source(file.path("scripts", "flask_ave.R"))
-source(file.path ("scripts", "Eriks_functions.R"))
-source(file.path ("scripts", "outlet_cut_functions.R"))
-source(file.path("scripts", "Rachels_custom_plots.R"))
+source(file.path ("scripts", "plotting_functions.R"))
+source(file.path ("scripts", "PicarroData_BreakUp.R"))
+source(file.path ("scripts", "Rachels_custom_plots.R"))
 
 # global knitting options for automatic saving of all plots as .png and .pdf
 knitr::opts_chunk$set(
@@ -38,7 +38,8 @@ knitr::opts_chunk$set(
 )
 
 #Load 2021 data
-tbl <- readRDS(file.path("data", "2021Data.RDS")) 
+tbl <- readRDS(file.path("data", "2021Data.RDS")) %>% 
+  bind_rows(readRDS(file.path("data","2022Data.RDS")))
 ```
 
 # Fall 2020 Testing
@@ -46,7 +47,7 @@ tbl <- readRDS(file.path("data", "2021Data.RDS"))
 
 * Because the main round of testing was done w/ the PTFE stuff, I think its probably best if I replicate again  
 ```{r}
-rosti <- read_csv("data/Fall_2020_SWISS_tests.csv")
+rosti <- read_csv("data/2021Data/Fall_2020_SWISS_tests.csv")
 
 rosti <- rosti %>% mutate (
   h2o_in = 11590,
@@ -118,8 +119,8 @@ data_072821 <- tbl %>%
       filter(MDT > "2021-07-28 09:21:37" & MDT < "2021-07-28 10:37:36") %>% 
         outlet_batches()
 
-WaterConcentration_plt(data_072821)
-plt_outlet_batch(data_072821)
+waterConcentration_plt(data_072821)
+outlet_batch_plt(data_072821)
 
 manual_flasks_072821 <- data_072821 %>% 
   filter(MDT > "2021-07-28 10:11:48" & MDT < "2021-07-28 10:16:42") %>% 
@@ -149,8 +150,8 @@ data_082221 <- tbl %>%
       filter(MDT > "2021-08-22 13:17:15" & MDT < "2021-08-22 14:34:10") %>% 
         outlet_batches()
 
-WaterConcentration_plt(data_082221)
-plt_outlet_batch(data_082221)
+waterConcentration_plt(data_082221)
+outlet_batch_plt(data_082221)
 
 manual_flasks_082221 <- data_082221 %>% 
   filter(MDT > "2021-08-22 13:37:15" & MDT < "2021-08-22 13:42:10") %>% 
@@ -174,4 +175,87 @@ Flask_h2o_plt(flask_aves_082221)
 
 
 # Two Week Water Vapor test 
-ß
+## March 19, 2022, vapor in
+
+Based on the H2O last three minutes plot, I felt that there were enough flasks where I needed to cut an extra 30 seconds off of the end than the function flask_last3minutes could do. So, I did that manually.
+
+I compared the hand-done averages I did day-of with these calculated averages, and they all matched at better than 0.05 per mil. 
+```{r}
+data_031922 <- tbl %>% 
+  filter(DATE == "2022-03-19") %>% 
+  BoulderTime() %>% 
+  filter(MDT > "2022-03-19 09:50:00" & MDT < "2022-03-19 14:07:00") %>% 
+  h2o_batches()
+
+waterConcentration_plt(data_031922)
+h2o_batch_plt(data_031922)
+
+h2o_LastThreeMinutes(data_031922)
+
+flask_aves_0311922 <- data_031922 %>% 
+    group_by(H2O_Batch) %>% 
+      mutate( 
+        row = row_number(),
+        totalrows= n()
+      ) %>% 
+        filter (totalrows > 100) %>% 
+          filter(row < (totalrows - 90)) %>% 
+            filter(row > (totalrows - 330)) %>% 
+              flask_out_ave() %>% 
+          mutate(Flask = c(1:16))
+```
+
+## April 2, 2022 
+```{r}
+data_040222 <- tbl %>% 
+  filter(DATE == "2022-04-02") %>% 
+    BoulderTime() %>% 
+      filter(MDT > "2022-04-02 12:38:00" & MDT < "2022-04-02 17:01:00") %>% 
+        h2o_batches()  
+
+waterConcentration_plt(data_040222)
+h2o_batch_plt(data_040222)
+
+h2O_FirstThreeMinutes(data_040222 %>% filter(H2O > 5000))
+
+flask_aves_040222 <- data_040222 %>% 
+  filter(H2O > 5000) %>% 
+  flask_first3minutes() %>% 
+  mutate(Flask = c(2:16))
+```
+
+## Differces
+```{r}
+WVtest_results <- flask_aves_0311922 %>% 
+  left_join(flask_aves_040222, by = "Flask") %>% 
+    mutate(
+      d18O_diff = d18O_out.y - d18O_out.x,
+      d2H_diff =   d2H_out.y - d2H_out.x
+    )
+
+WVtest_results_plt <- WVtest_results %>% 
+  pivot_longer(cols = c(d18O_diff, d2H_diff)) %>% 
+    mutate(
+      # turn into ordered variable (factor) that keeps the order
+      
+      latex_name = as_factor(name) %>% fct_inorder()  %>% 
+        # introduce latex substitutions
+        fct_recode(
+                   "$\\Delta \\delta^2H" = "d2H_diff",
+                   "$\\Delta \\delta^{18}O" = "d18O_diff")
+    ) %>% 
+      ggplot()+
+        aes(x = Flask, y = value, size = 2) +
+        facet_wrap(~latex_name, labeller = latex_labeller, ncol = 1, scales = "free")+
+        geom_point()+
+        scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+        theme_figure()+
+        theme(
+          legend.position = "none"
+        )
+
+print(WVtest_results_plt)
+```
+
+
+
