@@ -881,7 +881,7 @@ outlet.function1 <- data_070521 %>%
     outlet_batches()
 
 plt.outlet <- outlet.function1 %>% 
-  plt_outlet_batch()
+  outlet_batch_plt()
 
 plt.outlet
 
@@ -941,7 +941,7 @@ outlet_081121 <- data_081121 %>%
     outlet_batches()
 
 plt.outlet_081121 <- outlet_081121 %>% 
-  plt_outlet_batch()
+  outlet_batch_plt()
 
 ggplotly(plt.outlet_081121)
 
@@ -1018,7 +1018,7 @@ outlet_082221 <- data_082221 %>%
     outlet_batches()
 
 plt.outlet_082221 <- outlet_082221 %>% 
-  plt_outlet_batch()
+  outlet_batch_plt()
 
 ggplotly(plt.outlet_082221)
 
@@ -1068,7 +1068,7 @@ outlet_102821 <- data_102821 %>%
     outlet_batches()
 
 plt.outlet_102821 <- outlet_102821 %>% 
-  plt_outlet_batch()
+  outlet_batch_plt()
 
 ggplotly(plt.outlet_082221)
 
@@ -1111,7 +1111,7 @@ data_102821_plt <- outlet.function_aves_102821 %>%
 #Trim to the desired part    
 ggplotly(waterconcentration, dynamicTicks = TRUE)   
 
-data_030121$h2o_slope <- h2o_slope(data = data_030121, window = 12) 
+#data_030121$h2o_slope <- h2o_slope(data = data_030121, window = 12) 
 
 
 ```
@@ -1184,8 +1184,6 @@ flask5_031922 <-  data_031922 %>%
     H2O_Batch = 92,
     Flask = 5
   )
-
-h2o_batch_plt(flask5)
 
 h2o_LastThreeMinutes(data_031922 %>% filter(H2O_Batch != 92))
 
