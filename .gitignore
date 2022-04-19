@@ -12,6 +12,8 @@
 *.docx
 *.xlsx
 *.csv
+*.ai
+*.RDS
 *cache/**/*
 output/**/*
 plots/**/*
