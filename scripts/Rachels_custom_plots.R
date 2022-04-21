@@ -94,6 +94,19 @@ waterConcentration_plt <- function(df){
   
   ggplotly(plt, dynamicTicks = TRUE)
 }
+
+d180_time_plt <- function(df){
+  plt <- df %>% 
+    ggplot() + 
+    aes(x = MDT, y= Delta_18_16)+
+    geom_point()+
+    theme_figure ()
+  
+  ggplotly(plt, dynamicTicks = TRUE)
+}
+
+
+
   
 h2o_batch_plt <- function(df){
   plt <- df %>% 
