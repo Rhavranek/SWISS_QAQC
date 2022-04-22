@@ -17,6 +17,7 @@ editor_options:
 #Setup
 ```{r setup, echo = TRUE, message=FALSE, warning=FALSE}
 # load libraries
+l# load libraries
 library(tidyverse) 
 library(latex2exp)
 library(viridis)
@@ -29,9 +30,7 @@ setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS
 
 # source all relevant scripting files
 source(file.path ("scripts", "plotting_functions.R"))
-source(file.path ("scripts", "flask_ave.R"))
-source(file.path ("scripts", "Eriks_functions.R"))
-source(file.path ("scripts", "outlet_cut_functions.R"))
+source(file.path ("scripts", "PicarroData_BreakUp.R"))
 source(file.path ("scripts", "Rachels_custom_plots.R"))
 
 # global knitting options for automatic saving of all plots as .png and .pdf
@@ -41,8 +40,9 @@ knitr::opts_chunk$set(
   fig.path = file.path("fig_output", paste0(gsub("\\.[Rr]md", "", knitr::current_input()), "_"))
 )
 
-#load data
-tbl <- readRDS(file.path("data", "2021Data.RDS"))
+#Load 2021 data
+tbl <- readRDS(file.path("data", "2021Data.RDS")) %>% 
+  bind_rows(readRDS(file.path("data","2022Data.RDS")))
 ```
 
 # Dry Air 1, July 27, 2021
@@ -229,3 +229,139 @@ flask_aves_090121 <- flask_ave_outlet(data_090121) %>%
 Flask_h2o_plt(flask_aves_090121)
 ```
 2, 6, 10, 11, 12 all still suck. 
+
+# Water Vapor Test 
+## March 20, 2022
+```{r}
+data_032022 <- tbl %>% 
+  filter(DATE == "2022-03-20" | DATE == "2022-03-21") %>% 
+  BoulderTime() %>% 
+  filter(MDT > "2022-03-20 17:20:00" & MDT < "2022-03-20 21:42:00") %>% 
+  h2o_batches()
+
+waterConcentration_plt(data_032022)
+
+data_032022 %>% 
+  filter(H2O > 7000) %>% 
+  h2o_batch_plt()
+
+data_032022 %>%  
+  filter(H2O>7000) %>% 
+  h2o_LastThreeMinutes() 
+
+flasks_032022 <- data_032022 %>%  
+  filter(H2O>7000) %>%
+  flask_last3mintues() %>% 
+  mutate(Flask = c(1:16))
+```
+
+## April 3, 2022
+I did this in two parts - from 7:03 pm to 10:30 pm, and then another session the next morning
+I never flipped away from port 16, so it was open to atm for the whole test period.
+
+
+on april 3, batch 205 & 345 are both weird with water condensation problems 
+these are flasks 14, 11
+
+I averaged over a longer time period (5 minutes) for flask 14
+I averaged over a shorter time period for flask 11 (2 mintes) 39-41
+```{r}
+data_040322 <- tbl %>% 
+  filter(DATE == "2022-04-04") %>% 
+  BoulderTime() %>% 
+  filter(MDT > "2022-04-03 19:00:00" & MDT < "2022-04-03 22:34:00") %>% 
+  h2o_batches()
+
+waterConcentration_plt(data_040322) 
+data_040322 %>% h2o_batch_plt()
+data_040322 %>% 
+  filter(H2O_Batch !=58 & H2O_Batch != 205 & H2O_Batch !=345) %>% 
+    h2O_FirstThreeMinutes()
+
+flasks_040322 <- data_040322 %>% 
+  filter(H2O_Batch !=58 & H2O_Batch != 205 & H2O_Batch !=345) %>%
+  flask_first3minutes() %>% 
+  mutate(Flask = c(16,15,13,12,10:5))
+
+flask14 <- data_040322 %>% 
+  filter(MDT > "2022-04-03 19:48:00" & MDT < "2022-04-03 19:53:00") %>% 
+  flask_out_ave() %>% 
+  mutate(Flask = 14)
+
+flask11 <- data_040322 %>% 
+  filter(MDT > "2022-04-03 20:39:00" & MDT < "2022-04-03 20:41:00") %>% 
+  flask_out_ave() %>% 
+  mutate(Flask = 11)
+
+
+flasks_040322 <- flasks_040322 %>% 
+  bind_rows(flask14, flask11)
+```
+
+
+```{r}
+data_040422 <- tbl %>% 
+  filter(DATE == "2022-04-04") %>% 
+  BoulderTime() %>% 
+  filter(MDT > "2022-04-04 07:32:00" & MDT < "2022-04-04 08:30:00") %>% 
+  h2o_batches()
+
+waterConcentration_plt(data_040422)
+d180_time_plt(data_040422)
+h2o_batch_plt(data_040422)
+h2O_FirstThreeMinutes(data_040422 %>% filter(H2O > 5000))
+
+flasks_040422 <- data_040422 %>% 
+  filter(H2O > 5000) %>% 
+  flask_first3minutes() %>% 
+  mutate(Flask = c(4,3,2))
+
+allflasks <- flasks_040322 %>% bind_rows(flasks_040422)
+```
+
+```{r}
+WVtest_results <- flasks_032022 %>% 
+  left_join(allflasks, by = "Flask") %>% 
+    mutate(
+      d18O_diff = d18O_out.y - d18O_out.x,
+      d2H_diff =   d2H_out.y - d2H_out.x
+    )
+
+WVtest_results_plt <- WVtest_results %>% 
+  pivot_longer(cols = c(d18O_diff, d2H_diff)) %>% 
+    mutate(
+      # turn into ordered variable (factor) that keeps the order
+      latex_name = as_factor(name) %>% fct_inorder()  %>% 
+        # introduce latex substitutions
+        fct_recode(
+                   "$\\Delta \\delta^2H" = "d2H_diff",
+                   "$\\Delta \\delta^{18}O" = "d18O_diff")
+    ) %>% 
+      ggplot()+
+        aes(x = Flask, y = value, size = 2) +
+        facet_wrap(~latex_name, labeller = latex_labeller, ncol = 1, scales = "free")+
+        geom_point()+
+        scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+        theme_figure()+
+        theme(
+          legend.position = "none"
+        )
+
+print(WVtest_results_plt)
+ggplotly(WVtest_results_plt)
+
+
+evap <- WVtest_results %>% 
+  ggplot()+
+  aes(x = d18O_diff, y = d2H_diff) +
+  geom_point()+
+  geom_smooth(method = "lm")+
+  theme_figure()
+
+print(evap)
+
+lm(formula = d2H_diff ~ d18O_diff, data = WVtest_results)
+```
+
+
+
