@@ -395,7 +395,7 @@ vaporout_concentration <- data032121 %>%
 ggplotly(vaporout_concentration, dynamicTicks = TRUE)
 
 outlet_032121 <- outlet_batches(data032121)
-outlet_plt_032121 <- plt_outlet_batch(outlet_032121)
+outlet_plt_032121 <- outlet_batch_plt(outlet_032121)
 
 flask_ave_032121 <- flask_ave_outlet(outlet_032121) %>% 
   mutate(
@@ -476,7 +476,7 @@ data_072021 <- tbl %>%
       filter (MDT < "2021-07-20 16:58:15")
 
 outlet_072021 <- outlet_batches(data_072021)
-outlet_plt_072021 <- plt_outlet_batch(
+outlet_plt_072021 <- outlet_batch_plt(
   outlet_072021 %>% 
     filter(newbatch != 0 & newbatch != 7 & newbatch != 19 & newbatch != 26 & newbatch !=33 & newbatch != 38 & newbatch != 44)
   ) 
@@ -499,7 +499,7 @@ data_072121 <- tbl %>%
   filter (MDT > "2021-07-21 09:06:54" & MDT < "2021-07-21 12:06:28")
 
 outlet_072121 <- outlet_batches(data_072121)
-outlet_plt_072121 <- plt_outlet_batch(outlet_072121)
+outlet_plt_072121 <- outlet_batch_plt(outlet_072121)
 ggplotly(outlet_plt_072121)
 
 flask_ave_072121 <-  flask_ave_outlet(
@@ -532,7 +532,7 @@ vaporout_concentration <- data_072821 %>%
 ggplotly(vaporout_concentration, dynamicTicks = TRUE)
 
 outlet_072821 <- outlet_batches(data_072821)
-outlet_plt_072821 <- plt_outlet_batch(outlet_072821)
+outlet_plt_072821 <- outlet_batch_plt(outlet_072821)
 
 flask_ave_072821 <- flask_ave_outlet(outlet_072821) %>% 
   mutate(
@@ -561,7 +561,7 @@ vaporout_concentration <- data_090821 %>%
 
 ggplotly(vaporout_concentration, dynamicTicks = TRUE)
 
-outlet_plt_090821 <-plt_outlet_batch(data_090821)
+outlet_plt_090821 <-outlet_batch_plt(data_090821)
 ggplotly(outlet_plt_090821, dynamicTicks = TRUE)
 
 #flask 3 is gonna be a problem 
@@ -601,7 +601,7 @@ ggplotly(vaporout_concentration, dynamicTicks = TRUE)
 
 outlet_plt_102821 <-data_102821 %>% 
   filter(newbatch != 16 & newbatch!=8) %>% 
-  plt_outlet_batch()
+  outlet_batch_plt()
 
 ggplotly(outlet_plt_102821, dynamicTicks = TRUE)
 

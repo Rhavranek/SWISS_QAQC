@@ -397,4 +397,36 @@ WVtest_results_plt <- WVtest_results %>%
 print(WVtest_results_plt)
 ```
 
+# May 2022 Backyard test 
+```{r}
+May2022_data <- tibble(
+  Flask = (16:2),
+  d18O = c(-31.85, -17.87, -24.33, -31.85, -17.91, -23.39, -32.76,-18.09, - 26.27, -33.9, -18.09, -23.43, -33.4, -19.0, -23.3),
+  d2H = c(-251,-167.4, -191.2, -247.8,-168, -195, -265.1,-168.7, - 207, -262, - 169.5, -192.2, -255.6, -173.5,  - 189)
+)
+
+d18O_plt <- May2022_data %>% 
+  ggplot()+
+  aes(x = Flask, y = d18O)+
+  geom_errorbar(aes(ymin = d18O- 0.5, ymax = d18O+0.5))+
+  geom_point()+
+  scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    theme_figure()
+
+print(d18O_plt)
+
+
+d2H_plt <- May2022_data %>% 
+  ggplot()+
+  aes(x = Flask, y = d2H)+
+  geom_errorbar(aes(ymin = d2H- 4.0, ymax = d2H+4.0))+
+  geom_point()+
+  scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+    theme_figure()
+
+print(d2H_plt)
+
+
+
+ ```
 
