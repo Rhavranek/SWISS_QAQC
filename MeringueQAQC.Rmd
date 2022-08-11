@@ -111,14 +111,14 @@ OutletValve_plt(data_070421)
 data_070421 <- outlet_batches(data_070421)
 plt_outlet_batch(data_070421)
 
-# flask5_070421 <- data_070421 %>% 
-#   filter(MDT >"2021-07-04 13:52:00" & MDT < "2021-07-04 13:55:00") %>% 
-#     flask_out_ave() %>% 
+# flask5_070421 <- data_070421 %>%
+#   filter(MDT >"2021-07-04 13:52:00" & MDT < "2021-07-04 13:55:00") %>%
+#     flask_out_ave() %>%
 #       mutate(Flask = 5)
 
-# flask11_070421 <- data_070421 %>% 
-#   filter(MDT >"2021-07-04 13:22:00" & MDT < "2021-07-04 13:25:00") %>% 
-#     flask_out_ave() %>% 
+# flask11_070421 <- data_070421 %>%
+#   filter(MDT >"2021-07-04 13:22:00" & MDT < "2021-07-04 13:25:00") %>%
+#     flask_out_ave() %>%
 #       mutate(Flask = 11)
 
 flask_aves_070421 <- flask_ave_outlet(data_070421) %>% 

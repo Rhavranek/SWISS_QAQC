@@ -1,0 +1,171 @@
+---
+title: "Untitled"
+author: "Rachel"
+date: "8/11/2022"
+output: html_document
+---
+The purpose of this markdown is to provide a place to do the data reduction on the vapor calibrations. 
+
+
+```{r setup, echo = TRUE, message=FALSE, warning=FALSE}
+# load libraries
+library(tidyverse) 
+library(dplyr)
+library(latex2exp)
+library(viridis)
+library(data.table)
+library (lubridate)
+library(plotly)
+library(fs)
+
+setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS_QAQC/")
+
+# source all relevant scripting files
+source(file.path ("scripts", "plotting_functions.R"))
+source(file.path ("scripts", "PicarroData_BreakUp.R"))
+source(file.path ("scripts", "Rachels_custom_plots.R"))
+
+# global knitting options for automatic saving of all plots as .png and .pdf
+knitr::opts_chunk$set(
+  dev = c("png", "pdf"), fig.keep = "all",
+  dev.args = list(pdf = list(encoding = "WinAnsi", useDingbats = FALSE)),
+  fig.path = file.path("fig_output", paste0(gsub("\\.[Rr]md", "", knitr::current_input()), "_"))
+)
+
+#load data
+# tbl <-
+#     list.files ("data/Data2022", pattern = "*.dat", recursive = T, full.names = T) %>%
+#     map_df(~read_table2(.)) %>%
+#     as_tibble() %>%
+#     dplyr::select(1, 2, 15, 17, 18, 19)
+# 
+# currentdate <- Sys.Date()
+# saveRDS(tbl, "data/2022Data.RDS")
+
+
+tbl <- readRDS(file.path("data", "2021Data.RDS")) %>% 
+  bind_rows(readRDS(file.path("data","2022Data.RDS")))
+```
+
+# Standard values
+```{r}
+stds <- tibble(
+  std = c("KFW", "KBW", "KAW", "KGW"),
+  d18o_known = c(-0.76, -14.15, -30.30, -38.02),
+  d2H_known = c(-2.82,-111.65,-239.13, -298.37),
+  type = "known"
+)
+```
+
+# March 18, 2022 calibration
+Julien 
+```{r}
+data_031822 <- tbl %>% 
+  filter(DATE == "2022-03-18" | DATE == "2022-03-19") %>% 
+  BoulderTime() %>% 
+  filter(MDT > "2022-03-18 12:00:00" & MDT < "2022-03-19 02:15:00")
+
+d180_time_plt(data_031822)
+waterConcentration_plt(data_031822)
+
+KFW_031822 <- data_031822 %>% 
+  filter(MDT >"2022-03-18 16:10:00" & MDT < "2022-03-18 17:00:00") %>% 
+  flask_out_ave() %>% mutate (std = "KFW")
+
+
+KAW_031822 <- data_031822 %>% 
+  filter(MDT > "2022-03-18 18:45:00" & MDT < "2022-03-18 19:30:00") %>% 
+  flask_out_ave() %>% mutate(std = "KAW")
+
+KGW_031822 <- data_031822 %>% 
+  filter(MDT > "2022-03-18 21:20:00" & MDT < "2022-03-18 21:50:00") %>% 
+  flask_out_ave() %>% mutate(std = "KGW")
+
+KBW_031822 <- data_031822 %>% filter(MDT > "2022-03-18 23:55:00" & MDT < "2022-03-19 00:20:00") %>% flask_out_ave() %>% mutate(std = "KBW")
+
+
+observed_stds <- bind_rows(KFW_031822, KAW_031822, KGW_031822, KBW_031822) %>% 
+  mutate(
+    type = "Observed"
+  )
+
+all <- full_join(observed_stds, stds, by = "std")
+
+all %>% ggplot()+
+  aes(x = d18o_known, y = d18O_out)+
+  geom_point()+
+   geom_line()
+
+#linearly regress 
+d18O_lm <- lm(d18O_out ~ d18o_known, all)
+dD_lm <- lm(d2H_out ~ d2H_known, all)
+
+#double check it worked
+all <- all %>% 
+  mutate(
+    d18O_iso_disc_corr = (d18O_out-d18O_lm$coefficients[1]) / d18O_lm$coefficients[2],
+    dD_iso_disc_corr = (d2H_out-dD_lm$coefficients[1]) / dD_lm$coefficients[2],
+  )
+
+
+print(d18O_lm$coefficients[1])
+print(d18O_lm$coefficients[2])
+
+write.csv(data_031822, "data_031822.csv")
+```
+## Equations transfered into corrections script
+d18O_corr = (d18O_out - 1.68206) / 1.026412
+d2H_corr = (d2H_out - 5.669731) / 1.045704
+
+
+# April 3, 2022 Calibration 
+Julien 
+```{r}
+data_040422 <- tbl %>% 
+  filter(DATE == "2022-04-04" | DATE == "2022-04-05") %>% 
+  BoulderTime() %>% 
+  filter(MDT > "2022-04-04 15:00:00" & MDT < "2022-04-05 01:00:00")
+
+#waterConcentration_plt(data_040422)
+
+KFW_040422 <- data_040422 %>% 
+  filter(MDT> "2022-04-04 15:30:00" & MDT < "2022-04-04 16:15:00") %>% 
+  flask_out_ave() %>% mutate(std = "KFW")
+
+KAW_040422 <- data_040422 %>% 
+  filter(MDT> "2022-04-04 18:00:00" & MDT < "2022-04-04 18:30:00") %>% 
+  flask_out_ave() %>% mutate(std = "KAW")
+
+KGW_040422 <- data_040422 %>% 
+  filter(MDT > "2022-04-04 20:40:00" & MDT < "2022-04-04 21:10:00") %>% 
+  flask_out_ave() %>% mutate(std = "KGW")
+
+KBW_040422 <- data_040422 %>% 
+  filter(MDT > "2022-04-04 23:10:00" & MDT < "2022-04-04 23:40:00") %>% 
+  flask_out_ave() %>% mutate(std = "KBW")
+
+stds_040422 <- bind_rows(KFW_040422, KAW_040422, KGW_040422, KBW_040422) %>% 
+  full_join(stds, by = "std")
+
+stds_plt <- stds_040422 %>% 
+  ggplot()+
+    aes(x = d18o_known, y = d18O_out)+
+    geom_point()+
+    geom_line()
+
+d18O_lm_0404 <- lm(d18O_out ~ d18o_known, stds_040422)
+dD_lm_0404 <- lm(d2H_out ~ d2H_known, stds_040422)
+
+stds_040422 <- stds_040422 %>% 
+  mutate(
+    d18O_disc_corr = ((d18O_out-d18O_lm_0404$coefficients[1])/d18O_lm_0404$coefficients[2]),
+    dD_disc_corr = (d2H_out-dD_lm_0404$coefficients[1])/dD_lm_0404$coefficients[2],
+  )
+```
+
+## Equations copied into corrections script
+d18O_corr = (d18O_out - 1.4572)/1.0281
+d2H_corr = (d2H_out - 5.595052)/1.046536
+
+# August 9 
+Phlox 

@@ -31,6 +31,7 @@ setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS
 source(file.path ("scripts", "plotting_functions.R"))
 source(file.path ("scripts", "PicarroData_BreakUp.R"))
 source(file.path ("scripts", "Rachels_custom_plots.R"))
+source(file.path ("scripts", "corrections.R"))
 
 # global knitting options for automatic saving of all plots as .png and .pdf
 knitr::opts_chunk$set(
@@ -226,7 +227,9 @@ h2o_LastThreeMinutes(data_032022 %>% filter(H2O > 10000))
 flasks_032022 <- data_032022 %>% 
   filter(H2O > 10000) %>% 
   flask_last3mintues() %>% 
-  mutate(Flask = c(1:16))
+  mutate(Flask = c(1:16)) 
+
+flasks_032022 <- flasks_032022 %>% march182022_corr
 ```
 
 ## April 3, 2022
@@ -277,14 +280,17 @@ flask2 <- data_040322 %>%
 
 flasks_040322 <- flasks_040322 %>% 
   bind_rows(flask13, flask3, flask2)
+
+flasks_040322 <- flasks_040322 %>% April42022_corr
 ```
 ## Differences
 ```{r}
 WVtest_results <- flasks_032022 %>% 
   left_join(flasks_040322, by = "Flask") %>% 
     mutate(
-      d18O_diff = d18O_out.y - d18O_out.x - 0.75,
-      d2H_diff =   d2H_out.y - d2H_out.x
+      d18O_diff_raw = d18O_out.y - d18O_out.x,
+      #d2H_diff =   d2H_out.y - d2H_out.x,
+      d18O_diff_corr = d18O_corr.y - d18O_corr.x
     )
 
 WVtest_results_plt <- WVtest_results %>% 

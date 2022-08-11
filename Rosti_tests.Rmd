@@ -30,6 +30,7 @@ setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS
 source(file.path ("scripts", "plotting_functions.R"))
 source(file.path ("scripts", "PicarroData_BreakUp.R"))
 source(file.path ("scripts", "Rachels_custom_plots.R"))
+source(file.path ("scripts", "corrections.R"))
 
 # global knitting options for automatic saving of all plots as .png and .pdf
 knitr::opts_chunk$set(
