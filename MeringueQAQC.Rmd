@@ -31,6 +31,7 @@ setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS
 source(file.path ("scripts", "plotting_functions.R"))
 source(file.path ("scripts", "PicarroData_BreakUp.R"))
 source(file.path ("scripts", "Rachels_custom_plots.R"))
+source(file.path ("scripts", "corrections.R"))
 
 # global knitting options for automatic saving of all plots as .png and .pdf
 knitr::opts_chunk$set(
@@ -241,7 +242,7 @@ Flask_h2o_plt(flask_aves_090121)
 ## March 17 - March 31 
 #### in
 
-To do: correct for instrument drift 
+
 ```{r March 17, 2022}
 data_031722 <- tbl %>% 
   filter(DATE == "2022-03-17" | DATE == "2022-03-18") %>% 
@@ -288,7 +289,8 @@ flasks_031722 <- data_031722 %>%
   filter (H2O_Batch != 75 & H2O_Batch != 540) %>% 
     flask_last3mintues() %>% 
       mutate(Flask = c(2, 4:13)) %>% 
-        bind_rows(flask3_031722, flask14_031722)
+        bind_rows(flask3_031722, flask14_031722) %>% 
+        march182022_corr()
 ```
 ### out 
 
@@ -358,7 +360,7 @@ FlaskOut_033122 <- bind_rows(
   flask16_033122,
   flasks_033122_firsthalf,
   flasks_033122_secondhalf
-)
+) %>% April42022_corr()
 
 ```
 
@@ -368,8 +370,8 @@ FlaskOut_033122 <- bind_rows(
 WVtest_results <- flasks_031722 %>% 
   left_join(FlaskOut_033122, by = "Flask") %>% 
     mutate(
-      d18O_diff = d18O_out.y - d18O_out.x,
-      d2H_diff =   d2H_out.y - d2H_out.x
+      d18O_diff = d18O_corr.y - d18O_corr.x,
+      d2H_diff =   d2H_corr.y - d2H_corr.x
     )
 
 
