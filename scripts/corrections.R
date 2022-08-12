@@ -24,4 +24,15 @@ April42022_corr <- function(df){
     d18O_corr =round(((d18O_out - 1.4572)/1.0281), 1),
     d2H_corr = round(((d2H_out - 5.595052)/1.046536), 1 )
   )
+  
+  return(April4)
+}
+
+April4_phlox_corr <- function(df){
+  April4_phlox_corr <- df %>% mutate(
+    d18O_corr_phlox = (d18O_out - 4.229)/1.045868,
+    d2H_corr_phlox = (d2H_out + 0.00710443)/1.050112
+)
+  
+  return (April4_phlox_corr)
 }
