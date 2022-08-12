@@ -31,6 +31,7 @@ setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS
 source(file.path ("scripts", "plotting_functions.R"))
 source(file.path ("scripts", "PicarroData_BreakUp.R"))
 source(file.path ("scripts", "Rachels_custom_plots.R"))
+source(file.path ("scripts", "corrections.R"))
 
 # global knitting options for automatic saving of all plots as .png and .pdf
 knitr::opts_chunk$set(
@@ -1159,7 +1160,7 @@ I also did flask 5 manually becuase it was the only flask with a tail
 
 ```{r}
 data_031922 <- tbl %>% 
-  filter(DATE == "2022-03-19" | DATE == "2022-03-20") %>% 
+  dplyr::filter(DATE == "2022-03-19" | DATE == "2022-03-20") %>% 
     BoulderTime() %>% 
       filter (MDT > "2022-03-19 14:30:00" & MDT < "2022-03-19 18:45:00") %>% 
         h2o_batches()
@@ -1192,6 +1193,9 @@ flasks_031922 <- data_031922 %>%
     flask_last3mintues() %>% 
     mutate(Flask = c(1, 3,4,6:16)) %>% 
     bind_rows(flask2_031922, flask5_031922)
+
+
+flasks_031922 <- flasks_031922 %>% march182022_corr
 ```
 
 ## April 2, 2022
@@ -1216,27 +1220,35 @@ flasks_040222 <- data_040222 %>%
   filter(H2O > 5000) %>% 
   flask_first3minutes() %>% 
   mutate(Flask = c(2:16))
+
+flasks_040222 <- flasks_040222 %>% April42022_corr()
+flasks_040222 <- flasks_040222 %>% April4_phlox_corr()
+
 ```
 ## differences
 ```{r}
 WVtest_results <- flasks_031922 %>% 
   left_join(flasks_040222, by = "Flask") %>% 
     mutate(
-      d18O_diff = d18O_out.y - d18O_out.x - 1,
-      d2H_diff =   d2H_out.y - d2H_out.x
+      d18O_diff_raw = d18O_out.y - d18O_out.x,
+      d18O_corr_diff = d18O_corr.y -d18O_corr.x,
+      d2H_diff_raw =   d2H_out.y - d2H_out.x,
+      d2H_corr_diff = d2H_corr.y - d2H_corr.x,
+      phlox_diff = d18O_corr_phlox - d18O_corr.x,
+      d2h_phlox = d2H_corr_phlox -d2H_corr.x
     )
 
 WVtest_results_plt <- WVtest_results %>% 
-  pivot_longer(cols = c(d18O_diff, d2H_diff)) %>% 
+  pivot_longer(cols = c(d18O_diff_raw, d2H_diff_raw)) %>% 
     mutate(
       # turn into ordered variable (factor) that keeps the order
-      
-      latex_name = as_factor(name) %>% fct_inorder()  %>% 
+
+      latex_name = as_factor(name) %>% fct_inorder()  %>%
         # introduce latex substitutions
         fct_recode(
                    "$\\Delta \\delta^2H" = "d2H_diff",
                    "$\\Delta \\delta^{18}O" = "d18O_diff")
-    ) %>% 
+    ) %>%
       ggplot()+
         aes(x = Flask, y = value, size = 2) +
         facet_wrap(~latex_name, labeller = latex_labeller, ncol = 1, scales = "free")+
