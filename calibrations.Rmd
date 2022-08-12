@@ -167,5 +167,75 @@ stds_040422 <- stds_040422 %>%
 d18O_corr = (d18O_out - 1.4572)/1.0281
 d2H_corr = (d2H_out - 5.595052)/1.046536
 
+
+#April 4 on Phlox
+```{r}
+phlox0404 <- 
+    list.files ("data/Phlox_April4", pattern = "*.dat", recursive = T, full.names = T) %>%
+    map_df(~read_table2(.)) %>%
+    as_tibble() %>%
+    dplyr::select(1, 2, 15, 17, 18, 19)
+
+phlox0404 <- phlox0404 %>% 
+  BoulderTime() %>% 
+  filter(MDT > "2022-04-04 15:00:00" & MDT < "2022-04-05 01:00:00")
+
+waterConcentration_plt(phlox0404)
+
+KFW_040422_phlox <- phlox0404 %>% 
+  filter(MDT> "2022-04-04 15:30:00" & MDT < "2022-04-04 16:15:00") %>% 
+  flask_out_ave() %>% mutate(std = "KFW")
+
+KAW_040422_phlox <- phlox0404 %>% 
+  filter(MDT> "2022-04-04 18:00:00" & MDT < "2022-04-04 18:30:00") %>% 
+  flask_out_ave() %>% mutate(std = "KAW")
+
+KGW_040422_phlox <- phlox0404 %>% 
+  filter(MDT > "2022-04-04 20:40:00" & MDT < "2022-04-04 21:10:00") %>% 
+  flask_out_ave() %>% mutate(std = "KGW")
+
+KBW_040422_phlox <- phlox0404 %>% 
+  filter(MDT > "2022-04-04 23:10:00" & MDT < "2022-04-04 23:40:00") %>% 
+  flask_out_ave() %>% mutate(std = "KBW")
+
+stds_040422_phlox <- bind_rows(KFW_040422_phlox, KAW_040422_phlox, KGW_040422_phlox, KBW_040422_phlox) %>% 
+  full_join(stds, by = "std")
+
+
+d18O_lm_0404_phlox <- lm(d18O_out ~ d18o_known, stds_040422_phlox)
+dD_lm_0404_phlox <- lm(d2H_out ~ d2H_known, stds_040422_phlox)
+
+
+stds_040422_phlox <- stds_040422_phlox %>% 
+  mutate(
+    d18O_disc_corr = ((d18O_out-d18O_lm_0404_phlox$coefficients[1])/d18O_lm_0404_phlox$coefficients[2]),
+    dD_disc_corr = (d2H_out-dD_lm_0404_phlox$coefficients[1])/dD_lm_0404_phlox$coefficients[2],
+  )
+
+stds_040422_phlox <- stds_040422_phlox %>% April4_phlox_corr()
+
+```
+
+d18O_corr_phlox = (d18O_out - 4.229)/1.045868
+d2H_corr_phlox = (d2H_out + 0.00710443)/1.050112
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # August 9 
 Phlox 
