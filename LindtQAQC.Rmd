@@ -289,12 +289,13 @@ WVtest_results <- flasks_032022 %>%
   left_join(flasks_040322, by = "Flask") %>% 
     mutate(
       d18O_diff_raw = d18O_out.y - d18O_out.x,
-      #d2H_diff =   d2H_out.y - d2H_out.x,
-      d18O_diff_corr = d18O_corr.y - d18O_corr.x
+      d18O_diff_corr = d18O_corr.y - d18O_corr.x,
+      d2H_diff =   d2H_out.y - d2H_out.x,
+      d2H_diff_corr = d2H_corr.y - d2H_corr.x
     )
 
 WVtest_results_plt <- WVtest_results %>% 
-  pivot_longer(cols = c(d18O_diff, d2H_diff)) %>% 
+  pivot_longer(cols = c(d18O_diff_corr, d2H_diff_corr)) %>% 
     mutate(
       # turn into ordered variable (factor) that keeps the order
       
