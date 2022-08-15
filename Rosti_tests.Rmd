@@ -204,7 +204,7 @@ flask_aves_0311922 <- data_031922 %>%
           filter(row < (totalrows - 90)) %>% 
             filter(row > (totalrows - 330)) %>% 
               flask_out_ave() %>% 
-          mutate(Flask = c(1:16))
+          mutate(Flask = c(1:16)) %>% march182022_corr()
 ```
 
 ## April 2, 2022 
@@ -223,7 +223,8 @@ h2O_FirstThreeMinutes(data_040222 %>% filter(H2O > 5000))
 flask_aves_040222 <- data_040222 %>% 
   filter(H2O > 5000) %>% 
   flask_first3minutes() %>% 
-  mutate(Flask = c(2:16))
+  mutate(Flask = c(2:16)) %>% 
+  April42022_corr()
 ```
 
 ## Differences
@@ -231,8 +232,8 @@ flask_aves_040222 <- data_040222 %>%
 WVtest_results <- flask_aves_0311922 %>% 
   left_join(flask_aves_040222, by = "Flask") %>% 
     mutate(
-      d18O_diff = d18O_out.y - d18O_out.x,
-      d2H_diff =   d2H_out.y - d2H_out.x
+      d18O_diff = d18O_corr.y - d18O_corr.x,
+      d2H_diff =   d2H_corr.y - d2H_corr.x
     )
 
 WVtest_results_plt <- WVtest_results %>% 
@@ -259,5 +260,14 @@ WVtest_results_plt <- WVtest_results %>%
 print(WVtest_results_plt)
 ```
 
+# Long dry air
+```{r}
+long_dry_air <- tibble(
+  Flask = c(16:2),
+  H2O_out = c(650, 290, 272,260,290,1600,810,800,290,270,365,355,320,515,420)
+)
+
+long_dry_air %>% Flask_h2o_plt()
+```
 
 

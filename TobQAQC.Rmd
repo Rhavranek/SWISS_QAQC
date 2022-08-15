@@ -53,7 +53,7 @@ Outlet valve I have found is really helpful for identifying when the picarro fir
 # tbl <-
 #     list.files ("data", pattern = "*.dat", recursive = T, full.names = T) %>%
 #     map_df(~read_table2(.)) %>%
-#     select(1, 2, 15, 17, 18, 19)
+#     dplyr::select(1, 2, 15, 17, 18, 19)
 # 
 # currentdate <- Sys.Date()
 # saveRDS(tbl, "data/2021Data.RDS")
@@ -1239,7 +1239,7 @@ WVtest_results <- flasks_031922 %>%
     )
 
 WVtest_results_plt <- WVtest_results %>% 
-  pivot_longer(cols = c(d18O_diff_raw, d2H_diff_raw)) %>% 
+  pivot_longer(cols = c(d18O_corr_diff, d2H_corr_diff)) %>% 
     mutate(
       # turn into ordered variable (factor) that keeps the order
 
