@@ -105,7 +105,15 @@ d180_time_plt <- function(df){
   ggplotly(plt, dynamicTicks = TRUE)
 }
 
-
+d2H_time_plt <- function(df){
+  plt <- df %>% 
+    ggplot() + 
+    aes(x = MDT, y= Delta_D_H)+
+    geom_point()+
+    theme_figure ()
+  
+  ggplotly(plt, dynamicTicks = TRUE)
+}
 
   
 h2o_batch_plt <- function(df){
