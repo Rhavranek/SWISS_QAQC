@@ -54,17 +54,22 @@ tbl <- readRDS(file.path("data", "2021Data.RDS")) %>%
 ```
 
 # July 18 & July 19 data
+SWISS: Toblerone. No data log from the microcontroller 
 
-11, 12, 13 were 4th of July samples
-8,9,10 were June 29th samples 
-5,6,7 were June 24th samples
-2,3,4 were June 19th samples 
+- 11, 12, 13 were 4th of July samples
+- 8,9,10 were June 29th samples 
+- 5,6,7 were June 24th samples
+- 2,3,4 were June 19th samples 
 
+
+## July 18 
+Has two measurement periods, afternoon and evening 
+
+I think you can see condensation in most of the measurements. I think this is a good argument that dead-end pull at such high concentrations doesn't work. 
 
 flask 13 is messy  - averaging over a 9 minute window to represent real variability. Did a dead end pull to dry air at 30 ml/ min at 13:10. 
 
 flask 11 - condensation has a problem 
-
 ```{r}
 data_071822_firstbatch <- tbl %>% 
   filter (DATE == "2022-07-18" | DATE == "2022-07-2") %>% 
@@ -89,7 +94,9 @@ Flasks071822 <-  data_071822_firstbatch %>%
   flask_first3minutes %>% 
   mutate(Flask = c(12,10,9,8)) %>% 
   bind_rows(flask13, flask11) %>% 
-  mutate(sampledate = ifelse(Flask > 10, "22-07-04", "22-06-29"))
+  mutate(sampledate = ifelse(Flask > 10, "22-07-04", "22-06-29")) %>% 
+  mutate(sampledepth = ifelse(Flask == 13 | Flask == 10, 75, 
+                              ifelse(Flask == 12 | Flask == 9, 50, 25)))
 ```
 
 evening work
@@ -97,9 +104,85 @@ evening work
 data_071822_secondbatch <- tbl %>% 
   filter (DATE == "2022-07-19") %>% 
   BoulderTime() %>% 
-  filter (MDT > "2022-07-18 13:00:00" & MDT < " 2022-07-18 16:00:00") %>% 
+  filter (MDT > "2022-07-18 21:45:00" & MDT < " 2022-07-18 22:30:00") %>% 
   h2o_batches() 
+
+# waterConcentration_plt(data_071822_secondbatch)
+# h2o_batch_plt(data_071822_secondbatch)
+# 
+# h2O_FirstThreeMinutes(data_071822_secondbatch)
+# 
+# d180_time_plt(data_071822_secondbatch)
+
+
+flasks_2and3 <- data_071822_secondbatch %>% 
+  filter(H2O_Batch == 31 | H2O_Batch == 74) %>% 
+  flask_first3minutes() %>% 
+  mutate (
+    Flask = c(2,3),
+    sampledate = c("22-06-19"),
+    sampledepth = ifelse(Flask == 2, 25, 50)
+  )
+  
+
+Flasks071822 <- Flasks071822 %>% bind_rows(flasks_2and3)
 ```
+
+## July 19 
+
+```{r}
+data_071922 <- tbl %>% 
+  filter (DATE == "2022-07-19") %>% 
+  BoulderTime() %>% 
+  filter(MDT > "2022-07-19 11:00:00" & MDT < "2022-07-19 14:00:00") %>% 
+  h2o_batches()  
+  
+
+# waterConcentration_plt(data_071922)
+# d180_time_plt(data_071922)
+# 
+# h2o_batch_plt(data_071922)
+# h2O_FirstThreeMinutes(data_071922)
+
+flasks_071922 <- data_071922 %>% 
+  filter(H2O_Batch == 58 | H2O_Batch == 111 | H2O_Batch == 179) %>% 
+  flask_first3minutes() %>% 
+  mutate(
+    Flask = c(7,4,5),
+    sampledate = ifelse(Flask > 4, "22-06-24", "22-06-19"),
+    sampledepth = ifelse(Flask == 5, 25, 75)
+    )
+
+flask6 <- data_071922 %>% 
+  filter(MDT > "2022-07-19 13:48:00" & MDT < "2022-07-19 13:51:00") %>% 
+  flask_out_ave() %>% 
+  mutate(
+    Flask = 6, 
+    sampledate = "22-06-24",
+    sampledepth = 50
+  )
+  
+flasks_071922 <- flasks_071922 %>% bind_rows(flask6)
+```
+
+
+all flasks
+```{r}
+seibert_firstround <- Flasks071822 %>% bind_rows(flasks_071922)
+
+seibert_d18o <- seibert_firstround %>% 
+  filter(sampledepth < 75) %>% 
+  ggplot()+
+  aes(x = sampledate, y = d18O_out, color = as.character(sampledepth))+
+  geom_errorbar(aes(x = sampledate, ymax = d18O_out - 0.5, ymin = d18O_out + 0.5, width = 0.1)) +
+  geom_point(aes(size = 3)) +
+  theme_figure()
+  
+
+print(seibert_d18o)
+```
+
+
 
 
 
