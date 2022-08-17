@@ -42,13 +42,13 @@ knitr::opts_chunk$set(
 )
 
 #load data
-tbl <-
-    list.files ("data/Data2022", pattern = "*.dat", recursive = T, full.names = T) %>%
-    map_df(~read_table2(.)) %>%
-    as_tibble() %>%
-    dplyr::select(1, 2, 15, 17, 18, 19)
-
-saveRDS(tbl, "data/2022Data.RDS")
+# tbl <-
+#     list.files ("data/Data2022", pattern = "*.dat", recursive = T, full.names = T) %>%
+#     map_df(~read_table2(.)) %>%
+#     as_tibble() %>%
+#     dplyr::select(1, 2, 15, 17, 18, 19)
+# 
+# saveRDS(tbl, "data/2022Data.RDS")
 
 
 tbl <- readRDS(file.path("data", "2021Data.RDS")) %>% 
@@ -400,13 +400,74 @@ stds_081022 <- firstround_081022 %>%
      T = 27,
      Analyst = "Haley"
   )
+
+secondbatch <- firstround_081022 <- tbl %>% 
+  filter (DATE == "2022-08-10") %>% 
+  BoulderTime() %>% 
+    filter(MDT > "2022-08-10 16:00" & MDT < "2022-08-10 16:26") %>% 
+      h2o_batches() %>% 
+        flask_first3minutes() %>% 
+        mutate(
+          StdName = c("BDI_080222", "BDI_080222"),
+          T = 23,
+          Analyst = "Haley"
+  )
+
+
+stds_081022 <- stds_081022 %>% 
+  bind_rows(secondbatch)
 ```
 
 
 ## August 11
+```{r}
+data_081122 <- tbl %>% 
+  filter (DATE == "2022-08-11") %>% 
+    BoulderTime() %>% 
+      filter(MDT > "2022-08-11 9:30") %>% 
+        h2o_batches() %>% 
+          filter(H2O_Batch == 68 | H2O_Batch == 134 | H2O_Batch == 399 | H2O_Batch == 482 | H2O_Batch == 564)
 
+h2o_batch_plt(data_081122)
+d180_time_plt(data_081122)
 
-
+stds_081122 <- data_081122 %>% 
+  flask_first3minutes() %>% 
+    mutate(
+      StdName = c("BDI_080222", "BDI_080222", "BDI_080222", "L1_080322", "H2_080322"),
+          T = 23,
+          Analyst = "Haley"
+    )
+```
 
 ## August 12 
+```{r}
+data_081222 <- tbl %>% 
+  filter(DATE == "2022-08-12") %>% 
+    BoulderTime() %>% 
+      filter(MDT > "2022-08-12 10:20" & MDT < "2022-08-12 15:15") %>% 
+        h2o_batches() %>% 
+          filter(H2O_Batch == 51 | H2O_Batch == 126 | H2O_Batch ==206 | H2O_Batch == 463  | H2O_Batch == 623)
 
+
+
+batch545 <- tbl %>% 
+  filter(DATE == "2022-08-12") %>% 
+    BoulderTime() %>% 
+      filter(MDT > "2022-08-12 14:39:00" & MDT < "2022-08-12 14:42:01") %>% flask_out_ave() %>% 
+        mutate(
+          StdName = c("BDI_080222"),
+          T = 23,
+          Analyst = "Haley")
+        
+
+stds_081222 <- data_081222 %>% 
+  flask_first3minutes() %>% 
+   mutate(
+      StdName = c("L1_080322", "BDI_080222", "H2_080322", "L1_080322", "H2_080322"),
+          T = 23,
+          Analyst = "Haley") %>% 
+            bind_rows(batch545)
+```
+
+# August 16 
