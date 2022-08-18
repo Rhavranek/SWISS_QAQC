@@ -1,0 +1,160 @@
+---
+title: "Oglala National Grassland data"
+author: "Rachel Havranek"
+date: "`r format(Sys.Date(), '%d %b %Y')`"
+output:
+  html_document: 
+    df_print: paged # omit to disable paged data table output
+    number_sections: yes # change to no for unnumbered sections
+    toc: yes # change to no to disable table of contents
+    toc_float: true # change to false to keep toc at the top
+    toc_depth: 3 # change to specify which headings to include in toc
+    code_folding: show # change to hide to hide code by default
+editor_options:
+  chunk_output_type: console
+---
+
+
+```{r setup, echo = TRUE, message=FALSE, warning=FALSE}
+## load libraries
+library(tidyverse) 
+library(latex2exp)
+library(viridis)
+library(data.table)
+library (lubridate)
+library(plotly)
+library(fs)
+
+setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS_QAQC/")
+
+# source all relevant scripting files
+source(file.path ("scripts", "plotting_functions.R"))
+source(file.path ("scripts", "PicarroData_BreakUp.R"))
+source(file.path ("scripts", "Rachels_custom_plots.R"))
+source(file.path("scripts", "corrections.R"))
+
+# global knitting options for automatic saving of all plots as .png and .pdf
+knitr::opts_chunk$set(
+  dev = c("png", "pdf"), fig.keep = "all",
+  dev.args = list(pdf = list(encoding = "WinAnsi", useDingbats = FALSE)),
+  fig.path = file.path("fig_output", paste0(gsub("\\.[Rr]md", "", knitr::current_input()), "_"))
+)
+
+tbl <- readRDS(file.path("data","2022Data.RDS"))
+```
+
+# Deployment 1
+Measuring Lindt which was deployed in Oglala National Grassland 
+Photon: SWISS-5. No data log, because it was full
+
+Sample dates:
+*June 25: Flasks 2-4
+*June 29: Flasks 5-7
+*July 4: Flasks 8 - 10
+*July 9: Flasks 11-13
+*July 14: Flasks 14-16
+
+Picked up from the field on August 1 
+
+## August 5, 2022
+
+This was a box we
+```{r}
+data_080522 <- tbl %>% 
+  filter(DATE == "2022-08-05") %>% 
+    BoulderTime() %>% 
+      filter(MDT > "2022-08-05 10:30" & MDT < "2022-08-05 14:30") %>% 
+        h2o_batches()
+
+h2o_batch_plt(data_080522)
+
+flask16 <- data_080522 %>% 
+  filter(MDT > "2022-08-05 10:44" & MDT < "2022-08-05 10:49") %>% flask_out_ave() %>% mutate(Flask = 16) 
+
+flask15 <- data_080522 %>%  
+  filter(MDT > "2022-08-05 11:09" & MDT < "2022-08-05 11:14") %>% 
+  flask_out_ave() %>% mutate(Flask = 15)
+
+flask14 <- data_080522 %>% filter(H2O_Batch == 176)%>%  
+  filter(MDT > "2022-08-05 11:41" & MDT < "2022-08-05 11:46") %>%
+  flask_out_ave() %>% mutate(Flask = 14)
+
+flask13 <- data_080522 %>% filter(H2O_Batch==215) %>%  flask_first3minutes() %>% mutate(Flask = 13)
+
+flask12 <- data_080522 %>% filter(H2O_Batch == 249) %>% filter(MDT > "2022-08-05 12:23" & MDT < "2022-08-05 12:28") %>%
+  flask_out_ave() %>% mutate(Flask = 12)
+
+flask11 <- data_080522 %>% filter(H2O_Batch == 352) %>% filter(MDT > "2022-08-05 13:00" & MDT < "2022-08-05 13:05") %>%
+  flask_out_ave() %>% mutate(Flask = 11)
+
+flask10 <- data_080522 %>% filter(H2O_Batch == 387) %>% filter(MDT > "2022-08-05 13:18" & MDT < "2022-08-05 13:23") %>%
+  flask_out_ave() %>% mutate(Flask = 10)
+
+flask9 <- data_080522 %>% filter(H2O_Batch == 426) %>% filter(MDT > "2022-08-05 13:45" & MDT < "2022-08-05 13:50") %>%
+  flask_out_ave() %>% mutate(Flask = 9)
+
+flask8 <- data_080522 %>% filter(H2O_Batch == 537) %>% filter(MDT > "2022-08-05 14:20" & MDT < "2022-08-05 14:25") %>%
+  flask_out_ave() %>% mutate(Flask = 8)
+
+flasks_0805 <- bind_rows(flask16, flask15, flask14, flask13, flask12, flask11, flask10, flask9, flask8) %>% 
+  mutate(
+    sampledate = ifelse(Flask > 13, "2022-07-14",
+                        ifelse(Flask == 13 |Flask == 12 | Flask ==11, "2022-07-09", "2022-07-04")),
+    sampledepth = c(75,50,25,75,50,25,75,50,25),
+    Analyst = "Rachel"
+  )
+
+```
+
+## August 8, 2022
+```{r}
+data_080822 <- tbl %>% 
+  filter(DATE == "2022-08-08") %>% 
+  BoulderTime() %>% 
+  filter(MDT > "2022-08-08 16:15" & MDT < "2022-08-08 17:15") %>% 
+  h2o_batches()
+
+h2o_batch_plt(data_080822)
+h2O_FirstThreeMinutes(data_080822)
+
+flasks_0808 <- data_080822 %>% 
+  filter(H2O > 5000) %>% flask_first3minutes() %>% 
+  mutate(
+    Flask = c(7:5),
+    sampledate = "2022-06-29",
+    sampledepth = c(75,50,25)
+  )
+```
+
+## August 9, 2022
+```{r}
+data_0809 <- tbl %>% 
+  filter(DATE == "2022-08-09") %>% 
+  BoulderTime() %>% 
+  filter(MDT> "2022-08-09 09:57" & MDT < "2022-08-09 10:47") %>% 
+  h2o_batches()
+
+h2o_batch_plt(data_0809)
+
+flasks0809 <-  data_0809 %>% filter(H2O >10000) %>% flask_first3minutes() %>% 
+  mutate(
+    Flask = c(4:2),
+    sampledate = "2022-06-25",
+    sampledepth = c(75,50,25)
+  )
+```
+
+## Combine and plot
+```{r}
+oglala_firstround <- bind_rows(flasks_0805, flasks_0808, flasks0809)
+
+oglala_d18o <- oglala_firstround %>% 
+  ggplot()+
+  aes(x = sampledate, y = d18O_out, color = as.character(sampledepth))+
+  geom_errorbar(aes(x = sampledate, ymax = d18O_out - 0.5, ymin = d18O_out + 0.5, width = 0.1)) +
+  geom_point(aes(size = 3)) +
+  theme_figure()
+  
+
+print(oglala_d18o)
+```
