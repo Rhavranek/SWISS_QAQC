@@ -470,7 +470,7 @@ stds_081222 <- data_081222 %>%
             bind_rows(batch545)
 ```
 
-# August 16 
+## August 16 
 Valco calibration done on the humidity system. one hour seems to be a good amount of time, could maybe be even longer
 ```{r}
 data_081622 <- tbl %>% 
@@ -524,5 +524,10 @@ all_0816 <- all_0816 %>%
 
 print(d18O_lm$coefficients[1])
 print(d18O_lm$coefficients[2])
+
 ```
+
+### Equations transfered into corrections script
+d18O_corr = (d18O_out - 0.7917232) / 1.02183
+d2H_corr = (d2H_out - 2.226) / 1.036
 
