@@ -471,3 +471,58 @@ stds_081222 <- data_081222 %>%
 ```
 
 # August 16 
+Valco calibration done on the humidity system. one hour seems to be a good amount of time, could maybe be even longer
+```{r}
+data_081622 <- tbl %>% 
+  filter(DATE == "2022-08-16" | DATE == "2022-08-17") %>% 
+  BoulderTime() %>% 
+  filter(MDT<"2022-08-16 22:03") 
+
+waterConcentration_plt(data_081622)
+d180_time_plt(data_081622)
+
+KFW_0816 <- data_081622 %>% 
+  filter (MDT > "2022-08-16 17:51" & MDT < "2022-08-16 18:06") %>% 
+  flask_out_ave() %>% 
+  mutate(std = "KFW")
+
+KAW_0816 <- data_081622 %>% 
+  filter (MDT > "2022-08-16 18:51" & MDT < "2022-08-16 19:06") %>% 
+  flask_out_ave() %>% 
+  mutate(std = "KAW")
+
+KGW_0816 <- data_081622 %>% 
+  filter (MDT > "2022-08-16 19:51" & MDT < "2022-08-16 20:06") %>% 
+  flask_out_ave() %>% 
+  mutate(std = "KGW")
+
+KBW_0816 <- data_081622 %>% 
+  filter (MDT > "2022-08-16 20:51" & MDT < "2022-08-16 21:06") %>% 
+  flask_out_ave() %>% 
+  mutate(std = "KBW")
+
+stds_0817 <- bind_rows(KFW_0816, KAW_0816, KGW_0816, KBW_0816)
+
+
+all_0816 <- full_join(stds_0817, stds, by = "std")
+
+all_0816 %>% ggplot()+
+  aes(x = d18o_known, y = d18O_out, size = 2)+
+  geom_point()+ 
+  geom_smooth(method = "lm", se = FALSE, aes(size = 0.5))
+
+#linearly regress 
+d18O_lm <- lm(d18O_out ~ d18o_known, all_0816)
+dD_lm <- lm(d2H_out ~ d2H_known, all_0816)
+
+#double check it worked
+all_0816 <- all_0816 %>% 
+  mutate(
+    d18O_disc_corr = (d18O_out-d18O_lm$coefficients[1]) / d18O_lm$coefficients[2],
+    dD_disc_corr = (d2H_out-dD_lm$coefficients[1]) / dD_lm$coefficients[2],
+  )
+
+print(d18O_lm$coefficients[1])
+print(d18O_lm$coefficients[2])
+```
+
