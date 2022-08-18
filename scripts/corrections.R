@@ -28,6 +28,7 @@ April42022_corr <- function(df){
   return(April4)
 }
 
+
 April4_phlox_corr <- function(df){
   April4_phlox_corr <- df %>% mutate(
     d18O_corr_phlox = (d18O_out - 4.229)/1.045868,
@@ -35,4 +36,13 @@ April4_phlox_corr <- function(df){
 )
   
   return (April4_phlox_corr)
+}
+
+
+August17_phlox_corr <- function(df){
+  August17 <- df %>% mutate(
+    d18O_corr = (d18O_out - 0.7917232) / 1.02183,
+    d2H_corr = (d2H_out - 2.226) / 1.036
+  )
+  return (August17)
 }
