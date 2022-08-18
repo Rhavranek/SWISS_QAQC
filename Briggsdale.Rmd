@@ -1,0 +1,164 @@
+---
+title: "Briggsdale"
+author: "Rachel Havranek"
+date: "`r format(Sys.Date(), '%d %b %Y')`"
+output:
+  html_document: 
+    df_print: paged # omit to disable paged data table output
+    number_sections: yes # change to no for unnumbered sections
+    toc: yes # change to no to disable table of contents
+    toc_float: true # change to false to keep toc at the top
+    toc_depth: 3 # change to specify which headings to include in toc
+    code_folding: show # change to hide to hide code by default
+editor_options:
+  chunk_output_type: console
+---
+# Setup
+```{r setup, echo = TRUE, message=FALSE, warning=FALSE}
+## load libraries
+library(tidyverse) 
+library(latex2exp)
+library(viridis)
+library(data.table)
+library (lubridate)
+library(plotly)
+library(fs)
+
+setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS_QAQC/")
+
+# source all relevant scripting files
+source(file.path ("scripts", "plotting_functions.R"))
+source(file.path ("scripts", "PicarroData_BreakUp.R"))
+source(file.path ("scripts", "Rachels_custom_plots.R"))
+source(file.path("scripts", "corrections.R"))
+
+# global knitting options for automatic saving of all plots as .png and .pdf
+knitr::opts_chunk$set(
+  dev = c("png", "pdf"), fig.keep = "all",
+  dev.args = list(pdf = list(encoding = "WinAnsi", useDingbats = FALSE)),
+  fig.path = file.path("fig_output", paste0(gsub("\\.[Rr]md", "", knitr::current_input()), "_"))
+)
+```
+
+```{r load data}
+tbl <- readRDS(file.path("data", "2021Data.RDS")) %>% 
+  bind_rows(readRDS(file.path("data","2022Data.RDS")))
+```
+
+# First deployment
+## August 10, 2022
+```{r}
+data_0810 <- tbl %>% 
+  filter (DATE == "2022-08-10") %>% 
+  BoulderTime() %>% 
+  filter(MDT > "2022-08-10 13:30" & MDT < "2022-08-10 18:00") %>% 
+  h2o_batches() %>% 
+  filter (H2O_Batch == 22 | H2O_Batch == 46 | H2O_Batch == 102 | H2O_Batch == 329 | H2O_Batch == 359 | H2O_Batch == 388)
+
+h2o_batch_plt(data_0810)
+d180_time_plt(data_0810)
+h2O_FirstThreeMinutes(data_0810)
+
+flasks_0810 <- data_0810 %>% 
+  flask_first3minutes() %>% 
+  mutate(
+    Flask = c(16:11),
+    sampledate = ifelse(Flask > 13, "2022-08-06", "2022-08-01"),
+    sampledepth = c(75,50,25,75,50,25),
+    Analyst = "Haley"
+  )
+```
+
+## August 11 
+```{r}
+data_0811 <- tbl %>% 
+  filter(DATE == "2022-08-11") %>% 
+  BoulderTime() %>% 
+  filter(MDT > "2022-08-11 11:00" & MDT < "2022-08-11 14:13:30") %>% 
+  h2o_batches() %>% 
+  filter(H2O >5000)
+
+h2o_batch_plt(data_0811)
+h2O_FirstThreeMinutes(data_0811)
+
+flasks_0811 <- data_0811 %>% 
+  flask_first3minutes() %>% 
+  mutate(
+    Flask = c(10:5),
+    sampledate = ifelse (Flask >7 & Flask < 11, "2022-07-27", "2022-07-22"),
+    sampledepth = c(75,50,25,75,50,25),
+    Analyst = "Haley"
+  )
+```
+
+## August 12, 2022
+```{r}
+data_0812 <- tbl %>% 
+  filter(DATE == "2022-08-12") %>% 
+  BoulderTime() %>% 
+  filter(MDT > "2022-08-12 12:21" & MDT < "2022-08-12 13:53") %>% 
+  h2o_batches() %>% 
+  filter(H2O > 5000)
+
+h2o_batch_plt(data_0812)
+d180_time_plt(data_0812)
+h2O_FirstThreeMinutes(data_0812)
+
+flasks_0812 <- data_0812 %>% 
+  flask_first3minutes() %>% 
+    mutate(
+        Flask = c(4:2),
+        sampledate = "2022-07-17",
+        sampledepth = c(75,50,25),
+        Analyst = "Haley"
+    )
+```
+
+```{r}
+Brigssdale_july2022 <- bind_rows(flasks_0810,flasks_0811,flasks_0812)
+
+Brigssdale_d18o <- Brigssdale_july2022 %>% 
+  ggplot()+
+  # geom_errorbar(aes(
+  #   x = sampledate, 
+  #   ymax = d18O_out - 0.5, 
+  #   ymin = d18O_out + 0.5, 
+  #   width = 0, 
+  #   color = "black")) +
+  geom_point(
+    aes(
+      x = sampledate, 
+      y = d18O_out, 
+      fill = as.character(sampledepth)), shape = as.character(sampledepth),
+    size = 3)) +
+  theme_figure()
+  
+
+print(Brigssdale_d18o)
+```
+
+
+```{r}
+Brigssdale_july2022_plt <- Brigssdale_july2022 %>% 
+  ggplot()+
+   geom_errorbar(aes(
+    x = sampledate,
+    ymax = d18O_out - 0.5,
+    ymin = d18O_out + 0.5,
+    width = 0)) +
+  geom_point(
+    aes(
+      x= sampledate,
+      y = d18O_out,
+      pch = as.factor(sampledepth),
+      fill = as.factor(sampledepth)
+    ),
+    size = 3
+  ) +
+  scale_shape_manual(values = c(22,23,24)) +
+ scale_fill_viridis(discrete = TRUE) +
+  theme_figure()
+
+Brigssdale_july2022_plt
+```
+
