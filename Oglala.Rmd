@@ -24,6 +24,7 @@ library(data.table)
 library (lubridate)
 library(plotly)
 library(fs)
+library(gridExtra)
 
 setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS_QAQC/")
 
@@ -150,11 +151,55 @@ oglala_firstround <- bind_rows(flasks_0805, flasks_0808, flasks0809)
 
 oglala_d18o <- oglala_firstround %>% 
   ggplot()+
-  aes(x = sampledate, y = d18O_out, color = as.character(sampledepth))+
-  geom_errorbar(aes(x = sampledate, ymax = d18O_out - 0.5, ymin = d18O_out + 0.5, width = 0.1)) +
-  geom_point(aes(size = 3)) +
+  ylab(latex2exp::TeX('$\\delta^{18}O$'))+
+  geom_errorbar(aes(
+    x = sampledate,
+    ymax = d18O_out - 0.5,
+    ymin = d18O_out + 0.5,
+    width = 0)) +
+  geom_point(
+    aes(
+      x= sampledate,
+      y = d18O_out,
+      pch = as.factor(sampledepth),
+      fill = as.factor(sampledepth)
+    ),
+    size = 3
+  ) +
+  scale_shape_manual(values = c(22,23,24)) +
+  scale_fill_viridis(discrete = TRUE) +
   theme_figure()
   
-
 print(oglala_d18o)
 ```
+
+```{r}
+oglala_d2H <- oglala_firstround %>% 
+  ggplot()+
+  ylab(latex2exp::TeX('$\\delta^2H$'))+
+  geom_errorbar(aes(
+    x = sampledate,
+    ymax = d2H_out - 2.0,
+    ymin = d2H_out + 2.0,
+    width = 0)) +
+  geom_point(
+    aes(
+      x= sampledate,
+      y = d2H_out,
+      pch = as.factor(sampledepth),
+      fill = as.factor(sampledepth)
+    ),
+    size = 3
+  ) +
+  scale_shape_manual(values = c(22,23,24), name = "Sample Depth (cm)") +
+  scale_fill_viridis(discrete = TRUE, name = "Sample Depth (cm)") +
+  theme_figure()
+  
+print(oglala_d2H)
+```
+
+```{r}
+grid.arrange(oglala_d18o, oglala_d2H, nrow = 2)
+```
+
+
