@@ -171,7 +171,7 @@ print(plt_081121)
 now, figure out how to make pivot longer make TWO new columns (one with the mean and one with the sd), then add geom_errorbar(ymax = mean + sd, ymin = mean - sd)
 
 # Dry air 3
-```{r}
+```{r Lindt Dry Air Final }
 data_082521 <- tbl %>% 
   filter (DATE == "2021-08-25")  %>% 
     mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
@@ -201,10 +201,16 @@ flask12_082521 <- data_082521 %>%
 flask_ave_082521 <- data_082521 %>% 
   flask_ave_outlet() %>% 
   mutate(Flask = c(2,3,5,6,7,8,9,10,11,13,14,15,16)) %>% 
-  bind_rows(flask4_082521, flask12_082521)
+  bind_rows(flask4_082521, flask12_082521) 
+  
 
+flask_ave_082521_plt <- Flask_h2o_plt(flask_ave_082521) 
 
-flask_ave_082521_plt <- Flask_h2o_plt(flask_ave_082521)
+print(flask_ave_082521_plt +  
+        ylab(latex2exp::TeX('$H_2O (ppm)$')) +
+        ggtitle("Lindt") +
+       theme(plot.title = element_text(hjust = 0.5))
+      )
 ```
 
 
