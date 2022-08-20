@@ -61,6 +61,7 @@ latex_labeller <- function(labels, ...) {
   require("purrr")
   require("latex2exp")
   
+  
   # figure out if we're in a scale or facet labeller
   facet_labels <- is(labels, "data.frame")
   if (!facet_labels) labels <- tibble(..x.. = as.character(labels))
@@ -90,6 +91,9 @@ latex_labeller <- function(labels, ...) {
   else return(labels$..x..)
 }
 class(latex_labeller) <- c("function", "labeller")
+
+
+
 
 #' Generate a regression fit label to show on plots
 #'
