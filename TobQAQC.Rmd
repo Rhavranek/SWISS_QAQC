@@ -986,13 +986,11 @@ data_081121_plt
 
 # 7 Day Dry Air - August 22, 2021
 Filled with dry air on August 15, 2021 
-```{r 082221}
+```{r Use this Dry air test}
 #filter this to tightly surround the analysis period
 data_082221 <- tbl %>% 
   filter(DATE == "2021-08-22") %>% 
-    mutate(
-        UTC = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"),
-        MDT = with_tz(UTC, tzone = "America/Denver")) %>% 
+    BoulderTime() %>% 
       filter(MDT > "2021-08-22 15:17:45" & MDT < "2021-08-22 16:33:19")
 
 #make sure everything looks good
@@ -1002,7 +1000,7 @@ waterconcentration <- data_082221 %>%
       geom_point()+
       scale_x_time()
 
-ggplotly(waterconcentration, dynamicTicks = TRUE)    
+#ggplotly(waterconcentration, dynamicTicks = TRUE)    
 
 #pre-flag any samples that might not do well 
 OutletValve <- data_082221 %>% 
@@ -1011,7 +1009,7 @@ OutletValve <- data_082221 %>%
       geom_point()+
       scale_x_time()
 
-ggplotly(OutletValve, dynamicTicks = TRUE)
+#ggplotly(OutletValve, dynamicTicks = TRUE)
 
 
 #Cut the data up by outlet valve # & make sure that all of the flasks are separated
@@ -1031,6 +1029,12 @@ outlet.function_aves_082221 <- outlet_082221 %>%
 #Plot your data!
 data_082221_plt <- outlet.function_aves_082221 %>% 
   Flask_h2o_plt()
+
+data_082221_plt +  
+        ylab(latex2exp::TeX('$H_2O (ppm)$')) +
+        ggtitle("Toblerone") +
+       theme(plot.title = element_text(hjust = 0.5))+
+        scale_y_continuous(limits=c(0, 750), expand = c(0, 0))
 
 ```
 
