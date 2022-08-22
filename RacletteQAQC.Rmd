@@ -17,7 +17,7 @@ editor_options:
 #Setup
 ```{r setup, echo = TRUE, message=FALSE, warning=FALSE}
 # load libraries
-l# load libraries
+# load libraries
 library(tidyverse) 
 library(latex2exp)
 library(viridis)
@@ -51,15 +51,12 @@ tbl <- readRDS(file.path("data", "2021Data.RDS")) %>%
 ```{r}
 data_072721 <- tbl %>% 
   filter(DATE == "2021-07-27") %>% 
-    mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
-           UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
-           MDT = with_tz(UTC_full, tzone = "America/Denver"),
-           seconds = row_number()) %>% 
+  BoulderTime() %>% 
       filter(MDT > "2021-07-27 09:35:00" & MDT < "2021-07-27 11:14:19" ) %>% 
   outlet_batches()
 
-WaterConcentration_plt(data_072721)
-plt_outlet_batch(data_072721)
+waterConcentration_plt(data_072721)
+outlet_batch_plt(data_072721)
 
 flask_aves_072721 <- data_072721 %>% 
   flask_ave_outlet() %>% 
@@ -103,7 +100,7 @@ data_080121 <- tbl %>%
            seconds = row_number())  %>% 
       filter(MDT > "2021-08-01 13:52:00") 
 
-WaterConcentration_plt(data_080121)
+waterConcentration_plt(data_080121)
 
 
 inputvalue1 <- data_080121 %>% 
@@ -153,8 +150,8 @@ data_081821 <- tbl %>%
       filter(MDT > "2021-08-18 10:33:00" & MDT <"2021-08-18 13:18:16") %>% 
         outlet_batches()
 
-WaterConcentration_plt(data_081821)
-plt_outlet_batch(data_081821 %>% 
+waterConcentration_plt(data_081821)
+outlet_batch_plt(data_081821 %>% 
                    filter(newbatch != 7 & 
                           newbatch!=16 & 
                           newbatch !=25 & 
@@ -222,8 +219,8 @@ data_090121 <- tbl %>%
       filter(MDT > "2021-09-01 11:16:09" & MDT <"2021-09-01 12:32:21") %>% 
         outlet_batches()
 
-WaterConcentration_plt(data_090121)
-plt_outlet_batch(data_090121)
+waterConcentration_plt(data_090121)
+outlet_batch_plt(data_090121)
 
 flask_aves_090121 <- flask_ave_outlet(data_090121) %>% 
   mutate(Flask = c(2:16))
@@ -331,29 +328,29 @@ WVtest_results <- flasks_032022 %>%
       d2H_diff =   d2H_corr.y - d2H_corr.x
     )
 
-WVtest_results_plt <- WVtest_results %>% 
-  filter(Flask != 16) %>% 
-  pivot_longer(cols = c(d18O_diff, d2H_diff)) %>% 
-    mutate(
-      # turn into ordered variable (factor) that keeps the order
-      latex_name = as_factor(name) %>% fct_inorder()  %>% 
-        # introduce latex substitutions
-        fct_recode(
-                   "$\\Delta \\delta^2H" = "d2H_diff",
-                   "$\\Delta \\delta^{18}O" = "d18O_diff")
-    ) %>% 
-      ggplot()+
-        aes(x = Flask, y = value, size = 2) +
-        facet_wrap(~latex_name, labeller = latex_labeller, ncol = 1, scales = "free")+
-        geom_point()+
-        scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
-        theme_figure()+
-        theme(
-          legend.position = "none"
-        )
-
-print(WVtest_results_plt)
-ggplotly(WVtest_results_plt)
+# WVtest_results_plt <- WVtest_results %>% 
+#   filter(Flask != 16) %>% 
+#   pivot_longer(cols = c(d18O_diff, d2H_diff)) %>% 
+#     mutate(
+#       # turn into ordered variable (factor) that keeps the order
+#       latex_name = as_factor(name) %>% fct_inorder()  %>% 
+#         # introduce latex substitutions
+#         fct_recode(
+#                    "$\\Delta \\delta^2H" = "d2H_diff",
+#                    "$\\Delta \\delta^{18}O" = "d18O_diff")
+#     ) %>% 
+#       ggplot()+
+#         aes(x = Flask, y = value, size = 2) +
+#         facet_wrap(~latex_name, labeller = latex_labeller, ncol = 1, scales = "free")+
+#         geom_point()+
+#         scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+#         theme_figure()+
+#         theme(
+#           legend.position = "none"
+#         )
+# 
+# print(WVtest_results_plt)
+# ggplotly(WVtest_results_plt)
 
 
 evap <- WVtest_results %>% 
@@ -366,6 +363,22 @@ evap <- WVtest_results %>%
 print(evap)
 
 lm(formula = d2H_diff ~ d18O_diff, data = WVtest_results)
+```
+
+# Summer 2022 Dry Air 
+```{r}
+july2022 <- tibble(
+  H2O_out = c(533.5, 352.2, 309.8, 370.6, 310, 305, 374, 292.3,320.7, 523.3, 427.7, 267.1, 265.1, 269.1, 261),
+  Flask = c(2:16)
+)
+
+july2022_plt <- Flask_h2o_plt(july2022) 
+
+july2022_plt +  
+        ylab(latex2exp::TeX('$H_2O (ppm)$')) +
+        ggtitle("Raclette") +
+        theme(plot.title = element_text(hjust = 0.5)) +
+        scale_y_continuous(limits=c(0, 750), expand = c(0, 0))
 ```
 
 
