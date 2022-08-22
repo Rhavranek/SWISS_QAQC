@@ -209,7 +209,8 @@ flask_ave_082521_plt <- Flask_h2o_plt(flask_ave_082521)
 print(flask_ave_082521_plt +  
         ylab(latex2exp::TeX('$H_2O (ppm)$')) +
         ggtitle("Lindt") +
-       theme(plot.title = element_text(hjust = 0.5))
+       theme(plot.title = element_text(hjust = 0.5)) +
+      scale_y_continuous(limits=c(0, 750), expand = c(0, 0))
       )
 ```
 
