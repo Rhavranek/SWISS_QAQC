@@ -267,7 +267,22 @@ long_dry_air <- tibble(
   H2O_out = c(650, 290, 272,260,290,1600,810,800,290,270,365,355,320,515,420)
 )
 
-long_dry_air %>% Flask_h2o_plt()
+long_dry_air %>% ggplot()+
+  aes(x = Flask, y = H2O_out, size = 2)+
+  geom_point(color = "black") +
+  scale_y_continuous(limits =c(0, 3000), expand = c(0,0)) +
+  scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+  theme_figure() +
+  labs(
+    y = latex2exp::TeX("$H_2O (ppm)$"),
+    title = "Rosti",
+    subtitle = "34 Days"
+  ) +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5) ,
+    plot.subtitle = element_text(hjust = 0.5)
+  )
 ```
 
 
