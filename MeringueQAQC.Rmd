@@ -399,36 +399,110 @@ WVtest_results_plt <- WVtest_results %>%
 print(WVtest_results_plt)
 ```
 
+
+
+
+
 # May 2022 Backyard test 
+
+```{r}
+may24 <- tbl %>% 
+  filter(DATE == "2022-05-24" | DATE == "2022-05-25") %>% 
+  BoulderTime() %>% 
+  filter(MDT > "2022-05-24 15:45")
+
+waterConcentration_plt(may24)
+d180_time_plt(may24)
+```
+
+
 ```{r}
 May2022_data <- tibble(
   Flask = (16:2),
+  T = c(27,25,22, 18,17,15, 20,20.6,21.6, 25,27,28, 21,21,21),
   d18O = c(-31.85, -17.87, -24.33, -31.85, -17.91, -23.39, -32.76,-18.09, - 26.27, -33.9, -18.09, -23.43, -33.4, -19.0, -23.3),
-  d2H = c(-251,-167.4, -191.2, -247.8,-168, -195, -265.1,-168.7, - 207, -262, - 169.5, -192.2, -255.6, -173.5,  - 189)
-)
+  d18O_corr = (11.45 - 0.0795*T + 1.0012*d18O),
+  d2H = c(-251,-167.4, -191.2, -247.8,-168, -195, -265.1,-168.7, - 207, -262, - 169.5, -192.2, -255.6, -173.5,  - 189),
+  d2H_corr = (104.96 - 1.0342*T + 1.0724*d2H),
+  water= c("Light", "Atmosphere", "DI", "Light", "Atmosphere", "DI", "Light", "Atmosphere", "DI","Light", "Atmosphere", "DI", "Light", "Atmosphere", "DI" )
+) 
+
+
+# %>% 
+#   pivot_longer(cols = c(d18O, d2H)) %>% 
+#   mutate(
+#       # turn into ordered variable (factor) that keeps the order
+# 
+#       latex_name = as_factor(name) %>% fct_inorder()  %>%
+#         # introduce latex substitutions
+#         fct_recode(
+#                    "$\\Delta \\delta^2H" = "d2H",
+#                    "$\\Delta \\delta^{18}O" = "d18O")
+#     ) 
+
+
+# May2022_data %>%  ggplot()+
+#         aes(x = Flask, y = value,  fill = water) +
+#         facet_wrap(~latex_name, labeller = latex_labeller, ncol = 1, scales = "free")+
+#         geom_point(pch = 21, size = 4)+
+#         scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+#         theme_figure()+
+#         theme(
+#           legend.position = "none",
+#           axis.title.y = element_blank()
+#         ) +
+#         scale_fill_viridis(option = "C", discrete = TRUE)
+
+
 
 d18O_plt <- May2022_data %>% 
   ggplot()+
-  aes(x = Flask, y = d18O)+
-  geom_errorbar(aes(ymin = d18O- 0.5, ymax = d18O+0.5))+
-  geom_point()+
+  aes(x = Flask, y = d18O_corr, fill = water)+
+  geom_errorbar(aes(ymin = d18O_corr - 0.5, ymax = d18O_corr+0.5)) +
+  geom_point(pch = 21, size = 4)+
+  geom_hline(aes(yintercept = - 8.5), linetype = "longdash") +
+  geom_hline(aes(yintercept = - 8.0), linetype = "dotted") +
+  geom_hline(aes(yintercept = - 9.0), linetype = "dotted") +
+  
+  geom_hline(aes(yintercept = -13.82), linetype = "longdash") +  
+  geom_hline(aes(yintercept = -14.32), linetype = "dotted") +
+  geom_hline(aes(yintercept = -13.32), linetype = "dotted") +
+  
+  geom_hline(aes(yintercept = -22.69), linetype = "longdash")+
+  geom_hline(aes(yintercept = -22.19), linetype = "dotted")+
+  geom_hline(aes(yintercept = -23.19), linetype = "dotted") +
+  
   scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
-    theme_figure()
+  theme_figure() +
+  labs(
+   y = latex2exp::TeX("$\\Delta\\delta^{18}O$")) +
+  scale_fill_viridis(option = "C", discrete = TRUE)
 
 print(d18O_plt)
 
 
 d2H_plt <- May2022_data %>% 
   ggplot()+
-  aes(x = Flask, y = d2H)+
-  geom_errorbar(aes(ymin = d2H- 4.0, ymax = d2H+4.0))+
-  geom_point()+
+  aes(x = Flask, y = d2H_corr, fill = water)+
+  geom_errorbar(aes(ymin = d2H_corr - 2.4, ymax = d2H_corr+2.4)) +
+  geom_point(pch = 21, size = 4)+
+  geom_hline(aes(yintercept = -96.8832), linetype = "longdash") +
+  geom_hline(aes(yintercept = -99.28), linetype = "dotted") +
+  geom_hline(aes(yintercept = -94.4832), linetype = "dotted") +
+
+  geom_hline(aes(yintercept = -130.0204), linetype = "longdash") +
+  geom_hline(aes(yintercept = -132.4204), linetype = "dotted") +
+  geom_hline(aes(yintercept = -127.62), linetype = "dotted") +
+
+  geom_hline(aes(yintercept = -199.5119), linetype = "longdash")+
+  geom_hline(aes(yintercept = -201.9119), linetype = "dotted")+
+  geom_hline(aes(yintercept = -197.1119), linetype = "dotted") +
+  
   scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
-    theme_figure()
+  theme_figure() +
+  labs(
+   y = latex2exp::TeX("$\\Delta\\delta^2H$")) +
+  scale_fill_viridis(option = "C", discrete = TRUE)
 
 print(d2H_plt)
-
-
-
- ```
-
+```
