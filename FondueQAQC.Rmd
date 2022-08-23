@@ -616,7 +616,25 @@ flask_ave_102821 <- data_102821 %>%
       mutate(Flask = c(2,3,4,5,6,7,8,9,10,11,13)) %>% 
         bind_rows(flask12_102821)
 
-plt_flasks_102821 <- Flask_h2o_plt(flask_ave_102821)
+plt_flasks_102821 <- flask_ave_102821 %>% 
+  ggplot()+
+  aes(x = Flask, y = H2O_out, size = 2)+
+  geom_point(color = "black") +
+  scale_y_continuous(limits =c(0, 3000), expand = c(0,0)) +
+  scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+  theme_figure() +
+  labs(
+    y = latex2exp::TeX("$H_2O (ppm)$"),
+    title = "Fondue",
+    subtitle = "43 Days"
+  ) +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5) ,
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+plt_flasks_102821
 ```
 
 
