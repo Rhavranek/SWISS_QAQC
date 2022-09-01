@@ -302,6 +302,7 @@ WVtest_results <- flasks_032022 %>%
     )
 
 WVtest_results_plt <- WVtest_results %>% 
+  filter(Flask > 3) %>% 
   pivot_longer(cols = c(d18O_diff_corr, d2H_diff_corr)) %>% 
     mutate(
       # turn into ordered variable (factor) that keeps the order
