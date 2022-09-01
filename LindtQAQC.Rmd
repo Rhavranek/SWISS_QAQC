@@ -40,6 +40,15 @@ knitr::opts_chunk$set(
   fig.path = file.path("fig_output", paste0(gsub("\\.[Rr]md", "", knitr::current_input()), "_"))
 )
 
+# Add in new data files if needed, otherwise comment out because it is fairly slow to load the data otherwise 
+# tbl <-
+#     list.files ("data/Data2022", pattern = "*.dat", recursive = T, full.names = T) %>%
+#     map_df(~read_table2(.)) %>%
+#     as_tibble() %>%
+#     dplyr::select(1, 2, 15, 17, 18, 19)
+# 
+# saveRDS(tbl, "data/2022Data.RDS")
+
 #Load 2021 data
 tbl <- readRDS(file.path("data", "2021Data.RDS")) %>% 
   bind_rows(readRDS(file.path("data","2022Data.RDS")))
@@ -327,3 +336,164 @@ print(WVtest_results_plt)
 ```
 
 flasks 2 & 3 are for SURE weird. I feel pretty convinced there was a condensation problem; I should look for a water condensation problem in the first few flasks on Raclette.  Like the other boxes, it looks like there is ~ 0.75 per mil offset between the two time periods. Which would be really unexpected. check the standard runs that bracket this run. 
+
+
+# Water Vapor 3
+## August 17 2022
+* I filled this box with DI water (DI0803222) at a rate of 150 ml / min (with a 50 ml/min dilution flow). 
+* Each flask was filled for 30 minutes (or just shy ofd 7 turns)
+* At the start, the filling was a little wonky because there were some temperature fluctuations associated with the LN2 blow off from the instrument Troi. To mitigate that, I put the water container w/ probe installed a doer and then packed foam around it. That minimized temperature variablity quite a bit. 
+* 2:28 pm - 9:58 pm 
+* The batch plot doesn't work well for flasks 3, 5, and 8 - there was a fast enough increase in h2o concentration for the function to automatically break apart those groups, need to do those manually 
+
+```{r}
+data_081722 <- 
+  tbl %>% 
+    filter(DATE == "2022-08-17" | DATE == "2022-08-18") %>% 
+      BoulderTime() %>% 
+        filter(MDT > "2022-08-17 14:29" & MDT < "2022-08-17 22:01") %>% 
+          h2o_batches()
+
+h2o_batch_plt(data_081722)
+h2o_LastThreeMinutes(data_081722 %>% filter(H2O_Batch != 116 & H2O_Batch != 66))
+
+flasks_081722 <- data_081722 %>% 
+  filter(H2O_Batch != 116 & H2O_Batch != 66) %>% 
+    flask_last3mintues() %>% 
+      mutate(Flask =c(2,4,6,7,9:16))
+
+flask3_0817 <- data_081722 %>% 
+  filter(MDT > "2022-08-17 15:00" & MDT < "2022-08-17 15:29") %>% 
+  flask_last3mintues() %>% 
+    mutate(Flask = 3)
+
+flask5_0817 <- data_081722 %>% 
+  filter(MDT > "2022-08-17 16:00" & MDT < "2022-08-17 16:29") %>% 
+  flask_last3mintues() %>% 
+    mutate(Flask = 5)
+
+
+flask8 <- data_081722 %>% 
+  filter(MDT > "2022-08-17 17:30" & MDT < "2022-08-17 17:59") %>% 
+  flask_last3mintues() %>% 
+    mutate(Flask = 8)
+
+flasks_081722 <- flasks_081722 %>% 
+  bind_rows(flask3_0817, flask5_0817, flask8)
+```
+
+## August 29, 2022
+12 days
+```{r}
+data_082922 <- 
+  tbl %>% 
+    filter(DATE == "2022-08-29") %>% 
+      BoulderTime() %>% 
+        filter(MDT > "2022-08-29 13:00") %>% 
+          h2o_batches()
+
+h2o_batch_plt(data_082922)
+h2O_FirstThreeMinutes(data_082922 %>%  filter (H2O > 5000 & H2O_Batch !=376))
+
+
+flask12_082822 <- data_082922 %>% 
+  filter(H2O_Batch == 245) %>% 
+  filter(MDT > "2022-08-29 14:45:30" & MDT < "2022-08-29 14:48:30") %>% 
+  flask_out_ave() %>% 
+  mutate(Flask = 12)
+
+flask8_082822 <- data_082922 %>% 
+  filter(H2O_Batch == 419) %>% 
+  filter(MDT > "2022-08-29 16:38:30" & MDT < "2022-08-29 16:41:30") %>% 
+  flask_out_ave() %>% 
+  mutate(Flask = 8)
+
+flask5_082822 <- data_082922 %>% 
+  filter(H2O_Batch == 739) %>% 
+  filter(MDT > "2022-08-29 17:50:00" & MDT < "2022-08-29 17:53:00") %>% 
+  flask_out_ave() %>% 
+  mutate(Flask = 5)
+
+flasks_082922 <- data_082922%>%  
+  filter (H2O > 5000 & H2O_Batch !=376 & H2O_Batch != 245 & H2O_Batch !=419 & H2O_Batch != 739) %>%   flask_first3minutes() %>% 
+  mutate(Flask = c(16:13,11:9,7,6)) %>% 
+  bind_rows(flask12_082822, flask8_082822, flask5_082822)
+```
+
+## August 30, 2022
+```{r}
+data_083022 <- 
+  tbl %>% 
+    filter(DATE == "2022-08-30") %>% 
+      BoulderTime() %>% 
+        filter(MDT > "2022-08-30 08:35" & MDT < "2022-08-30 9:30") %>% 
+          h2o_batches()
+
+h2o_batch_plt(data_083022)
+d180_time_plt(data_083022)
+
+
+flasks_0830 <- data_083022 %>% 
+  filter(MDT > "2022-08-30 08:36:30" & MDT < "2022-08-30 08:39:30") %>% 
+    flask_out_ave() %>% 
+      mutate(Flask = 4)
+
+flasks_0830 <- flasks_0830 %>% 
+  bind_rows(
+    data_083022 %>% 
+  filter(MDT > "2022-08-30 08:50:00" & MDT < "2022-08-30 08:52:00") %>% 
+    flask_out_ave() %>% 
+      mutate(Flask = 3)
+  )
+
+flasks_0830 <- flasks_0830 %>% 
+  bind_rows(
+    data_083022 %>% 
+  filter(MDT > "2022-08-30 09:19:00" & MDT < "2022-08-30 09:22:00") %>% 
+    flask_out_ave() %>% 
+      mutate(Flask = 2)
+  )
+
+flasks_out_0822 <- bind_rows(flasks_082922, flasks_0830)
+```
+
+## differences
+```{r}
+WVtest_results_0822 <- flasks_081722 %>% 
+  left_join(flasks_out_0822, by = "Flask") %>% 
+    mutate(
+      d18O_diff_raw = d18O_out.y - d18O_out.x,
+      #d18O_diff_corr = d18O_corr.y - d18O_corr.x,
+      d2H_diff =   d2H_out.y - d2H_out.x,
+      #d2H_diff_corr = d2H_corr.y - d2H_corr.x
+    )
+
+WVtest_results_plt_0822 <- WVtest_results_0822 %>% 
+  pivot_longer(cols = c(d18O_diff_raw, d2H_diff)) %>% 
+    mutate(
+      # turn into ordered variable (factor) that keeps the order
+      
+      latex_name = as_factor(name) %>% fct_inorder()  %>% 
+        # introduce latex substitutions
+        fct_recode(
+                   "$\\Delta \\delta^2H" = "d2H_diff",
+                   "$\\Delta \\delta^{18}O" = "d18O_diff_raw")
+    ) %>% 
+      ggplot()+
+        aes(x = Flask, y = value, size = 2) +
+        facet_wrap(~latex_name, labeller = latex_labeller, ncol = 1, scales = "free")+
+        geom_point()+
+        scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+        theme_figure()+
+        theme(
+          legend.position = "none"
+        )
+
+print(WVtest_results_plt_0822)
+```
+
+
+
+
+
+
