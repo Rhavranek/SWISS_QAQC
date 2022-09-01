@@ -679,6 +679,7 @@ $$
 
 
 
+
 # Long Dry Air
 ```{r 52day.dry.air.1}
 
@@ -1256,7 +1257,8 @@ WVtest_results <- flasks_031922 %>%
 
 
 
-WVtest_results_plt <- WVtest_results %>% 
+WVtest_results_plt <- WVtest_results %>%  
+  filter(Flask < 15) %>% 
   pivot_longer(cols = c(d18O_corr_diff, d2H_corr_diff)) %>% 
     mutate(
       # turn into ordered variable (factor) that keeps the order
