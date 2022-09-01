@@ -482,6 +482,7 @@ print(d18O_plt)
 
 
 d2H_plt <- May2022_data %>% 
+   filter(water == "DI") %>%
   ggplot()+
   aes(x = Flask, y = d2H_corr, fill = water)+
   geom_errorbar(aes(ymin = d2H_corr - 2.4, ymax = d2H_corr+2.4)) +
