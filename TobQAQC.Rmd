@@ -1254,9 +1254,6 @@ WVtest_results <- flasks_031922 %>%
     )
 
 
-
-
-
 WVtest_results_plt <- WVtest_results %>%  
   filter(Flask < 15) %>% 
   pivot_longer(cols = c(d18O_corr_diff, d2H_corr_diff)) %>% 
@@ -1283,7 +1280,112 @@ WVtest_results_plt <- WVtest_results %>%
 print(WVtest_results_plt)
 ```
 
+# Water vapor test 3
+## August 18-19
+```{r}
+data_0818 <- tbl %>% 
+  filter(DATE == "2022-08-18") %>% 
+    BoulderTime() %>% 
+      filter(MDT > "2022-08-17 22:55" & MDT < "2022-08-18 06:30") %>% 
+        h2o_batches()
+
+h2o_batch_plt(data_0818)
+h2o_LastThreeMinutes(data_0818)
+
+
+flasks_0818 <- data_0818 %>% 
+  flask_last3mintues() %>% 
+  mutate(Flask = c(2:16))
+```
+
+## August 30 & 31
+
+I wrote a function for this set of data called: flask_First3_lessCutoff, where I just cut off the first 120 seconds of a flask measurement, rather than 
+```{r}
+data_0830 <-tbl %>% 
+  filter(DATE == "2022-08-30") %>% 
+    BoulderTime() %>% 
+      filter(MDT > "2022-08-30 09:50" & MDT < "2022-08-30 15:14") %>% 
+        h2o_batches()
+
+data_0830 %>% h2o_batch_plt()
+
+data_0830 %>% 
+  filter(Delta_18_16 > -30.5 & Delta_18_16 < -26) %>% 
+  d180_time_plt()
+
+data_0830 %>% 
+  filter(H2O > 5000) %>% 
+    h2o_First3_LessCutoff() 
+
+data_0830 %>% 
+  filter(H2O > 5000) %>% 
+    d18O_three_minute_start()
+
+
+flasks_0830 <- data_0830 %>% 
+  filter(H2O > 5000) %>% 
+    flask_First3_lessCutoff() %>% 
+      mutate(Flask = c(16:4))
+```
+
+```{r}
+data_0831 <- tbl %>% 
+  filter(DATE == "2022-08-31") %>% 
+    BoulderTime() %>% 
+      filter(MDT > "2022-08-31 10:44:00" & MDT < "2022-08-31 11:28:00") %>%  h2o_batches()
+
+data_0831 %>% 
+  filter(H2O > 5000) %>% 
+    h2o_batch_plt()
+
+data_0831 %>% 
+  filter(H2O > 5000) %>% 
+  filter(H2O_Batch != 47) %>% 
+    d18O_three_minute_start()
+
+flasks_0831 <- data_0831 %>% 
+  filter(H2O > 5000) %>% 
+    filter(H2O_Batch != 47) %>% 
+      flask_First3_lessCutoff() %>% 
+        mutate(Flask = c(3,2))
+
+flasks_out_202208 <- bind_rows(flasks_0830, flasks_0831)
+```
 
 
 
+
+```{r}
+WVtest_results_202208 <- flasks_0818 %>% 
+  left_join(flasks_out_202208, by = "Flask") %>% 
+    mutate(
+      d18O_diff_raw = d18O_out.y - d18O_out.x,
+      d2H_diff_raw =   d2H_out.y - d2H_out.x,
+    )
+
+WVtest_results_plt_202208 <- WVtest_results_202208 %>%  
+  pivot_longer(cols = c(d18O_diff_raw, d2H_diff_raw)) %>% 
+    mutate(
+      # turn into ordered variable (factor) that keeps the order
+
+      latex_name = as_factor(name) %>% fct_inorder()  %>%
+        # introduce latex substitutions
+        fct_recode(
+                   "$\\Delta \\delta^2H" = "d2H_diff_raw",
+                   "$\\Delta \\delta^{18}O" = "d18O_diff_raw")
+    ) %>%
+      ggplot()+
+        aes(x = Flask, y = value, size = 2) +
+        facet_wrap(~latex_name, labeller = latex_labeller, ncol = 1, scales = "free")+
+        geom_point()+
+        scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+        theme_figure()+
+        theme(
+          legend.position = "none",
+          axis.title.y = element_blank()
+        )
+
+WVtest_results_plt_202208
+```
 
