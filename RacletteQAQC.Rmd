@@ -381,5 +381,104 @@ july2022_plt +
         scale_y_continuous(limits=c(0, 750), expand = c(0, 0))
 ```
 
+# Water Vapor Test 2 
+# August 18, 2022
+h2o batches didn't differentiate 4 and 5 or 12 and 13 
+```{r}
+data_081822 <- tbl %>% 
+  filter (DATE == "2022-08-18") %>% 
+    BoulderTime() %>% 
+      filter (MDT > "2022-08-18 07:35" & MDT < "2022-08-18 15:07") %>% 
+        h2o_batches()
+
+data_081822 %>% h2o_batch_plt()
+data_081822 %>% h2o_Last3Minutes_MOREcuttoff()
+data_081822 %>% d18o_last3mintues_MOREcuttoff()
+
+flask4_0818 <-data_081822 %>% 
+  filter(MDT > "2022-08-18 09:01:19" & MDT < "2022-08-18 9:04:20") %>% 
+    flask_out_ave() %>% 
+      mutate(Flask = 4)
+
+flask12_0818 <- data_081822 %>% 
+  filter(MDT > "2022-08-18 13:01:19" & MDT < "2022-08-18 13:04:20") %>% 
+    flask_out_ave() %>% 
+      mutate(Flask = 12)
+
+flasks_081822 <- data_081822 %>% 
+  flask_last3_MOREcuttoff() %>% 
+    mutate(Flask = c(2,3,5:11,13:16)) %>% 
+      bind_rows(flask4_0818, flask12_0818) 
+```
+
+## August 30, 2022 
+flasks 16 and 6 were both super drifty, so I did those by hand 
+```{r}
+data_083122 <- tbl %>% 
+  filter (DATE == "2022-08-31" | DATE == "2022-09-01") %>% 
+    BoulderTime() %>% 
+      filter(MDT >"2022-08-31 11:45" & MDT < "2022-08-31 18:30") %>% 
+        h2o_batches() %>% 
+          filter(H2O > 5000)
+
+h2o_batch_plt(data_083122)
+h2O_FirstThreeMinutes(data_083122)
+d18O_three_minute_start(data_083122 %>% filter(H2O_Batch != 35 & H2O_Batch != 330))
+
+flask16_0831 <- data_083122 %>% 
+  filter(MDT >"2022-08-31 11:48:30" & MDT < "2022-08-31 11:51:31") %>% 
+    flask_out_ave() %>% 
+      mutate(Flask = 16)
+
+flask6_0831 <- data_083122 %>% 
+  filter(MDT> "2022-08-31 17:08" & MDT < "2022-08-31 17:11:01") %>%   
+      flask_out_ave()%>% 
+          mutate(Flask = 6)
+
+flasks_083122 <- data_083122 %>% 
+  filter(H2O_Batch != 35 & H2O_Batch != 330) %>% 
+    flask_first3minutes() %>% 
+      mutate(Flask = c(15:7, 5:2)) %>% 
+        bind_rows(flask16_0831, flask6_0831) 
+```
+
+
+```{r}
+WVtest_results_202208 <- flasks_081822 %>% 
+  left_join(flasks_083122, by = "Flask") %>% 
+    mutate(
+      d18O_diff_raw = d18O_out.y - d18O_out.x,
+      d2H_diff_raw =   d2H_out.y - d2H_out.x,
+    )
+
+WVtest_results_plt_202208 <- WVtest_results_202208 %>%  
+  pivot_longer(cols = c(d18O_diff_raw, d2H_diff_raw)) %>% 
+    mutate(
+      # turn into ordered variable (factor) that keeps the order
+
+      latex_name = as_factor(name) %>% fct_inorder()  %>%
+        # introduce latex substitutions
+        fct_recode(
+                   "$\\Delta \\delta^2H" = "d2H_diff_raw",
+                   "$\\Delta \\delta^{18}O" = "d18O_diff_raw")
+    ) %>%
+      ggplot()+
+        aes(x = Flask, y = value, size = 2) +
+        facet_wrap(~latex_name, labeller = latex_labeller, ncol = 1, scales = "free")+
+        geom_point()+
+        scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+        theme_figure()+
+        theme(
+          legend.position = "none",
+          axis.title.y = element_blank()
+        )
+
+WVtest_results_plt_202208
+```
+
+
+
+
+
 
 
