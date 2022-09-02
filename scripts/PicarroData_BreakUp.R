@@ -15,9 +15,9 @@ flask_out_ave <- function (df) {
     SDH2O_out = round(sd(H2O), 2),
     H2O_out = round(mean(H2O),2),
     SD_18O_out = round(sd (Delta_18_16),2),
-    d18O_out = round(mean (Delta_18_16),2),
+    d18O_out = round(mean (Delta_18_16),1),
     SD_2H_out = round(sd(Delta_D_H),2),
-    d2H_out = round(mean(Delta_D_H),2)
+    d2H_out = round(mean(Delta_D_H),1)
   )
   return(flask.out.ave)
 }
@@ -81,6 +81,21 @@ flask_last3mintues <- function(df) {
   return(flask.aves)  
 }
 
+flask_last3_MOREcuttoff <- function(df) {
+  flask.aves <- df %>% 
+    group_by(H2O_Batch) %>% 
+    mutate( 
+      row = row_number(),
+      totalrows= n()
+    ) %>% 
+    filter (totalrows > 100) %>% 
+    filter(row < (totalrows - 100)) %>% 
+    filter(row > (totalrows - 340)) %>% 
+    flask_out_ave()
+  
+  return(flask.aves)  
+}
+
 #for a flask where its broken up by water concentration, but you want the first three minutes 
 flask_first3minutes <- function (df) {
   flask.aves <- df %>% 
@@ -95,6 +110,17 @@ flask_first3minutes <- function (df) {
   return(flask.aves)
 }
 
-
-
+flask_First3_lessCutoff <- 
+  function (df) {
+    flask.aves <- df %>% 
+      group_by(H2O_Batch) %>% 
+      mutate( 
+        row = row_number(),
+        totalrows= n()
+      ) %>% 
+      filter(totalrows>100 & row > 120 & row < 335) %>% 
+      flask_out_ave()
+    
+    return(flask.aves)
+  }
 

@@ -151,6 +151,50 @@ h2o_LastThreeMinutes <- function (df){
   ggplotly(plt_groups, dynamicTicks = TRUE)
 }
   
+h2o_Last3Minutes_MOREcuttoff <- function (df){
+  groups <- df %>% 
+    group_by(H2O_Batch) %>% 
+    mutate( 
+      row = row_number(),
+      totalrows= n()
+    ) %>% 
+    filter (totalrows > 100) %>% 
+    filter(row < (totalrows - 100)) %>% 
+    filter(row > (totalrows - 340))
+  
+  plt_groups <- groups %>% 
+    ggplot()+
+    aes(x =MDT, y = H2O, color = H2O_Newbatch) +
+    geom_point() +
+    theme_figure()+
+    theme(legend.position = "none")
+  
+  ggplotly(plt_groups, dynamicTicks = TRUE)
+}
+
+
+d18o_last3mintues_MOREcuttoff <- function (df){
+  groups <- df %>% 
+    group_by(H2O_Batch) %>% 
+    mutate( 
+      row = row_number(),
+      totalrows= n()
+    ) %>% 
+    filter (totalrows > 100) %>% 
+    filter(row < (totalrows - 100)) %>% 
+    filter(row > (totalrows - 340))
+  
+  plt_groups <- groups %>% 
+    ggplot()+
+    aes(x =MDT, y = Delta_18_16, color = H2O_Newbatch) +
+    geom_point() +
+    theme_figure()+
+    theme(legend.position = "none")
+  
+  ggplotly(plt_groups, dynamicTicks = TRUE)
+}
+
+
 h2O_FirstThreeMinutes <- function(df){
   groups <- df %>% 
     group_by(H2O_Batch) %>% 
@@ -172,9 +216,45 @@ h2O_FirstThreeMinutes <- function(df){
 }  
 
 
+h2o_First3_LessCutoff <-  function(df){
+  groups <- df %>% 
+    group_by(H2O_Batch) %>% 
+    mutate( 
+      row = row_number(),
+      totalrows= n()
+    ) %>% 
+    filter(totalrows>100 & row > 120 & row < 335) 
+  
+  plt_groups <- groups %>% 
+    ggplot()+
+    aes(x =MDT, y = H2O, color = H2O_Newbatch) +
+    geom_point() +
+    theme_figure()+
+    theme(legend.position = "none")
+  
+  ggplotly(plt_groups, dynamicTicks = TRUE)
+  
+}  
 
-
-
+d18O_three_minute_start <-  function(df){
+  groups <- df %>% 
+    group_by(H2O_Batch) %>% 
+    mutate( 
+      row = row_number(),
+      totalrows= n()
+    ) %>% 
+    filter(totalrows>100 & row > 120 & row < 335) 
+  
+  plt_groups <- groups %>% 
+    ggplot()+
+    aes(x =MDT, y = Delta_18_16, color = H2O_Newbatch) +
+    geom_point() +
+    theme_figure()+
+    theme(legend.position = "none")
+  
+  ggplotly(plt_groups, dynamicTicks = TRUE)
+  
+}  
 
 
 
