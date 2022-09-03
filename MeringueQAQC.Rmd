@@ -62,18 +62,12 @@ tbl <- readRDS(file.path("data", "2021Data.RDS")) %>%
 ```{r DryAir1}
 data_061621 <- tbl %>% 
   filter(DATE == "2021-06-16") %>% 
-    mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
-           UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
-           MDT = with_tz(UTC_full, tzone = "America/Denver"),
-           seconds = row_number()) %>% 
-    filter(MDT > "2021-06-16 16:37:35" & MDT <"2021-06-16 17:50:11")
+   BoulderTime() %>% 
+    filter(MDT > "2021-06-16 16:37:35" & MDT <"2021-06-16 17:50:11") %>% 
+      outlet_batches()
 
-
-WaterConcentration_plt(data_061621)
-OutletValve_plt(data_061621)
-
-data_061621 <- outlet_batches(data_061621)
-plt_outlet_batch(data_061621)
+waterConcentration_plt(data_061621)
+outlet_batch_plt(data_061621)
 
 flask5_061621 <- data_061621 %>% 
   filter (MDT > "2021-06-16 16:54:54" & MDT <"2021-06-16 16:57:54") %>% 
@@ -100,17 +94,14 @@ From this test:
 ```{r DryAir2}
 data_070421 <- tbl %>% 
   filter(DATE == "2021-07-04") %>% 
-    mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
-           UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
-           MDT = with_tz(UTC_full, tzone = "America/Denver"),
-           seconds = row_number()) %>% 
-      filter(MDT > "2021-07-04 13:35:27" & MDT < "2021-07-04 14:50:17")
+   BoulderTime() %>% 
+      filter(MDT > "2021-07-04 13:35:27" & MDT < "2021-07-04 14:50:17") %>% 
+        outlet_batches()
 
-WaterConcentration_plt(data_070421)
-OutletValve_plt(data_070421)
+waterConcentration_plt(data_070421)
+outlet_batch_plt(data_070421)
 
-data_070421 <- outlet_batches(data_070421)
-plt_outlet_batch(data_070421)
+
 
 # flask5_070421 <- data_070421 %>%
 #   filter(MDT >"2021-07-04 13:52:00" & MDT < "2021-07-04 13:55:00") %>%
@@ -142,15 +133,12 @@ data_071922 <-  tbl %>%
 ```{r 080221_H2O}
 data_080221 <- tbl %>% 
   filter(DATE == "2021-08-02")  %>% 
-    mutate(UTC = hms(TIME), #by using the lubridate hms, it makes the UTC time filterable with dplyr
-           UTC_full = with_tz(ymd_hms(paste(DATE, TIME)), tzone = "UTC"), 
-           MDT = with_tz(UTC_full, tzone = "America/Denver"),
-           seconds = row_number()) %>% 
+    BoulderTime() %>% 
       filter(MDT < "2021-08-02 14:56:50") %>% 
         outlet_batches()
 
-WaterConcentration_plt(data_080221)
-plt_outlet_batch(data_080221)
+waterConcentration_plt(data_080221)
+outlet_batch_plt(data_080221)
 
 flask_aves_080221 <- flask_ave_outlet(data_080221) %>% 
   filter(H2O_out >1600) %>% 
@@ -176,10 +164,9 @@ data_082221 <- tbl %>%
       filter(MDT > "2021-08-22 11:49:48" & MDT < "2021-08-22 13:05:17") %>% 
   outlet_batches()
  
-WaterConcentration_plt(data_082221)
-OutletValve_plt(data_082221)
+waterConcentration_plt(data_082221)
+outlet_batch_plt(data_082221)
 
-plt_outlet_batch(data_082221)
 
 manual_flasks_082221 <- data_082221 %>% 
   filter(MDT > "2021-08-22 12:06:21" & MDT < "2021-08-22 12:09:21") %>% 
@@ -216,9 +203,8 @@ data_090121 <- tbl %>%
       filter(MDT < "2021-09-01 11:10:00" & MDT > "2021-09-01 09:53:18") %>% 
         outlet_batches()
 
-WaterConcentration_plt(data_090121)
-OutletValve_plt(data_090121)
-plt_outlet_batch(data_090121)
+waterConcentration_plt(data_090121)
+outlet_batch_plt(data_090121)
 
 manual_flasks_090121 <- data_090121 %>% 
   filter(MDT > "2021-09-01 10:39:51" & MDT < "2021-09-01 10:42:51") %>% 
@@ -255,11 +241,10 @@ data_031722 <- tbl %>%
 waterConcentration_plt(data_031722) 
 h2o_batch_plt(data_031722)
 
-outletValve_plt(data_031722)
 outlet_batch_plt(data_031722)
 
 #double check that your groups are clean
-h2o_lastthreeminutes(data_031722)
+h2o_LastThreeMinutes(data_031722)
   
 #need to average batches 75 & 540 by hand   
 flask3_031722 <- data_031722 %>% 
@@ -365,15 +350,18 @@ FlaskOut_033122 <- bind_rows(
 ```
 
 ### diff
-
+Based on the humidity calibrations, there was a consistent -0.2 per mil shift in oxygen isotopes across all waters, and no consistent shift in hydrogen isotopes, so I use the corrected value for the oxygen isotopes, but the raw values for the hydrogen isotopes.
 ```{r}
 WVtest_results <- flasks_031722 %>% 
   left_join(FlaskOut_033122, by = "Flask") %>% 
     mutate(
       d18O_diff = d18O_corr.y - d18O_corr.x,
-      d2H_diff =   d2H_corr.y - d2H_corr.x
+      d2H_diff =   d2H_out.y - d2H_out.x,
+      Session = "March2022",
+      SWISS = "Meringue"
     )
 
+write.csv(WVtest_results,"data/WaterVaporTests/Meringue_March.csv")
 
 WVtest_results_plt <- WVtest_results %>% 
   pivot_longer(cols = c(d18O_diff, d2H_diff)) %>% 
