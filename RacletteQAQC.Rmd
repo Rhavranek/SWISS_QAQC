@@ -320,38 +320,44 @@ flasks_040422 <- data_040422 %>%
 allflasks <- flasks_040322 %>% bind_rows(flasks_040422)
 ```
 
+Based on the humidity calibrations, there was a consistent -0.2 per mil shift in oxygen isotopes across all waters, and no consistent shift in hydrogen isotopes, so I use the corrected value for the oxygen isotopes, but the raw values for the hydrogen isotopes. 
+
 ```{r}
 WVtest_results <- flasks_032022 %>% 
   left_join(allflasks, by = "Flask") %>% 
     mutate(
       d18O_diff = d18O_corr.y - d18O_corr.x,
-      d2H_diff =   d2H_corr.y - d2H_corr.x
+      d2H_diff =   d2H_out.y - d2H_out.x,
+      Session = "March2022",
+      SWISS = "Raclette"
     )
 
-# WVtest_results_plt <- WVtest_results %>% 
-#   filter(Flask != 16) %>% 
-#   pivot_longer(cols = c(d18O_diff, d2H_diff)) %>% 
-#     mutate(
-#       # turn into ordered variable (factor) that keeps the order
-#       latex_name = as_factor(name) %>% fct_inorder()  %>% 
-#         # introduce latex substitutions
-#         fct_recode(
-#                    "$\\Delta \\delta^2H" = "d2H_diff",
-#                    "$\\Delta \\delta^{18}O" = "d18O_diff")
-#     ) %>% 
-#       ggplot()+
-#         aes(x = Flask, y = value, size = 2) +
-#         facet_wrap(~latex_name, labeller = latex_labeller, ncol = 1, scales = "free")+
-#         geom_point()+
-#         scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
-#         theme_figure()+
-#         theme(
-#           legend.position = "none"
-#         )
-# 
-# print(WVtest_results_plt)
-# ggplotly(WVtest_results_plt)
+write.csv(WVtest_results,"data/WaterVaporTests/Raclette_March.csv")
 
+
+
+WVtest_results_plt <- WVtest_results %>%
+  filter(Flask != 16) %>%
+  pivot_longer(cols = c(d18O_diff, d2H_diff)) %>%
+    mutate(
+      # turn into ordered variable (factor) that keeps the order
+      latex_name = as_factor(name) %>% fct_inorder()  %>%
+        # introduce latex substitutions
+        fct_recode(
+                   "$\\Delta \\delta^2H" = "d2H_diff",
+                   "$\\Delta \\delta^{18}O" = "d18O_diff")
+    ) %>%
+      ggplot()+
+        aes(x = Flask, y = value, size = 2) +
+        facet_wrap(~latex_name, labeller = latex_labeller, ncol = 1, scales = "free")+
+        geom_point()+
+        scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
+        theme_figure()+
+        theme(
+          legend.position = "none"
+        )
+
+print(WVtest_results_plt)
 
 evap <- WVtest_results %>% 
   ggplot()+
@@ -442,6 +448,8 @@ flasks_083122 <- data_083122 %>%
         bind_rows(flask16_0831, flask6_0831) 
 ```
 
+Picarro performance and drift was monitored across the 2 week period by both running standards using the probe introduction system (identical to the flasks) and by an independent water vapor creation system (e.g. like that in Rozmirek et al., 2022). There was no drift within analytical error (i.e. 0.2 per mil for d18o and 0.5 per mil for d2H). Therefore, we use the raw differences. 
+
 
 ```{r}
 WVtest_results_202208 <- flasks_081822 %>% 
@@ -450,6 +458,8 @@ WVtest_results_202208 <- flasks_081822 %>%
       d18O_diff_raw = d18O_out.y - d18O_out.x,
       d2H_diff_raw =   d2H_out.y - d2H_out.x,
     )
+
+write.csv(WVtest_results_202208,"data/WaterVaporTests/Raclette_August.csv")
 
 WVtest_results_plt_202208 <- WVtest_results_202208 %>%  
   pivot_longer(cols = c(d18O_diff_raw, d2H_diff_raw)) %>% 
