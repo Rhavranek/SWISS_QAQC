@@ -361,7 +361,7 @@ WVtest_results <- flasks_031722 %>%
       SWISS = "Meringue"
     )
 
-write.csv(WVtest_results,"data/WaterVaporTests/Meringue_March.csv")
+#write.csv(WVtest_results,"data/WaterVaporTests/Meringue_March.csv")
 
 WVtest_results_plt <- WVtest_results %>% 
   pivot_longer(cols = c(d18O_diff, d2H_diff)) %>% 
@@ -407,13 +407,24 @@ d180_time_plt(may24)
 ```{r}
 May2022_data <- tibble(
   Flask = (16:2),
-  T = c(27,25,22, 18,17,15, 20,20.6,21.6, 25,27,28, 21,21,21),
+  T = c(25,23,17, 17,16,15, 18,19,20, 22,23,26, 21,21,21),
   d18O = c(-31.85, -17.87, -24.33, -31.85, -17.91, -23.39, -32.76,-18.09, - 26.27, -33.9, -18.09, -23.43, -33.4, -19.0, -23.3),
-  d18O_corr = (11.45 - 0.0795*T + 1.0012*d18O),
+  d18O_offset = d18O - 0.9,
+  d18O_corr = (11.45 - 0.0795*T + 1.0012*d18O_offset),
   d2H = c(-251,-167.4, -191.2, -247.8,-168, -195, -265.1,-168.7, - 207, -262, - 169.5, -192.2, -255.6, -173.5,  - 189),
-  d2H_corr = (104.96 - 1.0342*T + 1.0724*d2H),
+  d2H_offset = d2H - 2.6, 
+  d2H_corr = (104.96 - 1.0342*T + 1.0724*d2H_offset),
   water= c("Light", "Atmosphere", "DI", "Light", "Atmosphere", "DI", "Light", "Atmosphere", "DI","Light", "Atmosphere", "DI", "Light", "Atmosphere", "DI" )
 ) 
+
+standardvalues <- tibble(
+  Water = c("Atmosphere", "Light", "DI"),
+  d18O_out =c(-18,-32.2,-23.5),
+  d2H_out = c(-167, -262.7, -197.9),
+  T = 22) %>% 
+    liq_rothfuss2013()
+
+
 
 
 # %>% 
@@ -444,21 +455,22 @@ May2022_data <- tibble(
 
 
 d18O_plt <- May2022_data %>% 
+  filter(Flask != 8) %>% 
   ggplot()+
   aes(x = Flask, y = d18O_corr, fill = water)+
-  geom_errorbar(aes(ymin = d18O_corr - 0.5, ymax = d18O_corr+0.5)) +
+  geom_errorbar(aes(ymin = d18O_corr - 0.9, ymax = d18O_corr+0.9), width = 0.2) +
   geom_point(pch = 21, size = 4)+
-  geom_hline(aes(yintercept = - 8.5), linetype = "longdash") +
-  geom_hline(aes(yintercept = - 8.0), linetype = "dotted") +
-  geom_hline(aes(yintercept = - 9.0), linetype = "dotted") +
+  geom_hline(aes(yintercept = - 8.7), linetype = "longdash") +
+  geom_hline(aes(yintercept = - 8.2), linetype = "dotted") +
+  geom_hline(aes(yintercept = - 9.2), linetype = "dotted") +
   
-  geom_hline(aes(yintercept = -13.82), linetype = "longdash") +  
-  geom_hline(aes(yintercept = -14.32), linetype = "dotted") +
-  geom_hline(aes(yintercept = -13.32), linetype = "dotted") +
+  geom_hline(aes(yintercept = -14.2), linetype = "longdash") +  
+  geom_hline(aes(yintercept = -14.7), linetype = "dotted") +
+  geom_hline(aes(yintercept = -13.7), linetype = "dotted") +
   
-  geom_hline(aes(yintercept = -22.69), linetype = "longdash")+
-  geom_hline(aes(yintercept = -22.19), linetype = "dotted")+
-  geom_hline(aes(yintercept = -23.19), linetype = "dotted") +
+  geom_hline(aes(yintercept = -22.9), linetype = "longdash")+
+  geom_hline(aes(yintercept = -22.4), linetype = "dotted")+
+  geom_hline(aes(yintercept = -23.4), linetype = "dotted") +
   
   scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
   theme_figure() +
@@ -470,22 +482,22 @@ print(d18O_plt)
 
 
 d2H_plt <- May2022_data %>% 
-   filter(water == "DI") %>%
+  filter(Flask != 8) %>% 
   ggplot()+
   aes(x = Flask, y = d2H_corr, fill = water)+
-  geom_errorbar(aes(ymin = d2H_corr - 2.4, ymax = d2H_corr+2.4)) +
+  geom_errorbar(aes(ymin = d2H_corr - 3.6, ymax = d2H_corr+3.6), width = 0.2) +
   geom_point(pch = 21, size = 4)+
-  geom_hline(aes(yintercept = -96.8832), linetype = "longdash") +
-  geom_hline(aes(yintercept = -99.28), linetype = "dotted") +
-  geom_hline(aes(yintercept = -94.4832), linetype = "dotted") +
+  geom_hline(aes(yintercept = -102.0), linetype = "longdash") +
+  geom_hline(aes(yintercept = -104.4), linetype = "dotted") +
+  geom_hline(aes(yintercept = -99.6), linetype = "dotted") +
 
-  geom_hline(aes(yintercept = -130.0204), linetype = "longdash") +
-  geom_hline(aes(yintercept = -132.4204), linetype = "dotted") +
-  geom_hline(aes(yintercept = -127.62), linetype = "dotted") +
+  geom_hline(aes(yintercept = -135.1), linetype = "longdash") +
+  geom_hline(aes(yintercept = -137.5), linetype = "dotted") +
+  geom_hline(aes(yintercept = -132.7), linetype = "dotted") +
 
-  geom_hline(aes(yintercept = -199.5119), linetype = "longdash")+
-  geom_hline(aes(yintercept = -201.9119), linetype = "dotted")+
-  geom_hline(aes(yintercept = -197.1119), linetype = "dotted") +
+  geom_hline(aes(yintercept = -204.7), linetype = "longdash")+
+  geom_hline(aes(yintercept = -202.3), linetype = "dotted")+
+  geom_hline(aes(yintercept = -207.1), linetype = "dotted") +
   
   scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
   theme_figure() +
