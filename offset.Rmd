@@ -1,0 +1,537 @@
+---
+title: "Offset Correction analysis"
+author: "Rachel Havranek"
+date: "`r format(Sys.Date(), '%d %b %Y')`"
+output:
+  html_document: 
+    df_print: paged # omit to disable paged data table output
+    number_sections: yes # change to no for unnumbered sections
+    toc: yes # change to no to disable table of contents
+    toc_float: true # change to false to keep toc at the top
+    toc_depth: 3 # change to specify which headings to include in toc
+    code_folding: show # change to hide to hide code by default
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, echo = FALSE, message=FALSE, warning=FALSE}
+## load libraries
+library(tidyverse) 
+library(latex2exp)
+library(viridis)
+library(data.table)
+library (lubridate)
+library(plotly)
+library(fs)
+library(fitdistrplus)
+library(MASS) 
+library(sm)
+
+setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS_QAQC/")
+
+# source all relevant scripting files
+source(file.path ("scripts", "plotting_functions.R"))
+source(file.path ("scripts", "PicarroData_BreakUp.R"))
+source(file.path ("scripts", "Rachels_custom_plots.R"))
+source(file.path("scripts", "corrections.R"))
+
+# global knitting options for automatic saving of all plots as .png and .pdf
+knitr::opts_chunk$set(
+  dev = c("png", "pdf"), fig.keep = "all",
+  dev.args = list(pdf = list(encoding = "WinAnsi", useDingbats = FALSE)),
+  fig.path = file.path("fig_output", paste0(gsub("\\.[Rr]md", "", knitr::current_input()), "_"))
+)
+```
+
+```{r load data, message=FALSE, warning=FALSE}
+tbl <-
+    list.files ("data/WaterVaporTests", pattern = "*.csv", recursive = T, full.names = T) %>%
+    map_df(~read_csv(.)) 
+```
+
+# d18O
+
+## plot all data from all three sessions
+First, we plot all of the data as a histogram and boxplot. The median value is 1.00 per mil. The upper fence is at 3.2 per mil and the lower fence is at -0.6 per mil. IQR is 1 per mil. 
+```{r all d18O, echo = FALSE}
+
+tbl %>% 
+  filter(Flask != 1) %>% 
+  ggplot()+
+  aes(x = d18O_diff) +
+  geom_histogram(aes(color = SWISS,  fill = SWISS), binwidth = 0.2, alpha = 0.2)+
+  theme_figure()+
+  labs(
+    x = latex2exp::TeX('$\\Delta\\delta^{18}O$'),
+    title = "All data"
+  )+
+  scale_color_viridis(discrete = TRUE)+
+  scale_fill_viridis(discrete = TRUE) +
+  geom_label(aes(label = "n = 164", x = 5, y = 12), color = "black")+
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+
+box_d18o <- tbl %>% 
+  filter(Flask != 1) %>%
+  ggplot()+
+  geom_boxplot(aes(y = d18O_diff))+
+  theme_figure()
+
+box_d18o
+```
+
+
+## Exclude outliers
+Next, we exclude outliers from the results and plot both a histogram and boxplot of the data 
+```{r echo = FALSE}
+bin_num2 = round(1+3.3*log(149)) #Dekking et al., p. 211 
+
+tbl %>% 
+  filter(Flask != 1) %>% 
+  #filter(Session != "March2021") %>% 
+  filter(d18O_diff < 3.2 & d18O_diff > -0.6) %>%
+  ggplot()+
+  aes(x = d18O_diff) +
+  geom_histogram(aes(color = SWISS,  fill = SWISS), bins = bin_num2, alpha = 0.2)+
+  theme_figure()+
+  labs(
+    x = latex2exp::TeX('$\\Delta\\delta^{18}O$'),
+    title = "Outliers removed",
+    y = "Count"
+  )+
+  scale_color_viridis(discrete = TRUE)+
+  scale_fill_viridis(discrete = TRUE) +
+  geom_label(aes(label = "n = 149", x = 1.5, y = 18), color = "black")+
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+
+box_d18o_OutliersExcluded <- tbl %>% 
+  filter(d18O_diff < 3.2 & d18O_diff > -0.6) %>%
+  filter(Flask != 1) %>%
+  #filter(Session != "March2021") %>% 
+  ggplot()+
+  geom_boxplot(aes(y = d18O_diff))+
+  labs(
+    y = latex2exp::TeX('$\\Delta\\delta^{18}O$'))+
+  theme_figure()
+
+box_d18o_OutliersExcluded
+```
+
+
+## Plot histogram and KDE with overlaid normal distribution 
+
+A normal distribution overestimates the center of the distribution, but captures the overall shape of the sides of the distribution. With the outliers excluded, the median is 1.00 and mean is 1.08 per mil. The IQR is 0.9 per mil and the SD is 1 per mil. I think though that I should use the median + IQR as my correction and uncertainty estimate. 
+```{r echo=FALSE}
+d18O_diff <- tbl %>%
+  filter(d18O_diff > -.60 & d18O_diff < 3.2)
+  
+d18o_norm <- fitdist(d18O_diff$d18O_diff, "norm") 
+summary(d18o_norm)
+
+
+tbl %>% 
+    dplyr::select(d18O_diff) %>% 
+    filter(d18O_diff < 3.2 & d18O_diff > -0.6) %>%
+        summary()
+
+plt_norm <- tbl %>% 
+   filter(d18O_diff < 3.2 & d18O_diff > -0.6) %>%
+      ggplot()+
+      aes(x=d18O_diff) +
+      geom_histogram(aes(y=..density..), bins = bin_num2, alpha = 0.2)+
+      stat_function(fun=dnorm, colour="red", args=list(mean=d18o_norm$estimate[1], sd=d18o_norm$estimate[2])) +
+  theme_figure()+
+  labs(
+    x = latex2exp::TeX('$\\Delta\\delta^{18}O$'),
+    title = "Outliers removed"
+  )+
+  scale_color_viridis(discrete = TRUE)+
+  scale_fill_viridis(discrete = TRUE) +
+  geom_label(aes(label = "n = 149", x = 1.5, y = 0.65), color = "black")+
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+plt_norm
+
+kde_d180 <- tbl %>% 
+  filter(d18O_diff < 3.2 & d18O_diff > -0.60) %>% 
+ # filter(Session != "March2021") %>% 
+  filter(Flask!=1) %>% 
+  ggplot()+
+  aes(x =d18O_diff) +
+  geom_density(bw = "SJ")+
+  stat_function(fun=dnorm, colour="red", args=list(mean=d18o_norm$estimate[1], sd=d18o_norm$estimate[2])) +
+  scale_fill_viridis(discrete = TRUE) +
+  scale_color_viridis(discrete = TRUE) +
+  #geom_label(label = "n = 149", x = 1.5, y = 0.5)+
+  theme_figure()+
+  labs(
+    #x = latex2exp::TeX('$\\Delta\\delta^{18}O$'),
+    title = "Kernel Density Estimate",
+    subtitle = "Outliers removed",
+    y = "density",
+    x = latex2exp::TeX('$\\Delta\\delta^{18}O$'),
+  )+
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+kde_d180
+```
+
+## Look at things between sessions and SWISS 
+```{r, echo = FALSE}
+tbl %>% 
+  filter(d18O_diff < 3.2 & d18O_diff > -0.6) %>% 
+  ggplot()+
+  aes(x =d18O_diff, fill = SWISS, color = SWISS) +
+  facet_wrap(~Session, ncol = 1)+
+  geom_density(bw = "SJ", alpha = .2)+
+  scale_fill_viridis(discrete = TRUE) +
+  scale_color_viridis(discrete = TRUE)+
+  theme_figure()+
+  labs(
+    x = latex2exp::TeX('$\\Delta\\delta^{18}O$'),
+    title = "Offset within analytical sessions",
+    subtitle = "Outliers removed"
+  )+
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+tbl %>% 
+  filter(d18O_diff < 3.2 & d18O_diff > -2) %>% 
+  ggplot()+
+  aes(x =d18O_diff, fill = Session, color = Session) +
+  facet_wrap(~SWISS, ncol = 2)+
+  geom_density(bw = "SJ", alpha = .2)+
+  scale_fill_viridis(discrete = TRUE, option = "H") +
+  scale_color_viridis(discrete = TRUE, option = "H") +
+  theme_figure()+
+  labs(
+    x = latex2exp::TeX('$\\Delta\\delta^{18}O$'),
+    title = "Offset by SWISS",
+    subtitle = "Outliers removed"
+  )+
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+```
+I have no idea why the March 2021 session was SO different. Toblerone is definitely different. During that session the water was heavier than the room (meaning it would have drifted lighter), whereas for both 2022 sessions the water was lighter than room (meaning they would have drifted heavier). 
+
+Even with measuring the flasks in two different ways between August 2022 and March 2022 there isn't much difference in distribution. 
+
+## example datasets corrected
+```{r}
+tbl <-  tbl %>% 
+  mutate(
+    d18O_offset = d18O_diff - 1.0
+  )
+
+corrected_d18o <- tbl %>% 
+ filter(Session == "August2022") %>% 
+  ggplot()+
+  aes(x= Flask, y = d18O_offset)+
+  geom_point(size = 3) +
+  facet_wrap(~SWISS)+
+  geom_hline(aes(yintercept = 0.9), linetype = "dashed")+
+  geom_hline(aes(yintercept = -0.9), linetype = "dashed")+
+  labs(
+    y = latex2exp::TeX('$\\Delta\\delta^{18}O$')
+  ) +
+  #scale_x_continuous(breaks = c(2,4,6,8,10,12,14,16)) +
+  theme_figure()
+
+
+corrected_d18o
+```
+
+
+
+
+
+# d2H
+
+
+## Plot all data
+```{r, echo = FALSE}
+tbl %>% 
+  ggplot()+
+  aes(x = d2H_diff) +
+  geom_histogram(aes(color = SWISS,  fill = SWISS), binwidth = 0.8, alpha = 0.2)+
+  theme_figure()+
+  labs(
+    x = latex2exp::TeX('$\\Delta\\delta^{2}H$'),
+    title = "All data"
+  )+
+  scale_color_viridis(discrete = TRUE)+
+  scale_fill_viridis(discrete = TRUE) +
+  geom_label(aes(label = "n = 164", x = -20, y = 12), color = "black")+
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+
+
+box_d2h <- tbl %>% 
+  ggplot()+
+  geom_boxplot(aes(y = d2H_diff))+
+  theme_figure()
+
+box_d2h
+```
+Upper fence: 9.5, lower fence: -5.1. I did this  iteratively, and got to a cutoff of - 4.2 (shown below)
+
+## Exclude Outliers
+Median = 2.3  
+Q1 = 1.1  
+Q3 = 4.8  
+IQR = 3.7  
+```{r, echo = FALSE}
+
+bin_num3 = round(1+3.3*log(138))
+
+tbl %>% 
+  filter(d2H_diff > -4.2 & d2H_diff < 9.5) %>% 
+  ggplot()+
+  aes(x = d2H_diff) +
+  geom_histogram(aes(color = SWISS,  fill = SWISS), bins = bin_num3, alpha = 0.2)+
+  theme_figure()+
+  labs(
+    x = latex2exp::TeX('$\\Delta\\delta^{2}H$'),
+    title = "All data"
+  )+
+  scale_color_viridis(discrete = TRUE)+
+  scale_fill_viridis(discrete = TRUE) +
+  geom_label(aes(label = "n = 138", x = 5, y = 17), color = "black")+
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+
+box_d2h_2 <- tbl %>% 
+  filter(d2H_diff > -4.2 & d2H_diff < 9.5) %>% 
+  ggplot()+
+  geom_boxplot(aes(y = d2H_diff))+
+  theme_figure()
+
+ggplotly(box_d2h_2)
+```
+
+## Plot histogram & KDE with overlaid normal distribution 
+Compare normal distribution parameters & 'unskewable' counterparts
+```{r, echo = FALSE}
+d2H_diff <- tbl %>%
+  filter(d2H_diff > -4.2 & d2H_diff < 9.5)
+  
+d2H_norm <- fitdist(d2H_diff$d2H_diff, "norm") 
+summary(d2H_norm)
+
+summary(d2H_diff$d2H_diff)
+```
+
+Similar to oxygen, the normal distribution is skewed heavy but does an okay job estimating the overall shape 
+```{r, echo=FALSE}
+tbl %>% 
+  filter(d2H_diff > -4.2 & d2H_diff < 9.5) %>% 
+  ggplot()+
+  aes(x = d2H_diff) +
+  geom_histogram(aes(y = ..density..), bins = bin_num3, alpha = 0.2)+
+      stat_function(fun=dnorm, colour="red", args=list(mean=d2H_norm$estimate[1], sd=d2H_norm$estimate[2])) +
+  theme_figure()+
+  labs(
+    x = latex2exp::TeX('$\\Delta\\delta^{2}H$'),
+    title = "All data"
+  )+
+  scale_color_viridis(discrete = TRUE)+
+  scale_fill_viridis(discrete = TRUE) +
+  geom_label(aes(label = "n = 138", x = 3.8, y = .17), color = "black")+
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+
+
+kde_d2H <- tbl %>% 
+  filter(d2H_diff > -4.2 & d2H_diff < 9.5) %>% 
+  ggplot()+
+  aes(x =d2H_diff) +
+  geom_density(bw = "SJ")+
+  stat_function(fun=dnorm, colour="red", args=list(mean=d2H_norm$estimate[1], sd=d2H_norm$estimate[2])) +
+  scale_fill_viridis(discrete = TRUE) +
+  scale_color_viridis(discrete = TRUE) +
+  #geom_label(label = "n = 149", x = 1.5, y = 0.5)+
+  theme_figure()+
+  labs(
+    #x = latex2exp::TeX('$\\Delta\\delta^{18}O$'),
+    title = "Kernel Density Estimate",
+    subtitle = "Outliers removed",
+    y = "density",
+    x = latex2exp::TeX('$\\Delta\\delta^{2}H$'),
+  )+
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+kde_d2H
+```
+
+
+It seems like the normal distribution is being heavily influenced by the 5 negative values, which all come from the March 2021 session, if I go through the same exercise, but instead use a cutoff of -2 I get:
+
+```{r, echo = FALSE}
+d2H_diff_2 <- tbl %>%
+  filter(d2H_diff > -2 & d2H_diff < 9.5)
+  
+d2H_norm_2 <- fitdist(d2H_diff_2$d2H_diff, "norm") 
+summary(d2H_norm)
+
+summary(d2H_diff_2$d2H_diff)
+```
+With this cutoff, mean of the normal distribution is 2.62 with an SD of 2.85. Median is 2.6 with and IQR of 3.5.  
+
+Similar to oxygen, the normal distribution is skewed heavy but does an okay job estimating the overall shape 
+```{r, echo=FALSE}
+tbl %>% 
+  filter(d2H_diff > -2 & d2H_diff < 9.5) %>% 
+  ggplot()+
+  aes(x = d2H_diff) +
+  geom_histogram(aes(y = ..density..), bins = bin_num3, alpha = 0.2)+
+      stat_function(fun=dnorm, colour="red", args=list(mean=d2H_norm_2$estimate[1], sd=d2H_norm_2$estimate[2])) +
+  theme_figure()+
+  labs(
+    x = latex2exp::TeX('$\\Delta\\delta^{2}H$'),
+    title = "All data"
+  )+
+  scale_color_viridis(discrete = TRUE)+
+  scale_fill_viridis(discrete = TRUE) +
+  geom_label(aes(label = "n = 124", x = 3.8, y = .25), color = "black")+
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+
+
+tbl %>% 
+  filter(d2H_diff > -2 & d2H_diff < 9.5) %>% 
+  ggplot()+
+  aes(x =d2H_diff) +
+  geom_density(bw = "SJ")+
+  stat_function(fun=dnorm, colour="red", args=list(mean=d2H_norm_2$estimate[1], sd=d2H_norm_2$estimate[2])) +
+  theme_figure()+
+  labs(
+    #x = latex2exp::TeX('$\\Delta\\delta^{18}O$'),
+    title = "Kernel Density Estimate",
+    subtitle = "Outliers removed",
+    y = "density",
+    x = latex2exp::TeX('$\\Delta\\delta^{2}H$'),
+  )+
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+```
+
+## Look at things by SWISS and Session 
+Effectively remove the March 2021 session by exculding everything less than -2 per mil 
+```{r, echo = FALSE}
+tbl %>% 
+  filter(d2H_diff > -4.2 & d2H_diff < 9.5) %>% 
+  ggplot()+
+  aes(x =d2H_diff, fill = SWISS, color = SWISS, ) +
+  facet_wrap(~Session, ncol = 1)+
+  geom_density(bw = "SJ", alpha = .2)+
+  scale_fill_viridis(discrete = TRUE) +
+  scale_color_viridis(discrete = TRUE)+
+  theme_figure() +
+  labs(
+    #x = latex2exp::TeX('$\\Delta\\delta^{18}O$'),
+    title = "Kernel Density Estimate by Session",
+    subtitle = "Outliers removed",
+    y = "density",
+    x = latex2exp::TeX('$\\Delta\\delta^{2}H$'),
+  )+
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+tbl %>% 
+  filter(d2H_diff > -4.2 & d2H_diff < 9.5) %>% 
+  ggplot()+
+  aes(x =d2H_diff, fill = Session, color = Session) +
+  facet_wrap(~SWISS, ncol = 2)+
+  geom_density(bw = "SJ", alpha = .2 )+
+  scale_fill_viridis(discrete = TRUE, option = "H") +
+  scale_color_viridis(discrete = TRUE, option = "H") +
+  theme_figure()+
+  labs(
+    #x = latex2exp::TeX('$\\Delta\\delta^{18}O$'),
+    title = "Kernel Density Estimate by SWISS",
+    subtitle = "Outliers removed",
+    y = "density",
+    x = latex2exp::TeX('$\\Delta\\delta^{2}H$'),
+  )+
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+```
+
+
+## example datasets corrected
+```{r}
+tbl <-  tbl %>%  
+  mutate(
+    d2H_offset = d2H_diff - 2.6
+  )
+
+corrected_d2H <- tbl %>% 
+  filter(Session == "August2022") %>%
+  ggplot()+
+  aes(x= Flask, y = d2H_offset)+
+  geom_point(size = 3) +
+  facet_wrap(~SWISS)+
+  geom_hline(aes(yintercept = 3.7), linetype = "dashed")+
+  geom_hline(aes(yintercept = -3.7), linetype = "dashed")+
+  labs(
+    y = latex2exp::TeX('$\\Delta\\delta^{2}H$')
+  ) +
+  #scale_x_continuous(breaks = c(2,4,6,8,10,12,14,16)) +
+  theme_figure()
+
+
+corrected_d2H
+```
+
+
+# Crossplot
+```{r}
+offsetlm <- lm(d2H_diff ~ d18O_diff, tbl)
+
+summary(offsetlm)
+
+tbl %>% 
+  filter(d2H_diff > -4.2 & d2H_diff < 9.5) %>% 
+  filter(d18O_diff < 3.2 & d18O_diff > -0.6) %>% 
+  ggplot()+
+  aes(x = d18O_diff, d2H_diff)+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  theme_figure()
+```
+
+
+
+
+
+
+
+
+
+
+
+
