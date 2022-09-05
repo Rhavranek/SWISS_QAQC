@@ -46,3 +46,12 @@ August17_phlox_corr <- function(df){
   )
   return (August17)
 }
+
+
+August18_phlox_corr <- function(df){
+  August17 <- df %>% mutate(
+    d18O_corr = (d18O_out - 0.7713) / 1.0321,
+    d2H_corr = (d2H_out - 0.3376) / 1.0344
+  )
+  return (August17)
+}
