@@ -320,6 +320,7 @@ flasks_040422 <- data_040422 %>%
 allflasks <- flasks_040322 %>% bind_rows(flasks_040422)
 ```
 
+## Differences
 Based on the humidity calibrations, there was a consistent -0.2 per mil shift in oxygen isotopes across all waters, and no consistent shift in hydrogen isotopes, so I use the corrected value for the oxygen isotopes, but the raw values for the hydrogen isotopes. 
 
 ```{r}
@@ -333,8 +334,6 @@ WVtest_results <- flasks_032022 %>%
     )
 
 write.csv(WVtest_results,"data/WaterVaporTests/Raclette_March.csv")
-
-
 
 WVtest_results_plt <- WVtest_results %>%
   filter(Flask != 16) %>%
@@ -455,22 +454,34 @@ Picarro performance and drift was monitored across the 2 week period by both run
 WVtest_results_202208 <- flasks_081822 %>% 
   left_join(flasks_083122, by = "Flask") %>% 
     mutate(
-      d18O_diff_raw = d18O_out.y - d18O_out.x,
-      d2H_diff_raw =   d2H_out.y - d2H_out.x,
+      d18O_diff = d18O_out.y - d18O_out.x,
+      d2H_diff =   d2H_out.y - d2H_out.x,
+      Session = "August2022",
+      SWISS = "Raclette"
     )
 
-write.csv(WVtest_results_202208,"data/WaterVaporTests/Raclette_August.csv")
+#write.csv(WVtest_results_202208,"data/WaterVaporTests/Raclette_August.csv")
+
+```
+
+```{r}
+WVtest_results_202208 <- WVtest_results_202208 %>% 
+  mutate(
+    d18O_offset = d18O_diff - 1,
+    d2H_offset = d2H_diff -2.6
+  )
+
 
 WVtest_results_plt_202208 <- WVtest_results_202208 %>%  
-  pivot_longer(cols = c(d18O_diff_raw, d2H_diff_raw)) %>% 
+  pivot_longer(cols = c(d18O_offset, d2H_offset)) %>% 
     mutate(
       # turn into ordered variable (factor) that keeps the order
 
       latex_name = as_factor(name) %>% fct_inorder()  %>%
         # introduce latex substitutions
         fct_recode(
-                   "$\\Delta \\delta^2H" = "d2H_diff_raw",
-                   "$\\Delta \\delta^{18}O" = "d18O_diff_raw")
+                   "$\\Delta \\delta^2H" = "d2H_offset",
+                   "$\\Delta \\delta^{18}O" = "d18O_offset")
     ) %>%
       ggplot()+
         aes(x = Flask, y = value, size = 2) +
@@ -485,7 +496,6 @@ WVtest_results_plt_202208 <- WVtest_results_202208 %>%
 
 WVtest_results_plt_202208
 ```
-
 
 
 
