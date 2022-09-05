@@ -228,13 +228,18 @@ flask_aves_040222 <- data_040222 %>%
 ```
 
 ## Differences
+Based on the humidity calibrations, there was a consistent -0.2 per mil shift in oxygen isotopes across all waters, and no consistent shift in hydrogen isotopes, so I use the corrected value for the oxygen isotopes, but the raw values for the hydrogen isotopes. 
 ```{r}
 WVtest_results <- flask_aves_0311922 %>% 
   left_join(flask_aves_040222, by = "Flask") %>% 
     mutate(
       d18O_diff = d18O_corr.y - d18O_corr.x,
-      d2H_diff =   d2H_corr.y - d2H_corr.x
+      d2H_diff =   d2H_out.y - d2H_out.x,
+      Session = "March2022",
+      SWISS = "Rosti"
     )
+
+write.csv(WVtest_results,"data/WaterVaporTests/Rosti_March.csv")
 
 WVtest_results_plt <- WVtest_results %>% 
   pivot_longer(cols = c(d18O_diff, d2H_diff)) %>% 

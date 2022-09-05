@@ -412,8 +412,12 @@ fondue_comparison <- left_join(fondue_vaporin, flask_ave_032121, by = "Flask") %
   mutate(
     H2O_diff = H2O_out.y- H2O_out.x,
     d18O_diff = d18O_out.y - d18O_out.x,
-    d2H_diff = d2H_out.y - d2H_out.x
+    d2H_diff = d2H_out.y - d2H_out.x,
+    Session = "March2021",
+    SWISS = "Fondue"
   )
+
+write.csv(fondue_comparison,"data/WaterVaporTests/Fondue_March2021.csv")
 
 compare_plot <- fondue_comparison %>% select(Flask, H2O_diff, d18O_diff, d2H_diff) %>% 
   pivot_longer(cols = c(H2O_diff, d18O_diff, d2H_diff))  %>%   
@@ -729,15 +733,20 @@ flasks_040322 <- data_040322 %>%
   April42022_corr()
 ```
 
-## Difference
+## Differences
+Based on the humidity calibrations, there was a consistent -0.2 per mil shift in oxygen isotopes across all waters, and no consistent shift in hydrogen isotopes, so I use the corrected value for the oxygen isotopes, but the raw values for the hydrogen isotopes. 
 ```{r}
 
 WVtest_results <- fondue_flasks_march2022 %>% 
   left_join(flasks_040322, by = "Flask") %>% 
     mutate(
       d18O_diff = d18O_corr.y - d18O_corr.x,
-      d2H_diff =   d2H_corr.y - d2H_corr.x
+      d2H_diff =   d2H_out.y - d2H_out.x,
+      Session = "March2022",
+      SWISS = "Fondue"
     )
+
+write.csv(WVtest_results,"data/WaterVaporTests/Fondue_March2022.csv")
 
 WVtest_results_plt <- WVtest_results %>% 
   filter(Flask > 2) %>% 

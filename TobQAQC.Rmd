@@ -642,10 +642,12 @@ Tob_comparison <- left_join(tob_vaporin, tob_vaporout, by = "Flask") %>%
   mutate(
     H2O_diff = H2O_out.y - H2O_out.x,
     d18O_diff = d18O_out.y - d18O_out.x,
-    d2H_diff = d2H_out.y - d2H_out.x
+    d2H_diff = d2H_out.y - d2H_out.x,
+    Session = "March2021",
+    SWISS = "Toblerone"
   )
 
-
+write.csv(Tob_comparison,"data/WaterVaporTests/Toblerone_March2021.csv")
 
 compare_plot <- Tob_comparison %>% select(Flask, H2O_diff, d18O_diff, d2H_diff) %>% 
   pivot_longer(cols = c(H2O_diff, d18O_diff, d2H_diff))  %>% 
@@ -1171,7 +1173,7 @@ ggplotly(waterconcentration, dynamicTicks = TRUE)
 ## March 19, 2022
 Flask 2 was not differentiated from flask 3, so I had to do that flask manually.
 
-I also did flask 5 manually becuase it was the only flask with a tail 
+I also did flask 5 manually because it was the only flask with a tail 
 
 ```{r}
 data_031922 <- tbl %>% 
@@ -1240,31 +1242,37 @@ flasks_040222 <- flasks_040222 %>% April42022_corr()
 flasks_040222 <- flasks_040222 %>% April4_phlox_corr()
 
 ```
+
 ## differences
+Based on the humidity calibrations, there was a consistent -0.2 per mil shift in oxygen isotopes across all waters, and no consistent shift in hydrogen isotopes, so I use the corrected value for the oxygen isotopes, but the raw values for the hydrogen isotopes. 
+
 ```{r}
 WVtest_results <- flasks_031922 %>% 
   left_join(flasks_040222, by = "Flask") %>% 
     mutate(
       d18O_diff_raw = d18O_out.y - d18O_out.x,
-      d18O_corr_diff = d18O_corr.y -d18O_corr.x,
-      d2H_diff_raw =   d2H_out.y - d2H_out.x,
+      d18O_diff = d18O_corr.y -d18O_corr.x, #This is the one I want to use 
+      d2H_diff =   d2H_out.y - d2H_out.x, #this is the one I want to use 
       d2H_corr_diff = d2H_corr.y - d2H_corr.x,
-      phlox_diff = d18O_corr_phlox - d18O_corr.x,
-      d2h_phlox = d2H_corr_phlox -d2H_corr.x
+      Session = "March2022",
+      SWISS = "Toblerone"
     )
 
 
+write.csv(WVtest_results,"data/WaterVaporTests/Toblerone_March.csv")
+
+
 WVtest_results_plt <- WVtest_results %>%  
-  filter(Flask < 15) %>% 
-  pivot_longer(cols = c(d18O_corr_diff, d2H_corr_diff)) %>% 
+  #filter(Flask < 15) %>% 
+  pivot_longer(cols = c(d18O_diff, d2H_diff)) %>% 
     mutate(
       # turn into ordered variable (factor) that keeps the order
 
       latex_name = as_factor(name) %>% fct_inorder()  %>%
         # introduce latex substitutions
         fct_recode(
-                   "$\\Delta \\delta^2H" = "d2H_corr_diff",
-                   "$\\Delta \\delta^{18}O" = "d18O_corr_diff")
+                   "$\\Delta \\delta^2H" = "d2H_diff",
+                   "$\\Delta \\delta^{18}O" = "d18O_diff")
     ) %>%
       ggplot()+
         aes(x = Flask, y = value, size = 2) +
@@ -1354,26 +1362,32 @@ flasks_out_202208 <- bind_rows(flasks_0830, flasks_0831)
 ```
 
 
-
-
+## differences
+Picarro performance and drift was monitored across the 2 week period by both running standards using the probe introduction system (identical to the flasks) and by an independent water vapor creation system (e.g. like that in Rozmirek et al., 2022). There was no drift within analytical error (i.e. 0.2 per mil for d18o and 0.5 per mil for d2H). Therefore, we use the raw differences. 
 ```{r}
 WVtest_results_202208 <- flasks_0818 %>% 
   left_join(flasks_out_202208, by = "Flask") %>% 
     mutate(
-      d18O_diff_raw = d18O_out.y - d18O_out.x,
-      d2H_diff_raw =   d2H_out.y - d2H_out.x,
+      d18O_diff = d18O_out.y - d18O_out.x,
+      d2H_diff =   d2H_out.y - d2H_out.x,
+      d18O_offset = d18O_diff -1,
+      d2H_offset = d2H_diff - 2.6,
+      Session = "August2022",
+      SWISS = "Toblerone"
     )
 
+#write.csv(WVtest_results_202208,"data/WaterVaporTests/Toblerone_August.csv")
+
 WVtest_results_plt_202208 <- WVtest_results_202208 %>%  
-  pivot_longer(cols = c(d18O_diff_raw, d2H_diff_raw)) %>% 
+  pivot_longer(cols = c(d18O_offset, d2H_offset)) %>% 
     mutate(
       # turn into ordered variable (factor) that keeps the order
 
       latex_name = as_factor(name) %>% fct_inorder()  %>%
         # introduce latex substitutions
         fct_recode(
-                   "$\\Delta \\delta^2H" = "d2H_diff_raw",
-                   "$\\Delta \\delta^{18}O" = "d18O_diff_raw")
+                   "$\\Delta \\delta^2H" = "d2H_offset",
+                   "$\\Delta \\delta^{18}O" = "d18O_offset")
     ) %>%
       ggplot()+
         aes(x = Flask, y = value, size = 2) +

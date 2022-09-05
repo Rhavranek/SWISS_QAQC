@@ -299,20 +299,24 @@ flasks_040322 <- flasks_040322 %>%
 
 flasks_040322 <- flasks_040322 %>% April42022_corr
 ```
+
 ## Differences
+Based on the humidity calibrations, there was a consistent -0.2 per mil shift in oxygen isotopes across all waters, and no consistent shift in hydrogen isotopes, so I use the corrected value for the oxygen isotopes, but the raw values for the hydrogen isotopes.
 ```{r}
 WVtest_results <- flasks_032022 %>% 
   left_join(flasks_040322, by = "Flask") %>% 
     mutate(
-      d18O_diff_raw = d18O_out.y - d18O_out.x,
-      d18O_diff_corr = d18O_corr.y - d18O_corr.x,
+      d18O_diff = d18O_corr.y - d18O_corr.x,
       d2H_diff =   d2H_out.y - d2H_out.x,
-      d2H_diff_corr = d2H_corr.y - d2H_corr.x
+      Session = "March2022",
+      SWISS = "Lindt"
     )
+
+write.csv(WVtest_results,"data/WaterVaporTests/Lindt_March.csv")
 
 WVtest_results_plt <- WVtest_results %>% 
   filter(Flask > 3) %>% 
-  pivot_longer(cols = c(d18O_diff_corr, d2H_diff_corr)) %>% 
+  pivot_longer(cols = c(d18O_diff, d2H_diff)) %>% 
     mutate(
       # turn into ordered variable (factor) that keeps the order
       
@@ -333,6 +337,7 @@ WVtest_results_plt <- WVtest_results %>%
         )
 
 print(WVtest_results_plt)
+
 ```
 
 flasks 2 & 3 are for SURE weird. I feel pretty convinced there was a condensation problem; I should look for a water condensation problem in the first few flasks on Raclette.  Like the other boxes, it looks like there is ~ 0.75 per mil offset between the two time periods. Which would be really unexpected. check the standard runs that bracket this run. 
@@ -458,18 +463,24 @@ flasks_out_0822 <- bind_rows(flasks_082922, flasks_0830)
 ```
 
 ## differences
+Picarro performance and drift was monitored across the 2 week period by both running standards using the probe introduction system (identical to the flasks) and by an independent water vapor creation system (e.g. like that in Rozmirek et al., 2022). There was no drift within analytical error (i.e. 0.2 per mil for d18o and 0.5 per mil for d2H). Therefore, we use the raw differences. 
 ```{r}
 WVtest_results_0822 <- flasks_081722 %>% 
   left_join(flasks_out_0822, by = "Flask") %>% 
     mutate(
-      d18O_diff_raw = d18O_out.y - d18O_out.x,
+      d18O_diff = d18O_out.y - d18O_out.x,
       #d18O_diff_corr = d18O_corr.y - d18O_corr.x,
       d2H_diff =   d2H_out.y - d2H_out.x,
       #d2H_diff_corr = d2H_corr.y - d2H_corr.x
+      Session = "August2022",
+      SWISS = "Lindt"
     )
 
+#write.csv(WVtest_results_0822,"data/WaterVaporTests/Lindt_August.csv")
+
+
 WVtest_results_plt_0822 <- WVtest_results_0822 %>% 
-  pivot_longer(cols = c(d18O_diff_raw, d2H_diff)) %>% 
+  pivot_longer(cols = c(d18O_diff, d2H_diff)) %>% 
     mutate(
       # turn into ordered variable (factor) that keeps the order
       
@@ -477,7 +488,7 @@ WVtest_results_plt_0822 <- WVtest_results_0822 %>%
         # introduce latex substitutions
         fct_recode(
                    "$\\Delta \\delta^2H" = "d2H_diff",
-                   "$\\Delta \\delta^{18}O" = "d18O_diff_raw")
+                   "$\\Delta \\delta^{18}O" = "d18O_diff")
     ) %>% 
       ggplot()+
         aes(x = Flask, y = value, size = 2) +
@@ -493,6 +504,40 @@ print(WVtest_results_plt_0822)
 ```
 
 
+```{r}
+correctedWV <- WVtest_results_0822 %>% 
+  mutate(
+    d18o_offset = d18O_diff -1,
+    d2H_offset = d2H_diff - 2.6
+  )
+
+plt <- correctedWV %>%
+  pivot_longer(cols = c(d18o_offset, d2H_offset)) %>% 
+
+    mutate(
+      latex_name = as_factor(name) %>% fct_inorder()  %>% 
+        fct_recode(
+                   "$\\Delta \\delta^2H$" = "d2H_offset",
+                   "$\\Delta \\delta^{18}O$" = "d18o_offset")
+    ) %>% 
+  ggplot()+
+  aes(x= Flask, y= value) +
+  facet_wrap(~latex_name, labeller = latex_labeller, ncol =1, scales = "free")+
+  geom_point(size = 5)+
+  labs(
+    title = "Lindt",
+    subtitle = "August 2022"
+  )+
+  theme_figure()+
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5),
+    axis.title.y = element_blank()
+  )
+
+
+plt
+```
 
 
 
