@@ -234,6 +234,33 @@ tbl <-  tbl %>%
     d18O_offset = d18O_diff - 1.0
   )
 
+correctedKDE <- tbl %>% 
+  filter(d18O_offset < 2.2 & d18O_offset >-3) %>% 
+  ggplot()+
+  aes(x =d18O_offset) +
+  geom_density(bw = "SJ")+
+  scale_fill_viridis(discrete = TRUE) +
+  scale_color_viridis(discrete = TRUE) +
+  #geom_label(label = "n = 149", x = 1.5, y = 0.5)+
+  theme_figure()+
+  labs(
+    #x = latex2exp::TeX('$\\Delta\\delta^{18}O$'),
+    title = "Kernel Density Estimate",
+    subtitle = "Corrected data",
+    y = "density",
+    x = latex2exp::TeX('$\\Delta\\delta^{18}O$'),
+  )+
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+correctedKDE
+  
+  
+  
+  
+  
 corrected_d18o <- tbl %>% 
  filter(Session == "August2022") %>% 
   ggplot()+
@@ -251,6 +278,8 @@ corrected_d18o <- tbl %>%
 
 corrected_d18o
 ```
+
+
 
 
 
@@ -488,6 +517,31 @@ tbl <-  tbl %>%
   mutate(
     d2H_offset = d2H_diff - 2.6
   )
+
+correctedKDE_d2H <- tbl %>% 
+  filter(d18O_offset < 7 & d18O_offset >-2.5) %>% 
+  ggplot()+
+  aes(x =d18O_offset) +
+  geom_density(bw = "SJ")+
+  scale_fill_viridis(discrete = TRUE) +
+  scale_color_viridis(discrete = TRUE) +
+  #geom_label(label = "n = 149", x = 1.5, y = 0.5)+
+  theme_figure()+
+  labs(
+    #x = latex2exp::TeX('$\\Delta\\delta^{18}O$'),
+    title = "Kernel Density Estimate",
+    subtitle = "Corrected data",
+    y = "density",
+    x = latex2exp::TeX('$\\Delta\\delta^{2}H$'),
+  )+
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+correctedKDE_d2H
+
+
 
 corrected_d2H <- tbl %>% 
   filter(Session == "August2022") %>%
