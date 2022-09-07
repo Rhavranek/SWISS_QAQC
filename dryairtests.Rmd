@@ -1,0 +1,90 @@
+---
+title: "Dry Air QAQC"
+author: "Rachel Havranek"
+date: "`r format(Sys.Date(), '%d %b %Y')`"
+output:
+  html_document: 
+    df_print: paged # omit to disable paged data table output
+    number_sections: no # change to no for unnumbered sections
+    toc: yes # change to no to disable table of contents
+    toc_float: true # change to false to keep toc at the top
+    toc_depth: 3 # change to specify which headings to include in toc
+    code_folding: show # change to hide to hide code by default
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, echo = FALSE, message=FALSE, warning=FALSE}
+## load libraries
+library(tidyverse) 
+library(latex2exp)
+library(viridis)
+library(data.table)
+library (lubridate)
+library(plotly)
+library(fs)
+library(fitdistrplus)
+library(MASS) 
+library(sm)
+
+setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS_QAQC/")
+
+# source all relevant scripting files
+source(file.path ("scripts", "plotting_functions.R"))
+source(file.path ("scripts", "PicarroData_BreakUp.R"))
+source(file.path ("scripts", "Rachels_custom_plots.R"))
+source(file.path("scripts", "corrections.R"))
+
+# global knitting options for automatic saving of all plots as .png and .pdf
+knitr::opts_chunk$set(
+  dev = c("png", "pdf"), fig.keep = "all",
+  dev.args = list(pdf = list(encoding = "WinAnsi", useDingbats = FALSE)),
+  fig.path = file.path("fig_output", paste0(gsub("\\.[Rr]md", "", knitr::current_input()), "_"))
+)
+```
+
+```{r load data, echo = FALSE, message=FALSE, warning=FALSE}
+tbl <-
+    list.files ("data/DryAirTests", pattern = "*.csv", recursive = T, full.names = T) %>%
+    map_df(~read_csv(.)) 
+```
+
+#7 Day test
+```{r}
+shortdryair <- tbl %>% filter(test == "Dry Air 7 Day")
+
+plt <- shortdryair %>% 
+  ggplot( ) +
+  aes(x = Flask, y = H2O_out) +
+  geom_point()+
+  facet_wrap(~SWISS)+
+  scale_y_continuous(limits=c(0, 750), expand = c(0, 0))+
+  theme_figure()+  
+        ylab(latex2exp::TeX('$H_2O (ppm)$')) 
+
+plt
+```
+
+#long tests
+```{r}
+long_dryair <- tbl %>% filter(test != "Dry Air 7 Day") %>% 
+  mutate(
+    days = ifelse(SWISS == "Fondue", "43 Days", 
+              ifelse(SWISS == "Rosti", "34 Days", "52 Days"))
+  )
+
+
+plt2 <- long_dryair %>% 
+  ggplot( ) +
+  aes(x = Flask, y = H2O_out) +
+  geom_point(size = 4)+
+  facet_wrap(vars(SWISS, days))+
+  scale_y_continuous(limits=c(0, 3000), expand = c(0, 0))+
+  theme_figure()+  
+        ylab(latex2exp::TeX('$H_2O (ppm)$')) 
+
+plt2
+```
+
+
+
