@@ -204,12 +204,17 @@ DryAirResults_030121 <- DryAirResults_030121 %>%
 
 DryAir_030121_plot <- DryAirResults_030121 %>% 
   ggplot ()+
-  aes(x = Flask, y = H2O_out, size = 2)+
-  geom_point(color = "blue") +
-  geom_hline(aes(yintercept = 250))+
-  scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16))
+  aes(x = Flask, y = H2O_out)+
+  geom_point(size = 4) +
+  #geom_hline(aes(yintercept = 250))+
+  #scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16))+
+  theme_figure()+
+  ylab(latex2exp::TeX('$H_2O (ppm)$')) +
+  ggtitle("Toblerone, Dry Air Test 1") +
+   theme(plot.title = element_text(hjust = 0.5)) +
+  scale_y_continuous(limits = c(0,3000))
 
-ggplotly(DryAir_030121_plot)
+#ggplotly(DryAir_030121_plot)
 print(DryAir_030121_plot)
 ```
 
@@ -364,12 +369,17 @@ DryAirResults_031321 <- DryAirResults_031321 %>%
 
 DryAir_031321_plot <- DryAirResults_031321 %>% 
   ggplot ()+
-  aes(x = Flask, y = H2O_out, size = 2)+
-  geom_point(color = "blue") +
-  geom_hline(aes(yintercept = 250))+
-  scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16))
+  aes(x = Flask, y = H2O_out)+
+  geom_point(size = 4) +
+  #geom_hline(aes(yintercept = 250))+
+  #scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16))+
+  theme_figure()+
+  ylab(latex2exp::TeX('$H_2O (ppm)$')) +
+  ggtitle("Toblerone, Dry Air Test 2") +
+   theme(plot.title = element_text(hjust = 0.5)) +
+  scale_y_continuous(limits = c(0,3000))
 
-ggplotly(DryAir_031321_plot)
+#ggplotly(DryAir_031321_plot)
 print(DryAir_031321_plot)
 ```
 
@@ -710,7 +720,7 @@ OutletValve <- data_070521 %>%
       geom_point()+
       scale_x_time()
 
-ggplotly(OutletValve, dynamicTicks = TRUE)
+#ggplotly(OutletValve, dynamicTicks = TRUE)
 
 
 
@@ -835,6 +845,12 @@ DryAirResults_070521 <- DryAirResults_070521  %>%
         mutate(Flask = 16)
   )
 
+DryAirResults_070521 <- DryAirResults_070521 %>% 
+  mutate(
+    SWISS = "Toblerone",
+    test = "Long Dry Air"
+  )
+
 DryAirResults_070521_plt <- DryAirResults_070521 %>% 
   ggplot()+
   aes(x = Flask, y = H2O_out, size = 2)+
@@ -854,6 +870,10 @@ DryAirResults_070521_plt <- DryAirResults_070521 %>%
   )
 
 print(DryAirResults_070521_plt)
+
+
+write.csv(DryAirResults_070521, "data/DryAirTests/Tob_LongDryAir.csv")
+
 ```
 
 
@@ -1032,12 +1052,16 @@ outlet_082221 <- data_082221 %>%
 plt.outlet_082221 <- outlet_082221 %>% 
   outlet_batch_plt()
 
-ggplotly(plt.outlet_082221)
+#ggplotly(plt.outlet_082221)
 
 #Average out all of the data and mutate on the order that flasks were measured in
 outlet.function_aves_082221 <- outlet_082221 %>% 
     flask_ave_outlet() %>% 
-      mutate(Flask = c(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16))
+      mutate(Flask = c(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)) %>% 
+      mutate(
+        SWISS = "Toblerone",
+        test = "Dry Air 7 Day"
+      )
 
 #Plot your data!
 data_082221_plt <- outlet.function_aves_082221 %>% 
@@ -1049,6 +1073,8 @@ data_082221_plt +
        theme(plot.title = element_text(hjust = 0.5))+
         scale_y_continuous(limits=c(0, 750), expand = c(0, 0))
 
+
+write.csv(outlet.function_aves_082221, "data/DryAirTests/TobleroneDryAir.csv")
 ```
 
 
@@ -1376,7 +1402,7 @@ WVtest_results_202208 <- flasks_0818 %>%
       SWISS = "Toblerone"
     )
 
-#write.csv(WVtest_results_202208,"data/WaterVaporTests/Toblerone_August.csv")
+write.csv(WVtest_results_202208,"data/WaterVaporTests/Toblerone_August.csv")
 
 WVtest_results_plt_202208 <- WVtest_results_202208 %>%  
   pivot_longer(cols = c(d18O_offset, d2H_offset)) %>% 
