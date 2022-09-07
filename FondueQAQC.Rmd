@@ -618,7 +618,14 @@ flask_ave_102821 <- data_102821 %>%
   filter(batch != 16 & batch!=8  & batch !=33) %>% 
     flask_ave_outlet() %>% 
       mutate(Flask = c(2,3,4,5,6,7,8,9,10,11,13)) %>% 
-        bind_rows(flask12_102821)
+        bind_rows(flask12_102821) %>% 
+          mutate(
+            SWISS = "Fondue",
+            test = "Fondue 43 Day"
+          )
+
+write.csv(flask_ave_102821, "data/DryAirTests/Fondue_LongDryAir.csv")
+
 
 plt_flasks_102821 <- flask_ave_102821 %>% 
   ggplot()+

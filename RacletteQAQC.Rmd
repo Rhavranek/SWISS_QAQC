@@ -374,8 +374,12 @@ lm(formula = d2H_diff ~ d18O_diff, data = WVtest_results)
 ```{r}
 july2022 <- tibble(
   H2O_out = c(533.5, 352.2, 309.8, 370.6, 310, 305, 374, 292.3,320.7, 523.3, 427.7, 267.1, 265.1, 269.1, 261),
-  Flask = c(2:16)
+  Flask = c(2:16),
+  SWISS = "Raclette",
+  test =  "Dry Air 7 Day"
 )
+
+write.csv(july2022, "data/DryAirTests/Raclette7Day.csv")
 
 july2022_plt <- Flask_h2o_plt(july2022) 
 

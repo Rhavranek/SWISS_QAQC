@@ -215,6 +215,14 @@ flask_ave_082521 <- data_082521 %>%
 
 flask_ave_082521_plt <- Flask_h2o_plt(flask_ave_082521) 
 
+flask_ave_082521 <- flask_ave_082521 %>% 
+  mutate(
+    SWISS = "Lindt",
+    test = "Dry Air 7 Day"
+  )
+  
+write.csv(flask_ave_082521, "data/DryAirTests/LindtDryAir.csv")  
+  
 print(flask_ave_082521_plt +  
         ylab(latex2exp::TeX('$H_2O (ppm)$')) +
         ggtitle("Lindt") +
