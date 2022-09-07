@@ -13,6 +13,9 @@ output:
 editor_options:
   chunk_output_type: console
 ---
+
+
+
 # Setup
 ```{r setup, echo = TRUE, message=FALSE, warning=FALSE}
 # load libraries
@@ -62,11 +65,33 @@ rosti <- rosti %>% mutate (
 ```
 
 ```{r}
+# rosti <- rosti %>% 
+#   rename(
+#     eight_day = dry_test_1,
+#     twentyseven_day = dry_test_2
+#   )
+# 
+
+ PTFE_plt <- rosti %>%
+   pivot_longer(c(dry_test_1, dry_test_2)) %>%
+   ggplot () +
+   aes (x = Port, y = value)+
+   geom_point(size = 4) +
+   facet_wrap(~name )+
+  ylab(latex2exp::TeX("$H_2O  (ppm)"))+
+   theme_figure()
+
+ PTFE_plt
+
+#|| Flask == 9 || Flask == 10
+
 rosti_plot <- rosti %>% 
   pivot_longer(c(dry_test_1, dry_test_2, d18O_diff, d2H_diff)) %>% 
   ggplot () +
   aes (x = Port, y = value)+
-  geom_point() +
+  geom_point(
+    
+  ) +
   facet_wrap(
     ~name, 
     scales = "free")+
@@ -77,7 +102,7 @@ rosti_plot
 ggplotly(rosti_plot)
 
 DryAir_labs <- c("9-day dry air test", "27-day dry air test")
-names(DryAir_labs) <- c("dry_test_1", "dry_test_2")
+names(DryAir_labs) <- c("dry_test_1", "dry_test_1")
 
 otherlab <- c ("H2O concentration")
 names(otherlab) <- c("value")
@@ -269,8 +294,12 @@ print(WVtest_results_plt)
 ```{r}
 long_dry_air <- tibble(
   Flask = c(16:2),
-  H2O_out = c(650, 290, 272,260,290,1600,810,800,290,270,365,355,320,515,420)
+  H2O_out = c(650, 290, 272,260,290,1600,810,800,290,270,365,355,320,515,420),
+  SWISS = "Rosti",
+  test = "Long Dry Air"
 )
+
+write.csv(long_dry_air, "data/DryAirTests/Rost_LongDryAir.csv")
 
 long_dry_air %>% ggplot()+
   aes(x = Flask, y = H2O_out, size = 2)+
