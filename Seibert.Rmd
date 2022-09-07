@@ -169,7 +169,14 @@ flasks_071922 <- flasks_071922 %>% bind_rows(flask6)
 
 all flasks
 ```{r}
-seibert_firstround <- Flasks071822 %>% bind_rows(flasks_071922)  
+seibert_firstround <- Flasks071822 %>% bind_rows(flasks_071922)    %>% 
+  mutate(
+    d18o_offset = d18O_out - 0.9,
+    d2H_offset = d2H_out - 2.6,
+    T = 23, #estimate until we dig up the loggers, temp based on 25 cm temp in 2021
+    d18O_rothfuss = 11.45 - 0.0795*T +1.0012*d18o_offset,
+    d2H_rothfuss =104.96 - 1.0342*T + 1.0724*d2H_offset
+  )
   
 
 seibert_d18o <- seibert_firstround %>% 
@@ -179,13 +186,13 @@ seibert_d18o <- seibert_firstround %>%
   ggtitle("Seibert")+
   geom_errorbar(aes(
     x = sampledate,
-    ymax = d18O_out - 0.5,
-    ymin = d18O_out + 0.5,
+    ymax = d18O_rothfuss - 0.9,
+    ymin = d18O_rothfuss + 0.9,
     width = 0)) +
   geom_point(
     aes(
       x= sampledate,
-      y = d18O_out,
+      y = d18O_rothfuss,
       pch = as.factor(sampledepth),
       fill = as.factor(sampledepth)
     ),
@@ -211,13 +218,13 @@ seibert_d2h <- seibert_firstround %>%
   xlab("Sample Date")+
   geom_errorbar(aes(
     x = sampledate,
-    ymax = d2H_out - 2.0,
-    ymin = d2H_out + 2.0,
+    ymax = d2H_rothfuss - 3.6,
+    ymin = d2H_rothfuss + 3.6,
     width = 0)) +
   geom_point(
     aes(
       x= sampledate,
-      y = d2H_out,
+      y = d2H_rothfuss,
       pch = as.factor(sampledepth),
       fill = as.factor(sampledepth)
     ),

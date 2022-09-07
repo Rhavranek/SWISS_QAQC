@@ -116,12 +116,13 @@ flasks_0812 <- data_0812 %>%
 ```
 
 ```{r}
-Brigssdale_july2022 <- bind_rows(flasks_0810,flasks_0811,flasks_0812) %>% mutate(
-  T = ,
-  d18O_rothfuss = ,
-  d2H_rothfuss = ,
-  d18O_oerter =   ,
-  d2H_oerter =   ,
+Brigssdale_july2022 <- bind_rows(flasks_0810,flasks_0811,flasks_0812) %>%
+  mutate(
+    d18o_offset = d18O_out - 0.9,
+    d2H_offset = d2H_out - 2.6,
+    T = 23, #estimate until we dig up the loggers
+    d18O_rothfuss = 11.45 - 0.0795*T +1.0012*d18o_offset,
+    d2H_rothfuss =104.96 - 1.0342*T + 1.0724*d2H_offset
 )
   
 ```
@@ -135,13 +136,13 @@ Brigssdale_july2022_plt <- Brigssdale_july2022 %>%
   ggtitle("Briggsdale, CO")+
   geom_errorbar(aes(
     x = sampledate,
-    ymax = d18O_out - 0.5,
-    ymin = d18O_out + 0.5,
+    ymax = d18O_rothfuss - 0.9,
+    ymin = d18O_rothfuss + 0.9,
     width = 0)) +
   geom_point(
     aes(
       x= sampledate,
-      y = d18O_out,
+      y = d18O_rothfuss,
       pch = as.factor(sampledepth),
       fill = as.factor(sampledepth)
     ),
@@ -165,13 +166,13 @@ Brigssdale_d2h <- Brigssdale_july2022 %>%
   ylab(latex2exp::TeX('$\\delta^2H$'))+
   geom_errorbar(aes(
     x = sampledate,
-    ymax = d2H_out - 2.0,
-    ymin = d2H_out + 2.0,
+    ymax = d2H_rothfuss - 3.6,
+    ymin = d2H_rothfuss + 3.6,
     width = 0)) +
   geom_point(
     aes(
       x= sampledate,
-      y = d2H_out,
+      y = d2H_rothfuss,
       pch = as.factor(sampledepth),
       fill = as.factor(sampledepth)
     ),
