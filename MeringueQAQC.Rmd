@@ -410,47 +410,34 @@ May2022_data <- tibble(
   T = c(25,23,17, 17,16,15, 18,19,20, 22,23,26, 21,21,21),
   d18O = c(-31.85, -17.87, -24.33, -31.85, -17.91, -23.39, -32.76,-18.09, - 26.27, -33.9, -18.09, -23.43, -33.4, -19.0, -23.3),
   d18O_offset = d18O - 0.9,
-  d18O_corr = (11.45 - 0.0795*T + 1.0012*d18O_offset),
+  d18O_corr = round((11.45 - 0.0795*T + 1.0012*d18O_offset), 1),
   d2H = c(-251,-167.4, -191.2, -247.8,-168, -195, -265.1,-168.7, - 207, -262, - 169.5, -192.2, -255.6, -173.5,  - 189),
   d2H_offset = d2H - 2.6, 
-  d2H_corr = (104.96 - 1.0342*T + 1.0724*d2H_offset),
+  d2H_corr = round((104.96 - 1.0342*T + 1.0724*d2H_offset),1),
   water= c("Light", "Atmosphere", "DI", "Light", "Atmosphere", "DI", "Light", "Atmosphere", "DI","Light", "Atmosphere", "DI", "Light", "Atmosphere", "DI" )
 ) 
 
 standardvalues <- tibble(
-  Water = c("Atmosphere", "Light", "DI"),
+  SWISS = "Meringue",
+  water = c("Atmosphere", "Light", "DI"),
   d18O_out =c(-18,-32.2,-23.5),
   d2H_out = c(-167, -262.7, -197.9),
   T = 22) %>% 
-    liq_rothfuss2013()
+    liq_rothfuss2013() 
+
+stds_tbl <- standardvalues %>% 
+  dplyr::select(SWISS, water, d18O_liq, d2H_liq) %>% 
+  rename(d18O = d18O_liq, d2H = d2H_liq)
 
 
+May2022_data %>% 
+  mutate(SWISS = "Meringue") %>% 
+  dplyr::select(SWISS, Flask, water, d18O_corr, d2H_corr) %>% 
+  arrange(Flask) %>% 
+  rename (d18O = d18O_corr, d2H = d2H_corr) %>% 
+  bind_rows(stds_tbl) %>% 
+  write.csv("output/BackyardTest.csv")
 
-
-# %>% 
-#   pivot_longer(cols = c(d18O, d2H)) %>% 
-#   mutate(
-#       # turn into ordered variable (factor) that keeps the order
-# 
-#       latex_name = as_factor(name) %>% fct_inorder()  %>%
-#         # introduce latex substitutions
-#         fct_recode(
-#                    "$\\Delta \\delta^2H" = "d2H",
-#                    "$\\Delta \\delta^{18}O" = "d18O")
-#     ) 
-
-
-# May2022_data %>%  ggplot()+
-#         aes(x = Flask, y = value,  fill = water) +
-#         facet_wrap(~latex_name, labeller = latex_labeller, ncol = 1, scales = "free")+
-#         geom_point(pch = 21, size = 4)+
-#         scale_x_continuous(breaks = c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) +
-#         theme_figure()+
-#         theme(
-#           legend.position = "none",
-#           axis.title.y = element_blank()
-#         ) +
-#         scale_fill_viridis(option = "C", discrete = TRUE)
 
 
 
