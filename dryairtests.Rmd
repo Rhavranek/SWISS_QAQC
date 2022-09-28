@@ -63,6 +63,12 @@ plt <- shortdryair %>%
         ylab(latex2exp::TeX('$H_2O (ppm)$')) 
 
 plt
+
+shortdryair %>% 
+  mutate(days = 7) %>% 
+  dplyr::select(SWISS, days, H2O_out, SDH2O_out) %>% 
+  rename(H2O_ppm = H2O_out, H2O_stdev_ppm = SDH2O_out) %>% 
+  write.csv("output/DryAirResults.csv")
 ```
 
 #long tests
@@ -84,6 +90,11 @@ plt2 <- long_dryair %>%
         ylab(latex2exp::TeX('$H_2O (ppm)$')) 
 
 plt2
+
+long_dryair %>% 
+  dplyr::select(SWISS, days, H2O_out, SDH2O_out)%>% 
+  rename(H2O_ppm = H2O_out, H2O_stdev_ppm = SDH2O_out) %>% 
+  write.csv("output/LongDryAirResults.csv")
 ```
 
 
