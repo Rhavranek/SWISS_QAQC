@@ -546,20 +546,32 @@ correctedKDE_d2H
 corrected_d2H <- tbl %>% 
   filter(Session == "August2022") %>%
   ggplot()+
-  aes(x= Flask, y = d2H_offset)+
-  geom_point(size = 3) +
+  aes(x= Flask, y = d2H_offset,  fill = ifelse(d2H_offset > 3.7, "red", "black"))+
+  geom_point(size = 3, pch = 21) +
   facet_wrap(~SWISS)+
   geom_hline(aes(yintercept = 3.7), linetype = "dashed")+
   geom_hline(aes(yintercept = -3.7), linetype = "dashed")+
   labs(
     y = latex2exp::TeX('$\\Delta\\delta^{2}H$')
   ) +
+  scale_fill_identity()+
   #scale_x_continuous(breaks = c(2,4,6,8,10,12,14,16)) +
   theme_figure()
 
 
 corrected_d2H
 ```
+
+
+```{r}
+tbl %>% 
+  filter(Session == "August2022") %>%
+    mutate(Days = 14) %>% 
+    dplyr::select(SWISS, Days, Session, d18O_offset, d2H_offset) %>% 
+      rename(Dd18O = d18O_offset, Dd2H =d2H_offset) %>% 
+        write.csv("output/WVTestResults.csv")
+```
+
 
 
 # Crossplot
@@ -576,6 +588,9 @@ tbl %>%
   geom_point()+
   geom_smooth(method = "lm")+
   theme_figure()
+
+
+
 ```
 
 
