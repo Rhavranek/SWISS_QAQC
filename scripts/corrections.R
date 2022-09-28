@@ -3,8 +3,8 @@
 liq_rothfuss2013 <- function(df){
   liq_rothfuss2013 <- df %>% mutate(
     T = 27,
-    d18O_liq = 11.45 - 0.0795*T +1.0012*d18O_out,
-    d2H_liq = 104.96 - 1.0342*T + 1.0724*d2H_out
+    d18O_liq = round((11.45 - 0.0795*T +1.0012*d18O_out),1),
+    d2H_liq = round((104.96 - 1.0342*T + 1.0724*d2H_out),1)
   )
   return(liq_rothfuss2013)
 }
