@@ -9,6 +9,17 @@ liq_rothfuss2013 <- function(df){
   return(liq_rothfuss2013)
 }
   
+
+SWISS_offset <- function(df){
+  offset <- df %>% mutate(
+   d18O_offset = d18O_corr - 1.0,
+   dD_offset = d2H_corr - 2.6
+  )
+  return(offset)
+}
+ 
+
+
 march182022_corr <- function(df){
   march18 <- df %>% mutate(
     d18O_corr = round(((d18O_out - 1.68206)/1.026412),1),
@@ -37,6 +48,15 @@ April4_phlox_corr <- function(df){
   
   return (April4_phlox_corr)
 }
+
+August10_12_corr <- function(df) {
+  August10_12 <- df %>% mutate(
+    d18O_corr = round(((d18O_liq - -8.994) / 1.000),1),
+    d2H_corr = round(((d2H_liq - -80.7073) / 0.92),)
+  )
+  return (August10_12)
+}
+
 
 
 August17_phlox_corr <- function(df){
