@@ -24,6 +24,7 @@ library (lubridate)
 library(plotly)
 library(fs)
 library(gridExtra)
+library(egg)
 
 setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS_QAQC/")
 
@@ -117,14 +118,36 @@ flasks_0812 <- data_0812 %>%
 
 ```{r}
 Brigssdale_july2022 <- bind_rows(flasks_0810,flasks_0811,flasks_0812) %>%
+ 
   mutate(
-    d18o_offset = d18O_out - 0.9,
-    d2H_offset = d2H_out - 2.6,
     T = 23, #estimate until we dig up the loggers
-    d18O_rothfuss = 11.45 - 0.0795*T +1.0012*d18o_offset,
-    d2H_rothfuss =104.96 - 1.0342*T + 1.0724*d2H_offset
-)
-  
+     #transfer to liquid values
+    d18O_liq = round((11.45 - 0.0795*T +1.0012*d18O_out),1),
+    d2H_liq =round((104.96 - 1.0342*T + 1.0724*d2H_out),1),
+    
+    #transfer to VSMWOW
+    d18O_corr = round(( (d18O_liq - 0.3055)/1.005),1),
+    dD_corr = round(( (d2H_liq - -9.5209)/0.9878),1),
+    
+    # apply swiss offset correction
+    d18o_offset = d18O_corr - 1.0,
+    dD_offset = dD_corr - 2.6
+  ) 
+```
+
+
+```{r}
+# Brigssdale_july2022 <- Brigssdale_july2022 %>% 
+#   mutate(
+#     d18O_off_first = d18O_out - 1.0,
+#     dD_off_first = d2H_out - 2.6, 
+#     
+#     d18O_thenroth = round((11.45 - 0.0795*T +1.0012*d18O_off_first),1),
+#     d2H_thenroth = round((104.96 - 1.0342*T + 1.0724*dD_off_first),1),
+#     
+#     vsmow_last_d180 = round(( (d18O_thenroth - 0.3055)/1.005),1),
+#     vsmow_last_d2H = round(( (d2H_thenroth - -9.5209)/0.9878),1)
+#   )
 ```
 
 
@@ -132,28 +155,30 @@ Brigssdale_july2022 <- bind_rows(flasks_0810,flasks_0811,flasks_0812) %>%
 Brigssdale_july2022_plt <- Brigssdale_july2022 %>%   
   filter(sampledepth > 25) %>% 
   ggplot()+
-  ylab(latex2exp::TeX('$\\delta^{18}O$'))+
+  ylab(latex2exp::TeX('$\\delta^{18}O VSMOW$'))+
   ggtitle("Briggsdale, CO")+
   geom_errorbar(aes(
     x = sampledate,
-    ymax = d18O_rothfuss - 0.9,
-    ymin = d18O_rothfuss + 0.9,
+    ymax = d18o_offset - 0.9,
+    ymin = d18o_offset + 0.9,
     width = 0)) +
   geom_point(
     aes(
       x= sampledate,
-      y = d18O_rothfuss,
+      y = d18o_offset,
       pch = as.factor(sampledepth),
       fill = as.factor(sampledepth)
     ),
-    size = 3
+    size = 6
   ) +
-  scale_shape_manual(values = c(22,23,24), name = "Sample Depth (cm)") +
-  scale_fill_viridis(discrete = TRUE, name = "Sample Depth (cm)") +
+  scale_shape_manual(values = c(23,24), name = "Sample Depth (cm)") +
+  scale_fill_manual(values = c("#20908C", "#FCE621"), name = "Sample Depth (cm)")+
   theme_figure() +
   theme(
-    axis.text = element_text(size = 14),
-    legend.text = element_text(size = 14)
+    axis.text.x = element_blank(),
+    axis.title.x = element_blank(),
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5)
   )
 
 Brigssdale_july2022_plt
@@ -163,33 +188,46 @@ Brigssdale_july2022_plt
 Brigssdale_d2h <- Brigssdale_july2022 %>% 
   filter(sampledepth > 25) %>% 
   ggplot()+
-  ylab(latex2exp::TeX('$\\delta^2H$'))+
+  ylab(latex2exp::TeX('$\\delta^2H VSMOW$'))+
   geom_errorbar(aes(
     x = sampledate,
-    ymax = d2H_rothfuss - 3.6,
-    ymin = d2H_rothfuss + 3.6,
+    ymax = dD_offset - 3.6,
+    ymin = dD_offset + 3.6,
     width = 0)) +
   geom_point(
     aes(
       x= sampledate,
-      y = d2H_rothfuss,
+      y = dD_offset,
       pch = as.factor(sampledepth),
       fill = as.factor(sampledepth)
     ),
-    size = 3
+    size = 6
   ) +
-  scale_shape_manual(values = c(22,23,24), name = "Sample Depth (cm)") +
-  scale_fill_viridis(discrete = TRUE, name = "Sample Depth (cm)") +
-  theme_figure()
+  scale_shape_manual(values = c(23,24), name = "Sample Depth (cm)") +
+  scale_fill_manual(values = c("#20908C", "#FCE621"), name = "Sample Depth (cm)")+
+  theme_figure() +
+  theme(
+    axis.text.x = element_text(size = 14, angle = 45,  hjust=1),
+    axis.title.x = element_blank(),
+    legend.text = element_text(size = 14),
+    legend.title = element_text(size = 14)
+  )
 
 print(Brigssdale_d2h)
 ```
 
 ```{r Briggsdale june data}
-grid.arrange(Brigssdale_july2022_plt, Brigssdale_d2h, nrow = 2)
+ggarrange(Brigssdale_july2022_plt, Brigssdale_d2h)
+
+Brigssdale_july2022 %>% 
+  filter(sampledepth > 25) %>% 
+  mutate(
+    Site = "Briggsdale"
+  ) %>% 
+    dplyr::select(Site, sampledate, sampledepth, Flask, T, d18o_offset, SD_18O_out, dD_offset, SD_2H_out) %>% 
+      arrange(Flask) %>% 
+        rename(Date = sampledate, Depth = sampledepth, AnalyticalError = SD_18O_out) %>% 
+        write.csv("output/BriggsdaleJulyData.csv")
 ```
 ```
-
-
-
 
