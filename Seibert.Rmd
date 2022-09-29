@@ -25,6 +25,7 @@ library (lubridate)
 library(plotly)
 library(fs)
 library(gridExtra)
+library(egg)
 
 setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS_QAQC/")
 
@@ -167,82 +168,110 @@ flasks_071922 <- flasks_071922 %>% bind_rows(flask6)
 ```
 
 
-all flasks
+## Correct Data & Save
 ```{r}
 seibert_firstround <- Flasks071822 %>% bind_rows(flasks_071922)    %>% 
   mutate(
-    d18o_offset = d18O_out - 0.9,
-    d2H_offset = d2H_out - 2.6,
+    #transfer to liquid values
     T = 23, #estimate until we dig up the loggers, temp based on 25 cm temp in 2021
-    d18O_rothfuss = 11.45 - 0.0795*T +1.0012*d18o_offset,
-    d2H_rothfuss =104.96 - 1.0342*T + 1.0724*d2H_offset
+    d18O_rothfuss = 11.45 - 0.0795*T +1.0012*d18O_out,
+    d2H_rothfuss =104.96 - 1.0342*T + 1.0724*d2H_out,
+    
+    #transfer into VSMOW
+    d18O_vsmow = (d18O_rothfuss - 0.7289) / 1.02,
+    d2H_vsmow = (d2H_rothfuss - -.4987) / 1.0236,
+    
+    #apply SWISS offset correction
+    d18o_offset = round((d18O_vsmow - 0.9),1),
+    d2H_offset = round((d2H_vsmow - 2.6), 1)
   )
   
 
+seibert_firstround%>% 
+  filter(sampledepth < 75) %>% 
+  mutate(
+    Site = "Seibert"
+  ) %>% 
+    dplyr::select(Site, sampledate, sampledepth, Flask, T, d18o_offset, SD_18O_out, d2H_offset, SD_2H_out) %>% 
+      arrange(Flask) %>% 
+        rename(Date = sampledate, Depth = sampledepth, AnalyticalError = SD_18O_out) %>% 
+        write.csv("output/SeibertJulyData.csv")
+```
+
+## Plot 
+```{r}
 seibert_d18o <- seibert_firstround %>% 
   filter(sampledepth < 75) %>% 
   ggplot()+
-  ylab(latex2exp::TeX('$\\delta^{18}O$'))+
-  ggtitle("Seibert")+
+  ylab(latex2exp::TeX('$\\delta^{18}O VSMOW$'))+
+  ggtitle("Seibert, CO")+
   geom_errorbar(aes(
     x = sampledate,
-    ymax = d18O_rothfuss - 0.9,
-    ymin = d18O_rothfuss + 0.9,
+    ymax = d18o_offset - 0.9,
+    ymin = d18o_offset + 0.9,
     width = 0)) +
   geom_point(
     aes(
       x= sampledate,
-      y = d18O_rothfuss,
+      y = d18o_offset,
       pch = as.factor(sampledepth),
       fill = as.factor(sampledepth)
     ),
-    size = 3
+    size = 6
   ) +
-  scale_shape_manual(values = c(22,23,24), name = "Sample Depth (cm)") +
-  scale_fill_viridis(discrete = TRUE, name = "Sample Depth (cm)") +
+  scale_shape_manual(values = c(22,23), name = "Sample Depth (cm)") +
+  scale_fill_manual(values = c("#441853", "#20908C"), name = "Sample Depth (cm)")+
   theme_figure()+
-  theme(legend.title = element_text(size = 14),
-        legend.text = element_text(size = 14),
-        axis.text.x = element_text(size = 14),
-        axis.title.x = element_blank())
+  theme(
+    axis.text.x = element_blank(),
+    axis.title.x = element_blank(),
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5)
+  )
   
 
 print(seibert_d18o)
 ```
 
+
+
+
 ```{r}
 seibert_d2h <- seibert_firstround %>% 
   filter(sampledepth < 75) %>% 
   ggplot()+
-  ylab(latex2exp::TeX('$\\delta^2H$'))+
+  ylab(latex2exp::TeX('$\\delta^2H VSMOW$'))+
   xlab("Sample Date")+
   geom_errorbar(aes(
     x = sampledate,
-    ymax = d2H_rothfuss - 3.6,
-    ymin = d2H_rothfuss + 3.6,
+    ymax = d2H_offset - 3.6,
+    ymin = d2H_offset + 3.6,
     width = 0)) +
   geom_point(
     aes(
       x= sampledate,
-      y = d2H_rothfuss,
+      y = d2H_offset,
       pch = as.factor(sampledepth),
       fill = as.factor(sampledepth)
     ),
-    size = 3
+    size = 6
   ) +
   scale_shape_manual(values = c(22,23,24), name = "Sample Depth (cm)") +
-  scale_fill_viridis(discrete = TRUE, name = "Sample Depth (cm)") +
+  scale_fill_manual(values = c("#441853", "#20908C"), name = "Sample Depth (cm)")+
   theme_figure()+
-  theme(legend.title = element_text(size = 14),
-        legend.text = element_text(size = 14),
-        axis.text.x = element_text(size = 14),
-        axis.title.x = element_blank())
+  scale_y_continuous(breaks=c(-62, -58, -54))+
+  theme(
+    axis.text.x = element_text(size = 14, angle = 45,  hjust=1),
+    axis.title.x = element_blank(),
+    legend.text = element_text(size = 14),
+    legend.title = element_text(size = 14)
+  )
 
 print(seibert_d2h)
 ```
 
 ```{r Seibert July data}
-grid.arrange(seibert_d18o, seibert_d2h, nrow = 2)
+ggarrange(seibert_d18o, seibert_d2h)
 ```
 
 
