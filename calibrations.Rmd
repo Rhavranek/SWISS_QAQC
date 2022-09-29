@@ -58,12 +58,15 @@ tbl <- readRDS(file.path("data", "2021Data.RDS")) %>%
 # Standard values
 ```{r}
 stds <- tibble(
-  std = c("KFW", "KBW", "KAW", "KGW"),
-  d18o_known = c(-0.76, -14.15, -30.30, -38.02),
-  d2H_known = c(-2.82,-111.65,-239.13, -298.37),
+  std = c("KFW", "KBW", "KAW", "KGW", "BDI_080222","Ygrette4", "H2_080322", "H072022", "2019DI_Gallon"),
+  d18o_known = c(-0.76, -14.15, -30.30, -38.02, -17.02, -25.45, 5.35, -3.43, -15.87),
+  d2H_known = c(-2.82,-111.65,-239.13, -298.37, -124.9, -187.5, -49.5, -76.9, -119.7),
   type = "known"
 )
 ```
+
+
+
 
 # March 18, 2022 calibration
 Julien 
@@ -229,7 +232,7 @@ d2H_corr_phlox = (d2H_out + 0.00710443)/1.050112
 
 # July 2022
 ## July 19, 2022
-On July 19 and 20 we (Haley) ran three standards, ygrette4, DI from benson, and a heavy water. All of those were subsampled for discrete runs. As of august 16, 2022 they haven't been run yet, but I expect to do that run the first week of September. 
+On July 19 and 20 we (Haley & I) ran three standards, ygrette4, DI from benson, and a heavy water. All of those were subsampled for discrete runs. As of august 16, 2022 they haven't been run yet, but I expect to do that run the first week of September. 
 
 On july 19
 There were probably large room temp fluctuations while Haley ran the last heavy standard. If you look at the first 10 minutes, d18O centers around -12.5 per mil, but from 16:25 - 16:33 it cetners morre around - 11.9. I chose to keep the lighter value, since that is more likely in line with the values from the other standards temperature wise. I've kept the plot of the fluctuating values for reference. 
@@ -256,10 +259,12 @@ stds_071922 <- data_071922 %>%
   filter(H2O_Batch == 0 | H2O_Batch == 106 | H2O_Batch == 247) %>% 
     flask_first3minutes() %>% 
      mutate(
-       StdName = c("Ygrette4", "Ygrette4", "Heavy"),
-       T = 27,
+       std = c("Ygrette4", "Ygrette4", "H072022"),
+       T = 22,
        Analyst = "Haley",
-     )
+       d18O_rothfuss = 11.45 - 0.0795*T +1.0012*d18O_out,
+       d2H_rothfuss =104.96 - 1.0342*T + 1.0724*d2H_out
+     ) 
 ```
 
 ## July 20, 2022 
@@ -280,23 +285,46 @@ stds_072022 <- data_072022 %>%
   filter (H2O_Batch>1) %>% 
   flask_first3minutes() %>% 
   mutate(
-    StdName = c("Heavy", "Heavy", "DI", "DI"),
-       T = 27,
-       Analyst = "Haley"
+    std = c("H072022", "H072022", "2019DI_Gallon", "2019DI_Gallon"),
+       T = 22,
+       Analyst = "Haley",
+       d18O_rothfuss = 11.45 - 0.0795*T +1.0012*d18O_out,
+       d2H_rothfuss =104.96 - 1.0342*T + 1.0724*d2H_out
   )
 ```
 
 
 ```{r}
 julystd <- bind_rows(stds_071922, stds_072022) %>% 
-  ggplot()+
-  aes(x = d18O_out, y = d2H_out, color= StdName)+
-  geom_errorbar(aes(ymin = d2H_out - 2, ymax = d2H_out + 2))+
-  geom_errorbarh(aes(xmin = d18O_out - 0.5, xmax = d18O_out + 0.5))+
-  geom_point()
+  left_join(stds, by = "std")
 
-print(julystd )
+d18O_lm_0722 <- lm(d18O_rothfuss ~ d18o_known, julystd) 
+d2H_lm_0722 <- lm (d2H_rothfuss ~ d2H_known, julystd)
+
+julystd <- julystd %>% 
+  mutate(
+    d18O_vsmow = (d18O_rothfuss - 0.7289) / 1.02,
+    d2H_vsmow = (d2H_rothfuss - -.4987) / 1.0236
+  )
+
+julystd_plt <- julystd %>% 
+  ggplot()+
+  aes(x = d18O_vsmow, y = d2H_vsmow, color= std)+
+  geom_errorbar(aes(ymin = d2H_vsmow - 2, ymax = d2H_vsmow + 2))+
+  geom_errorbarh(aes(xmin = d18O_vsmow - 0.5, xmax = d18O_vsmow + 0.5))+
+  geom_point() +
+  geom_point(data = julystd, aes
+             (x = d18o_known, y = d2H_known), color = "black")
+
+ggplotly(julystd_plt)
 ```
+
+## equations:
+d18O_vsmow = (d18O_rothfuss - 0.7289) / 1.02,
+d2H_vsmow = (d2H_rothfuss - -.4987) / 1.0236
+
+
+
 
 # August 2022
 Between August 5 - 12 we measured two SWISS pulled from the field, and so we also tried to measure our own standards in the meantime. Additionally, I tried to do a 'valco' run using the vaporizer system, but that run was unsuccessful. For these, we have some new standards:
@@ -320,8 +348,8 @@ stds_080522 <- data_080522 %>%
   filter (H2O_Batch != 54) %>% 
   flask_first3minutes() %>% 
   mutate(
-    StdName = c("DI", "Ygrette4"),
-       T = 27,
+    std = c("BDI_080222", "Ygrette4"),
+       T = 22,
        Analyst = "Haley"
   )
 ```
@@ -345,8 +373,8 @@ ygrette <- data_080922 %>%
   filter (MDT >"2022-08-09 12:45" & MDT < "2022-08-09 12:50") %>% 
   flask_out_ave() %>% 
   mutate(
-     StdName = c("Ygrette4"),
-     T = 27,
+     std = c("Ygrette4"),
+     T = 22,
      Analyst = "Haley"
   )
 
@@ -359,12 +387,51 @@ stds_080922 <- data_080922 %>%
   filter(H2O_Batch >179 & H2O > 15000) %>% 
   flask_first3minutes() %>% 
   mutate(
-     StdName = c("Ygrette4", "BDI_080222", "BDI_080222", "BDI_080222", "H2_080322", "H2_080322"),
-     T = 27,
+     std = c("Ygrette4", "BDI_080222", "BDI_080222", "BDI_080222", "H2_080322", "H2_080322"),
+     T = 22,
      Analyst = "Haley"
   ) %>% 
   bind_rows(ygrette)
 ```
+
+## Oglala Stds
+```{r}
+oglalastds <- bind_rows(stds_080522, stds_080922) %>% 
+  left_join(stds, by = "std") %>% 
+  mutate(
+    d18O_rothfuss = 11.45 - 0.0795*T +1.0012*d18O_out,
+    d2H_rothfuss =104.96 - 1.0342*T + 1.0724*d2H_out
+  )
+
+d18O_lm_080522 <- lm(d18O_rothfuss ~ d18o_known, oglalastds) 
+d2H_lm_080522 <- lm (d2H_rothfuss ~ d2H_known, oglalastds)
+
+oglalastds <- oglalastds %>% 
+  mutate(
+    d18O_vsmow = (d18O_rothfuss - 0.711) / 1.018,
+    d2H_vsmow = (d2H_rothfuss - -0.4566) / 1.0297
+  )
+
+oglalastd_plt <- oglalastds %>% 
+  ggplot()+
+  aes(x = d18O_vsmow, y = d2H_vsmow, color= std)+
+  geom_errorbar(aes(ymin = d2H_vsmow - 2, ymax = d2H_vsmow + 2))+
+  geom_errorbarh(aes(xmin = d18O_vsmow - 0.5, xmax = d18O_vsmow + 0.5))+
+  geom_point() +
+  geom_point(data = oglalastds, aes
+             (x = d18o_known, y = d2H_known), color = "black")
+
+ggplotly(oglalastd_plt)
+
+```
+
+### Equations:
+d18O_vsmow = (d18O_rothfuss - 0.711) / 1.018,
+d2H_vsmow = (d2H_rothfuss - -0.4566) / 1.0297  
+
+
+
+
 
 ## August 9 2022 vaporizer 
 - Phlox 
@@ -396,7 +463,7 @@ stds_081022 <- firstround_081022 %>%
   filter(H2O > 5000) %>% 
   flask_first3minutes() %>% 
   mutate(
-    StdName = c("Ygrette4", "BDI_080222"),
+    std = c("Ygrette4", "BDI_080222"),
      T = 27,
      Analyst = "Haley"
   )
@@ -408,7 +475,7 @@ secondbatch <- firstround_081022 <- tbl %>%
       h2o_batches() %>% 
         flask_first3minutes() %>% 
         mutate(
-          StdName = c("BDI_080222", "BDI_080222"),
+          std = c("BDI_080222", "BDI_080222"),
           T = 23,
           Analyst = "Haley"
   )
@@ -434,7 +501,7 @@ d180_time_plt(data_081122)
 stds_081122 <- data_081122 %>% 
   flask_first3minutes() %>% 
     mutate(
-      StdName = c("BDI_080222", "BDI_080222", "BDI_080222", "L1_080322", "H2_080322"),
+      std = c("BDI_080222", "BDI_080222", "BDI_080222", "L1_080322", "H2_080322"),
           T = 23,
           Analyst = "Haley"
     )
@@ -456,7 +523,7 @@ batch545 <- tbl %>%
     BoulderTime() %>% 
       filter(MDT > "2022-08-12 14:39:00" & MDT < "2022-08-12 14:42:01") %>% flask_out_ave() %>% 
         mutate(
-          StdName = c("BDI_080222"),
+          std = c("BDI_080222"),
           T = 23,
           Analyst = "Haley")
         
@@ -464,11 +531,42 @@ batch545 <- tbl %>%
 stds_081222 <- data_081222 %>% 
   flask_first3minutes() %>% 
    mutate(
-      StdName = c("L1_080322", "BDI_080222", "H2_080322", "L1_080322", "H2_080322"),
+      std = c("L1_080322", "BDI_080222", "H2_080322", "L1_080322", "H2_080322"),
           T = 23,
           Analyst = "Haley") %>% 
             bind_rows(batch545)
+
+stds_081222 <- stds_081222 %>% filter(H2O_Batch != 206)
 ```
+
+# Briggsdale Correction
+```{r}
+all_0812 <- bind_rows(stds_081022, stds_081122, stds_081222) %>% 
+  liq_rothfuss2013() %>% 
+  left_join(stds, by = "std")
+
+soconfunsed <- all_0812 %>% 
+  ggplot()+
+  aes(x = d18o_known, y = d18O_liq)+
+  geom_point() +
+  geom_abline(aes(slope = 1.005, intercept = 0.3055))
+
+ggplotly(soconfunsed)
+
+d18O_lm_0812 <- lm(d18O_liq ~ d18o_known, all_0812) 
+dD_lm_0812 <- lm(d2H_liq ~ d2H_known, all_0812)
+
+
+all_0812 <- all_0812 %>% 
+  mutate(
+    d18O_corr = round(( (d18O_liq - 0.3055)/1.005),1),
+    dD_corr = round(( (d2H_liq - -9.5209)/0.9878),1),
+  )
+```
+## Equations transferred to 
+d18O_corr = (d18O_out - -8.994) / 1.000
+d2H_corr = (d2H_out - -80.7073) / 0.92
+
 
 ## August 16 
 Valco calibration done on the humidity system. one hour seems to be a good amount of time, could maybe be even longer
