@@ -131,7 +131,9 @@ Brigssdale_july2022 <- bind_rows(flasks_0810,flasks_0811,flasks_0812) %>%
     
     # apply swiss offset correction
     d18o_offset = d18O_corr - 1.0,
-    dD_offset = dD_corr - 2.6
+    dD_offset = dD_corr - 2.6,
+    
+    dexcess = dD_offset - 8*d18o_offset
   ) 
 ```
 
@@ -229,5 +231,80 @@ Brigssdale_july2022 %>%
         rename(Date = sampledate, Depth = sampledepth, AnalyticalError = SD_18O_out) %>% 
         write.csv("output/BriggsdaleJulyData.csv")
 ```
+
+
+```{r}
+crossplt <- Brigssdale_july2022 %>% 
+  filter(sampledepth > 25) %>% 
+  ggplot()+
+  geom_errorbar(aes(
+    x = d18o_offset,
+    ymax = dD_offset - 3.6,
+    ymin = dD_offset + 3.6,
+    width = 0)) +
+  geom_errorbarh(aes(
+    y = dD_offset,
+    xmax = d18o_offset - 0.9,
+    xmin = d18o_offset + 0.9,
+    height = 0)) +
+  geom_point(
+    aes(
+      x = d18o_offset, 
+      y = dD_offset, 
+      pch = factor(sampledepth),
+      fill = factor(sampledate)),
+    size = 6
+  )+
+  scale_shape_manual(values = c(23,24), name = "Sample Depth (cm)") +
+  scale_fill_viridis(discrete = TRUE, name = "Sample Date") +
+  ylab(latex2exp::TeX('$\\delta^2H (VSMOW)$'))+
+  xlab(latex2exp::TeX('$\\delta^{18}O (VSMOW)$')) +
+  theme_figure()
+
+crossplt
 ```
+
+```{r}
+B_dexcess <- Brigssdale_july2022 %>% 
+  filter(sampledepth > 25) %>% 
+  ggplot()+
+  ylab("d-excess")+
+  xlab("Sample Date")+
+  geom_point(
+    aes(
+      x= sampledate,
+      y = dexcess,
+      pch = as.factor(sampledepth),
+      fill = as.factor(sampledepth)
+    ),
+    size = 6
+  ) +
+  scale_shape_manual(values = c(23,24), name = "Sample Depth (cm)") +
+  scale_fill_manual(values = c("#20908C", "#FCE621"), name = "Sample Depth (cm)")+
+  theme_figure()+
+  #scale_y_continuous(breaks=c(-62, -58, -54))+
+  theme(
+    axis.text.x = element_text(size = 14, angle = 45,  hjust=1),
+    axis.title.x = element_blank(),
+    legend.text = element_text(size = 14),
+    legend.title = element_text(size = 14)
+  )
+
+print(B_dexcess)
+```
+
+
+```{r}
+poop <- ggarrange(Brigssdale_july2022_plt, Brigssdale_d2h, B_dexcess)
+
+ggsave( "poop.png", poop)
+```
+
+```{r}
+latex2exp::latex2exp_supported(
+)
+```
+
+
+
 
