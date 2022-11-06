@@ -26,6 +26,7 @@ library(plotly)
 library(fs)
 library(gridExtra)
 library(egg)
+library(readxl)
 
 setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS_QAQC/")
 
@@ -251,6 +252,7 @@ ggarrange(oglala_d18o,oglala_d2H)
 ```{r}
 crossplt <- oglala_firstround %>% 
   ggplot()+
+  geom_abline(intercept = 10, slope = 8, size = 2, linetype = "longdash")+
   geom_errorbar(aes(
     x = d18o_offset,
     ymax = d2H_offset - 3.6,
@@ -265,13 +267,13 @@ crossplt <- oglala_firstround %>%
     aes(
       x = d18o_offset, 
       y = d2H_offset, 
-      #pch = factor(sampledepth),
-      color = factor(sampledate)),
+      pch = factor(sampledepth),
+      fill = factor(sampledate),
+      shape = factor(sampledepth)),
     size = 6
   )+
-  facet_wrap(~sampledepth)+
-  #scale_shape_manual(values = c(22, 23,24), name = "Sample Depth (cm)") +
-  scale_color_viridis(discrete = TRUE, name = "Sample Date") +
+  scale_shape_manual(values = c(22, 23,24), name = "Sample Depth (cm)") +
+  scale_fill_viridis(discrete = TRUE, option = "magma", name = "Sample Date") +
   ylab(latex2exp::TeX('$\\delta^2H (VSMOW)$'))+
   xlab(latex2exp::TeX('$\\delta^{18}O (VSMOW)$')) +
   theme_figure()
@@ -285,6 +287,7 @@ oglala_dexcess <- oglala_firstround %>%
   ggplot()+
   ylab("d-excess")+
   xlab("Sample Date")+
+  geom_errorbar(aes(x = sampledate, ymax =  dexcess + 3.5, ymin = dexcess - 3.5, width = 0))+
   geom_point(
     aes(
       x= sampledate,
@@ -306,5 +309,173 @@ oglala_dexcess <- oglala_firstround %>%
   )
 
 print(oglala_dexcess)
+```
+
+
+# Deployment 2
+```{r}
+Sept22 <- read_excel("data/Oglala_Sept2022.xlsx")
+
+Sept22 <- Sept22 %>% 
+  mutate(
+    sampledate = ymd(SampleDate),
+    T = c(21,21.5,21.5,19,20,20),
+    d18O_rothfuss = 11.45 - 0.0795*T +1.0012*d18O,
+    d2H_rothfuss =104.96 - 1.0342*T + 1.0724*d2H,
+    
+    d18O_vsmow = (d18O_rothfuss - 0.711) / 1.018,
+    d2H_vsmow = (d2H_rothfuss - -0.4566) / 1.0297,
+    
+    d18o_offset =  round(d18O_vsmow - 0.9, 1),
+    d2H_offset =  round(d2H_vsmow - 2.6,1),
+    
+    dexcess = d2H_offset - 8*d18o_offset
+  )
+
+```
+
+```{r}
+oglala_d18o_0922 <- Sept22 %>% 
+  ggplot()+
+  ylab(latex2exp::TeX('$\\delta^{18}O VSMOW$'))+
+  ggtitle("Oglala National Grassland, NE")+
+  geom_errorbar(aes(
+    x = sampledate,
+    ymax = d18o_offset - 1.0,
+    ymin = d18o_offset + 1.0,
+    width = 0)) +
+  geom_point(
+    aes(
+      x= sampledate,
+      y = d18o_offset,
+      pch = as.factor(SampleDepth),
+      fill = as.factor(SampleDepth)
+    ),
+    size = 6
+  ) +
+  scale_shape_manual(values = c(22,23,24), name = "Sample Depth (cm)") +
+  scale_fill_viridis(discrete = TRUE, name = "Sample Depth (cm)") +
+  theme_figure() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.title.x = element_blank(),
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5)
+  )
+  
+print(oglala_d18o_0922)
+
+
+
+oglala_d2H_0922 <- Sept22 %>% 
+  #filter(sampledepth == 75) %>% 
+  ggplot()+
+  ylab(latex2exp::TeX('$\\delta^2H VSMOW$'))+
+  geom_errorbar(aes(
+    x = sampledate,
+    ymax = d2H_offset - 3.6,
+    ymin = d2H_offset + 3.6,
+    width = 0)) +
+  geom_point(
+    aes(
+      x= sampledate,
+      y = d2H_offset,
+      pch = as.factor(SampleDepth),
+      fill = as.factor(SampleDepth)
+    ),
+    size = 6
+  ) +
+  scale_shape_manual(values = c(22,23,24), name = "Sample Depth (cm)") +
+  scale_fill_viridis(discrete = TRUE, name = "Sample Depth (cm)") +
+  theme_figure() +
+  theme(
+    axis.text.x = element_text(size = 14, angle = 45,  hjust=1),
+    axis.title.x = element_blank(),
+    legend.text = element_text(size = 14),
+    legend.title = element_text(size = 14)
+  )
+  
+print(oglala_d2H_0922)
+
+
+oglala_dexcess_0922 <- Sept22 %>% 
+  ggplot()+
+  ylab("d-excess")+
+  xlab("Sample Date")+
+  geom_errorbar(aes(x = sampledate, ymax =  dexcess + 3.5, ymin = dexcess - 3.5, width = 0))+
+  geom_point(
+    aes(
+      x= sampledate,
+      y = dexcess,
+      pch = as.factor(SampleDepth),
+      fill = as.factor(SampleDepth)
+    ),
+    size = 6
+  ) +
+  scale_shape_manual(values = c(22,23,24), name = "Sample Depth (cm)") +
+  scale_fill_viridis(discrete = TRUE, name = "Sample Depth (cm)")+
+  theme_figure()+
+  #scale_y_continuous(breaks=c(-62, -58, -54))+
+  theme(
+    axis.text.x = element_text(size = 14, angle = 45,  hjust=1),
+    axis.title.x = element_blank(),
+    legend.text = element_text(size = 14),
+    legend.title = element_text(size = 14)
+  )
+
+print(oglala_dexcess_0922)
+```
+
+```{r}
+ggarrange(oglala_d18o_0922,oglala_d2H_0922)
+```
+
+```{r}
+Sept22 <- Sept22 %>% 
+  rename(
+    sampledepth = "SampleDepth"
+    ymd
+  )
+
+oglala_firstround$sampledate <- as.Date(oglala_firstround$sampledate)
+
+
+all2022 <- bind_rows(oglala_firstround, Sept22)
+
+```
+
+
+
+
+```{r}
+crossplt_0922 <- all2022 %>% 
+  ggplot()+
+  geom_abline(intercept = 10, slope = 8, size = 2, linetype = "longdash")+
+  geom_errorbar(aes(
+    x = d18o_offset,
+    ymax = d2H_offset - 3.6,
+    ymin = d2H_offset + 3.6,
+    width = 0)) +
+  geom_errorbarh(aes(
+    y = d2H_offset,
+    xmax = d18o_offset - 1.0,
+    xmin = d18o_offset + 1.0,
+    height = 0)) +
+  geom_point(
+    aes(
+      x = d18o_offset, 
+      y = d2H_offset, 
+      pch = factor(sampledepth),
+      color = factor(sampledate),
+      shape = factor(sampledepth)),
+    size = 6
+  )+
+  #scale_shape_manual(values = c(22, 23,24), name = "Sample Depth (cm)") +
+  scale_color_viridis(discrete = TRUE, option = "magma", name = "Sample Date") +
+  ylab(latex2exp::TeX('$\\delta^2H (VSMOW)$'))+
+  xlab(latex2exp::TeX('$\\delta^{18}O (VSMOW)$')) +
+  theme_figure()
+
+crossplt_0922
 ```
 
