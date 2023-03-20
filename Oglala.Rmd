@@ -434,7 +434,6 @@ ggarrange(oglala_d18o_0922,oglala_d2H_0922)
 Sept22 <- Sept22 %>% 
   rename(
     sampledepth = "SampleDepth"
-    ymd
   )
 
 oglala_firstround$sampledate <- as.Date(oglala_firstround$sampledate)
@@ -448,7 +447,7 @@ all2022 <- bind_rows(oglala_firstround, Sept22)
 
 
 ```{r}
-crossplt_0922 <- all2022 %>% 
+crossplt_0922 <- all2022 %>%
   ggplot()+
   geom_abline(intercept = 10, slope = 8, size = 2, linetype = "longdash")+
   geom_errorbar(aes(
@@ -477,5 +476,49 @@ crossplt_0922 <- all2022 %>%
   theme_figure()
 
 crossplt_0922
+
 ```
 
+
+
+final_data <- ClumpedData %>% 
+  filter(Project == "REH") %>% 
+  dplyr:: select(
+    Sample.ID,
+    Strat_height_m,
+    d13C.avg,
+    d13C.2se,
+    d18O.avg,
+    d18O.2se,
+    D47.90.avg,
+    D47.se,
+    T.A,
+    T.A.2se,
+    d18Ow.A,
+    d18Ow.A.2se
+
+
+```{r}
+finaltbl <- all2022 %>% 
+  mutate(site = "Oglala") %>% 
+  dplyr::select(
+    site, 
+    sampledate,
+    sampledepth,
+    d18o_offset,
+    d2H_offset,
+    dexcess
+  ) %>% 
+  rename(
+    "Site" = site,
+    "Sample Date" = sampledate,
+    "Sample Depth (cm)" = sampledepth,
+    "d18O (VSMOW)" = d18o_offset,
+    "d2H (VSMOW)" = d2H_offset,
+    "d-excess ()" = dexcess
+  )
+
+write.csv(finaltbl, "output/OglalaResults_ch3.csv")
+```
+
+  

@@ -58,11 +58,18 @@ plt <- shortdryair %>%
   aes(x = Flask, y = H2O_out) +
   geom_point()+
   facet_wrap(~SWISS)+
+  geom_hline(yintercept = 500, color = "#BE1E2D", linetype = 2)+
   scale_y_continuous(limits=c(0, 750), expand = c(0, 0))+
+  #scale_x_continuous(breaks = c(2,4,6,8,10,12,14, 16))+
   theme_figure()+  
-        ylab(latex2exp::TeX('$H_2O (ppm)$')) 
+  theme(axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10),
+        strip.text.x = element_text(size = 12))+
+  ylab(latex2exp::TeX('$H_2O (ppm)$'))  
 
 plt
+
+ggsave("fig_output/dryair.pdf", width = 6.5, height = 3, units = "in")
 
 shortdryair %>% 
   mutate(days = 7) %>% 

@@ -163,7 +163,8 @@ kde_d180 <- tbl %>%
   ggplot()+
   aes(x =d18O_diff) +
   geom_density(bw = "SJ")+
-  stat_function(fun=dnorm, colour="red", args=list(mean=d18o_norm$estimate[1], sd=d18o_norm$estimate[2])) +
+  stat_function(fun=dnorm, colour="#00A651", linetype = "longdash", args=list(mean=d18o_norm$estimate[1], sd=d18o_norm$estimate[2])) +
+  coord_flip()+ 
   scale_fill_viridis(discrete = TRUE) +
   scale_color_viridis(discrete = TRUE) +
   #geom_label(label = "n = 149", x = 1.5, y = 0.5)+
@@ -389,11 +390,12 @@ kde_d2H <- tbl %>%
   ggplot()+
   aes(x =d2H_diff) +
   geom_density(bw = "SJ")+
-  stat_function(fun=dnorm, colour="red", args=list(mean=d2H_norm$estimate[1], sd=d2H_norm$estimate[2])) +
+  stat_function(fun=dnorm, colour="#00A651", linetype = "longdash", args=list(mean=d2H_norm$estimate[1], sd=d2H_norm$estimate[2])) +
   scale_fill_viridis(discrete = TRUE) +
   scale_color_viridis(discrete = TRUE) +
   #geom_label(label = "n = 149", x = 1.5, y = 0.5)+
   theme_figure()+
+  coord_flip()+
   labs(
     #x = latex2exp::TeX('$\\Delta\\delta^{18}O$'),
     title = "Kernel Density Estimate",
@@ -580,17 +582,75 @@ offsetlm <- lm(d2H_diff ~ d18O_diff, tbl)
 
 summary(offsetlm)
 
-tbl %>% 
-  filter(d2H_diff > -4.2 & d2H_diff < 9.5) %>% 
-  filter(d18O_diff < 3.2 & d18O_diff > -0.6) %>% 
+
+full_crssplt <- tbl %>% 
   ggplot()+
   aes(x = d18O_diff, d2H_diff)+
   geom_point()+
-  geom_smooth(method = "lm")+
-  theme_figure()
+  geom_hline(aes(yintercept = -4.2), linetype = "longdash")+
+  geom_hline(aes(yintercept = 9.5), linetype = "longdash")+
+  geom_vline(aes(xintercept = -0.6), linetype = "longdash")+
+  geom_vline(aes(xintercept = 3.2), linetype = "longdash")+
+   #cale_x_continuous(limits = c(-1,4))+
+    #scale_y_continuous(limits = c(-5, 35))+
+   geom_abline(slope = 3.9346, intercept = -2.7379)+
+  geom_label(aes(label = "outlier cut-off", x = 5, y = -25))+
+  geom_label(aes(label = "outlier cut-off", x = -2, y = -25))+
+  geom_label(aes(label = "slope = 3.93", x = - 4, y = -11 ))+
+  geom_label(aes(label = "outlier cut-off", x = 10, y = 9.5))+
+  geom_label(aes(label = "outlier cut-off", x = 10, y = -4.2))+
+  labs(
+    y = latex2exp::TeX('$\\Delta\\delta^{2}H$'),
+    x = latex2exp::TeX('$\\Delta\\delta^{18}O$'),
+    title = "No offset correction applied, Outliers included"
+  ) +
+  theme_figure()+
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+
+full_crssplt 
+
+tbl2 <-  tbl %>% 
+  filter(d2H_diff > -4.2 & d2H_diff < 9.5) %>% 
+  filter(d18O_diff < 3.2 & d18O_diff > -0.6)
 
 
 
+offsetlm_OutliersExcluded <- lm(d2H_diff ~ d18O_diff, tbl2)
+
+summary(offsetlm_OutliersExcluded)
+
+
+
+crssplt <- tbl %>% 
+  filter(d2H_diff > -4.2 & d2H_diff < 9.5) %>% 
+  filter(d18O_diff < 3.2 & d18O_diff > -0.6) %>%
+  ggplot()+
+  aes(x = d18O_diff, d2H_diff)+
+  geom_abline(slope = 8, intercept = -1.0544, linetype = 2)+
+  geom_abline(slope = 2.7, intercept = -1.0544, linetype = 3)+
+  geom_abline(slope = 3.14, intercept = -1.0544, size = 2)+
+  geom_point()+
+  scale_x_continuous(limits = c(-1,4))+
+  scale_y_continuous(limits = c(-5, 35))+
+  #geom_smooth(method = "lm")+ 
+  geom_label(aes(label = "slope = 3.14, R2 = 0.62", x = 3.5, y = 11 ))+
+  geom_label(aes(label = "slope = 2.7", x = 3.3, y = 7))+
+  geom_label(aes(label = "slope = 8", x = 2, y = 16.5))+
+labs(
+    y = latex2exp::TeX('$\\Delta\\delta^{2}H$'),
+    x = latex2exp::TeX('$\\Delta\\delta^{18}O$'),
+    title = "No offset correction applied", 
+    subtitle = "Outliers excluded"
+  ) +
+  theme_figure() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+crssplt
 ```
 
 
