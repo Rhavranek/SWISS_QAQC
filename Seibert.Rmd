@@ -73,41 +73,52 @@ I think you can see condensation in most of the measurements. I think this is a 
 flask 13 is messy  - averaging over a 9 minute window to represent real variability. Did a dead end pull to dry air at 30 ml/ min at 13:10. 
 
 flask 11 - condensation has a problem 
+
+March 20, 2023 note: adjust the filter by one hour to make the code work in pacific time zone, commented out the correct filter period
 ```{r}
+#Filter data between 13:00 - 16:00 MDT 
 data_071822_firstbatch <- tbl %>% 
-  filter (DATE == "2022-07-18" | DATE == "2022-07-2") %>% 
+  filter (DATE == "2022-07-18" | DATE == "2022-07-19") %>% 
   BoulderTime() %>% 
-  filter (MDT > "2022-07-18 13:00:00" & MDT < " 2022-07-18 16:00:00") %>% 
+  #filter (MDT > "2022-07-18 13:00:00" & MDT < " 2022-07-18 16:00:00") %>% 
+  filter (MDT > "2022-07-18 12:00:00" & MDT < " 2022-07-18 15:00:00") %>% 
   h2o_batches() 
 
 
 flask13 <- data_071822_firstbatch %>% 
-  filter (MDT > "2022-07-18 13:09:00" & MDT < "2022-07-18 13:16:00") %>% 
+  #filter (MDT > "2022-07-18 13:09:00" & MDT < "2022-07-18 13:16:00") %>% 
+  filter (MDT > "2022-07-18 12:09:00" & MDT < "2022-07-18 12:16:00") %>% 
   flask_out_ave() %>% 
-  mutate(Flask = 13)
+  mutate(Flask = 13,
+        T = 23)
 
 flask11 <-  data_071822_firstbatch %>% 
-  filter (MDT > "2022-07-18 13:52:00" & MDT < "2022-07-18 13:55:00") %>% 
+  #filter (MDT > "2022-07-18 13:52:00" & MDT < "2022-07-18 13:55:00") %>% 
+  filter (MDT > "2022-07-18 12:52:00" & MDT < "2022-07-18 12:55:00") %>% 
   flask_out_ave() %>% 
-  mutate(Flask = 11)
+  mutate(Flask = 11,
+         T = 25.0)
 
 
 Flasks071822 <-  data_071822_firstbatch %>% 
   filter(H2O_Batch == 88 | H2O_Batch == 181 | H2O_Batch == 226 | H2O_Batch == 271) %>% 
   flask_first3minutes %>% 
-  mutate(Flask = c(12,10,9,8)) %>% 
+  mutate(Flask = c(12,10,9,8),
+         T = c(23.3, 23.0, 21.8, 23.2)) %>% 
   bind_rows(flask13, flask11) %>% 
   mutate(sampledate = ifelse(Flask > 10, "22-07-04", "22-06-29")) %>% 
   mutate(sampledepth = ifelse(Flask == 13 | Flask == 10, 75, 
-                              ifelse(Flask == 12 | Flask == 9, 50, 25)))
+                              ifelse(Flask == 12 | Flask == 9, 50, 25)))   
 ```
 
-evening work
+evening work  
+March 20, 2023 note: adjust the filter by one hour to make the code work in pacific time zone, commented out the correct filter period
 ```{r}
 data_071822_secondbatch <- tbl %>% 
   filter (DATE == "2022-07-19") %>% 
   BoulderTime() %>% 
-  filter (MDT > "2022-07-18 21:45:00" & MDT < " 2022-07-18 22:30:00") %>% 
+  #filter (MDT > "2022-07-18 21:45:00" & MDT < " 2022-07-18 22:30:00") %>% 
+  filter (MDT > "2022-07-18 20:45:00" & MDT < " 2022-07-18 21:30:00") %>% 
   h2o_batches() 
 
 # waterConcentration_plt(data_071822_secondbatch)
@@ -124,7 +135,8 @@ flasks_2and3 <- data_071822_secondbatch %>%
   mutate (
     Flask = c(2,3),
     sampledate = c("22-06-19"),
-    sampledepth = ifelse(Flask == 2, 25, 50)
+    sampledepth = ifelse(Flask == 2, 25, 50),
+    T = ifelse(Flask == 2, 24.2, 22)
   )
   
 
@@ -137,7 +149,8 @@ Flasks071822 <- Flasks071822 %>% bind_rows(flasks_2and3)
 data_071922 <- tbl %>% 
   filter (DATE == "2022-07-19") %>% 
   BoulderTime() %>% 
-  filter(MDT > "2022-07-19 11:00:00" & MDT < "2022-07-19 14:00:00") %>% 
+  #filter(MDT > "2022-07-19 11:00:00" & MDT < "2022-07-19 14:00:00") %>% 
+  filter(MDT > "2022-07-19 10:00:00" & MDT < "2022-07-19 13:00:00") %>% 
   h2o_batches()  
   
 
@@ -152,17 +165,20 @@ flasks_071922 <- data_071922 %>%
   flask_first3minutes() %>% 
   mutate(
     Flask = c(7,4,5),
+    T = c(23,23,24.0),
     sampledate = ifelse(Flask > 4, "22-06-24", "22-06-19"),
     sampledepth = ifelse(Flask == 5, 25, 75)
     )
 
 flask6 <- data_071922 %>% 
-  filter(MDT > "2022-07-19 13:48:00" & MDT < "2022-07-19 13:51:00") %>% 
+  #filter(MDT > "2022-07-19 13:48:00" & MDT < "2022-07-19 13:51:00") %>% 
+  filter(MDT > "2022-07-19 12:48:00" & MDT < "2022-07-19 12:51:00") %>% 
   flask_out_ave() %>% 
   mutate(
     Flask = 6, 
     sampledate = "22-06-24",
-    sampledepth = 50
+    sampledepth = 50,
+    T = 22.2
   )
   
 flasks_071922 <- flasks_071922 %>% bind_rows(flask6)
@@ -174,7 +190,6 @@ flasks_071922 <- flasks_071922 %>% bind_rows(flask6)
 seibert_firstround <- Flasks071822 %>% bind_rows(flasks_071922)    %>% 
   mutate(
     #transfer to liquid values
-    T = 23, #estimate until we dig up the loggers, temp based on 25 cm temp in 2021
     d18O_rothfuss = 11.45 - 0.0795*T +1.0012*d18O_out,
     d2H_rothfuss =104.96 - 1.0342*T + 1.0724*d2H_out,
     
@@ -205,7 +220,7 @@ seibert_firstround%>%
 ### d18o
 ```{r}
 seibert_d18o <- seibert_firstround %>% 
-  filter(sampledepth < 75) %>% 
+  #filter(sampledepth < 75) %>% 
   ggplot()+
   ylab(latex2exp::TeX('$\\delta^{18}O VSMOW$'))+
   ggtitle("Seibert, CO")+
@@ -223,8 +238,10 @@ seibert_d18o <- seibert_firstround %>%
     ),
     size = 6
   ) +
-  scale_shape_manual(values = c(22,23), name = "Sample Depth (cm)") +
-  scale_fill_manual(values = c("#441853", "#20908C"), name = "Sample Depth (cm)")+
+  scale_shape_manual(values = c(22,23,24), name = "Sample Depth (cm)") +
+  scale_fill_viridis(discrete = TRUE, name = "Sample Depth (cm)") +
+  #scale_shape_manual(values = c(22,23), name = "Sample Depth (cm)") +
+  #scale_fill_manual(values = c("#441853", "#20908C"), name = "Sample Depth (cm)")+
   theme_figure()+
   theme(
     axis.text.x = element_blank(),
@@ -242,7 +259,7 @@ print(seibert_d18o)
 ### d2H
 ```{r}
 seibert_d2h <- seibert_firstround %>% 
-  filter(sampledepth < 75) %>% 
+  #filter(sampledepth < 75) %>% 
   ggplot()+
   ylab(latex2exp::TeX('$\\delta^2H VSMOW$'))+
   xlab("Sample Date")+
@@ -261,14 +278,18 @@ seibert_d2h <- seibert_firstround %>%
     size = 6
   ) +
   scale_shape_manual(values = c(22,23,24), name = "Sample Depth (cm)") +
-  scale_fill_manual(values = c("#441853", "#20908C"), name = "Sample Depth (cm)")+
+  scale_fill_viridis(discrete = TRUE, name = "Sample Depth (cm)") +
+  # scale_shape_manual(values = c(22,23,24), name = "Sample Depth (cm)") +
+  # scale_fill_manual(values = c("#441853", "#20908C"), name = "Sample Depth (cm)")+
   theme_figure()+
-  scale_y_continuous(breaks=c(-62, -58, -54))+
+  #scale_y_continuous(breaks=c(-62, -58, -54))+
   theme(
-    axis.text.x = element_text(size = 14, angle = 45,  hjust=1),
+    axis.text.x = element_blank(),
+    #axis.text.x = element_text(size = 14, angle = 45,  hjust=1),
     axis.title.x = element_blank(),
-    legend.text = element_text(size = 14),
-    legend.title = element_text(size = 14)
+    legend.position = "none",
+    #legend.text = element_text(size = 14),
+    #legend.title = element_text(size = 14)
   )
 
 print(seibert_d2h)
@@ -278,7 +299,7 @@ print(seibert_d2h)
 ```{r}
 
 seibert_dexcess <- seibert_firstround %>% 
-  filter(sampledepth < 75) %>% 
+  #filter(sampledepth < 75) %>% 
   ggplot()+
   ylab("d-excess")+
   xlab("Sample Date")+
@@ -298,7 +319,9 @@ seibert_dexcess <- seibert_firstround %>%
     size = 6
   ) +
   scale_shape_manual(values = c(22,23,24), name = "Sample Depth (cm)") +
-  scale_fill_manual(values = c("#441853", "#20908C"), name = "Sample Depth (cm)")+
+  scale_fill_viridis(discrete = TRUE, name = "Sample Depth (cm)") +
+  #scale_shape_manual(values = c(22,23,24), name = "Sample Depth (cm)") +
+  #scale_fill_manual(values = c("#441853", "#20908C"), name = "Sample Depth (cm)")+
   theme_figure()+
   #scale_y_continuous(breaks=c(-62, -58, -54))+
   theme(
@@ -310,6 +333,9 @@ seibert_dexcess <- seibert_firstround %>%
 
 print(seibert_dexcess)
 ```
+
+
+
 
 
 
