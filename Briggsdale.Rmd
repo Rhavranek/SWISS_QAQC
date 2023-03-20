@@ -25,6 +25,7 @@ library(plotly)
 library(fs)
 library(gridExtra)
 library(egg)
+library(readxl)
 
 setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS_QAQC/")
 
@@ -49,11 +50,23 @@ tbl <- readRDS(file.path("data", "2021Data.RDS")) %>%
 
 # First deployment
 ## August 10, 2022
+
+Flask 16: 13:33-13:44
+Flask 15: 14:12-14:22
+Flask 14: 15:11-15:21 batch 102
+DI-080222: 15:45-16:14
+DI-080222: 16:17-16:25
+Flask 13: 16:50-17:00 - batch 329
+Flask 12: 17:14-17:24 - batch 359
+Flask 11: 17:36 - 17:46 - batch 388
+
+March 20, 2023 -> batch numbers don't seem to work, not sure why, so re-doing batch filtering. something funky with timezones is happening, needed to adjust filter by one hour 
+
 ```{r}
 data_0810 <- tbl %>% 
   filter (DATE == "2022-08-10") %>% 
   BoulderTime() %>% 
-  filter(MDT > "2022-08-10 13:30" & MDT < "2022-08-10 18:00") %>% 
+  filter(MDT > "2022-08-10 12:30" & MDT < "2022-08-10 18:00") %>% 
   h2o_batches() %>% 
   filter (H2O_Batch == 22 | H2O_Batch == 46 | H2O_Batch == 102 | H2O_Batch == 329 | H2O_Batch == 359 | H2O_Batch == 388)
 
@@ -72,11 +85,19 @@ flasks_0810 <- data_0810 %>%
 ```
 
 ## August 11 
+
+flask 10, 11:10 - 11:20
+flask 9: 11:41- 11:51
+Flask 8: 12:16-12:27
+flask 7: 12:45 - 12:56
+flask 6: 13:19-13:30
+flask 5: 14:03-14:13
+
 ```{r}
 data_0811 <- tbl %>% 
   filter(DATE == "2022-08-11") %>% 
   BoulderTime() %>% 
-  filter(MDT > "2022-08-11 11:00" & MDT < "2022-08-11 14:13:30") %>% 
+  filter(MDT > "2022-08-11 10:00" & MDT < "2022-08-11 13:13:30") %>% 
   h2o_batches() %>% 
   filter(H2O >5000)
 
@@ -98,7 +119,7 @@ flasks_0811 <- data_0811 %>%
 data_0812 <- tbl %>% 
   filter(DATE == "2022-08-12") %>% 
   BoulderTime() %>% 
-  filter(MDT > "2022-08-12 12:21" & MDT < "2022-08-12 13:53") %>% 
+  filter(MDT > "2022-08-12 11:21" & MDT < "2022-08-12 12:53") %>% 
   h2o_batches() %>% 
   filter(H2O > 5000)
 
@@ -120,7 +141,7 @@ flasks_0812 <- data_0812 %>%
 Brigssdale_july2022 <- bind_rows(flasks_0810,flasks_0811,flasks_0812) %>%
  
   mutate(
-    T = 23, #estimate until we dig up the loggers
+    T = c(22.9,24.0,23,22.4,23.4,23,23,24.3,23,23.6,25.9,23,23,25.1,23), #estimate until we dig up the loggers
      #transfer to liquid values
     d18O_liq = round((11.45 - 0.0795*T +1.0012*d18O_out),1),
     d2H_liq =round((104.96 - 1.0342*T + 1.0724*d2H_out),1),
@@ -235,8 +256,9 @@ Brigssdale_july2022 %>%
 
 ```{r}
 crossplt <- Brigssdale_july2022 %>% 
-  filter(sampledepth > 25) %>% 
+  #filter(sampledepth > 25) %>% 
   ggplot()+
+  geom_abline(intercept = 10, slope = 8, size = 2, linetype = "longdash")+
   geom_errorbar(aes(
     x = d18o_offset,
     ymax = dD_offset - 3.6,
@@ -255,10 +277,12 @@ crossplt <- Brigssdale_july2022 %>%
       fill = factor(sampledate)),
     size = 6
   )+
-  scale_shape_manual(values = c(23,24), name = "Sample Depth (cm)") +
-  scale_fill_viridis(discrete = TRUE, name = "Sample Date") +
+  scale_shape_manual(values = c(22, 23,24), name = "Sample Depth (cm)") +
+  scale_fill_viridis(discrete = TRUE, option = "magma", name = "Sample Date") +
   ylab(latex2exp::TeX('$\\delta^2H (VSMOW)$'))+
   xlab(latex2exp::TeX('$\\delta^{18}O (VSMOW)$')) +
+  scale_x_continuous(limits = c(-15, -7.55))+
+  scale_y_continuous(limits = c(-80, -50))+
   theme_figure()
 
 crossplt
@@ -266,7 +290,7 @@ crossplt
 
 ```{r}
 B_dexcess <- Brigssdale_july2022 %>% 
-  filter(sampledepth > 25) %>% 
+  #filter(sampledepth > 25) %>% 
   ggplot()+
   ylab("d-excess")+
   xlab("Sample Date")+
@@ -279,8 +303,8 @@ B_dexcess <- Brigssdale_july2022 %>%
     ),
     size = 6
   ) +
-  scale_shape_manual(values = c(23,24), name = "Sample Depth (cm)") +
-  scale_fill_manual(values = c("#20908C", "#FCE621"), name = "Sample Depth (cm)")+
+  scale_shape_manual(values = c(22, 23, 24), name = "Sample Depth (cm)") +
+  #scale_fill_manual(values = c("#20908C", "#FCE621"), name = "Sample Depth (cm)")+
   theme_figure()+
   #scale_y_continuous(breaks=c(-62, -58, -54))+
   theme(
@@ -293,17 +317,215 @@ B_dexcess <- Brigssdale_july2022 %>%
 print(B_dexcess)
 ```
 
-
 ```{r}
-poop <- ggarrange(Brigssdale_july2022_plt, Brigssdale_d2h, B_dexcess)
+write.csv(Brigssdale_july2022, "output/BriggsdaleResults_July2022.csv")
+```
 
-ggsave( "poop.png", poop)
+
+
+
+# September 2022
+```{r}
+sept22 <- read_excel("data/Lindt_Septh2022.xlsx")
+
+sept22 <- sept22 %>% 
+  mutate(
+    sampledate = ymd(sampledate),
+    T = c(16,16,17,17.3,17.5,18.3,18.8,19.0,19.8,19.3,19.6,20.1,20.6,20.8,21.3),
+    d18O_rothfuss = 11.45 - 0.0795*T +1.0012*d18O,
+    d2H_rothfuss =104.96 - 1.0342*T + 1.0724*d2H,
+    
+    d18O_vsmow = (d18O_rothfuss - 0.711) / 1.018,
+    d2H_vsmow = (d2H_rothfuss - -0.4566) / 1.0297,
+    
+    d18o_offset =  round(d18O_vsmow - 0.9, 1),
+    d2H_offset =  round(d2H_vsmow - 2.6,1),
+    
+    dexcess = d2H_offset - 8*d18o_offset
+  )
 ```
 
 ```{r}
-latex2exp::latex2exp_supported(
-)
+Briggsdale_d18o_22 <- sept22 %>% 
+  filter(sampledate < "2022-10-10") %>% 
+  ggplot()+
+  ylab(latex2exp::TeX('$\\delta^{18}O VSMOW$'))+
+  ggtitle("Briggsdale, CO")+
+  geom_errorbar(aes(
+    x = sampledate,
+    ymax = d18o_offset - 1.0,
+    ymin = d18o_offset + 1.0,
+    width = 0)) +
+  geom_point(
+    aes(
+      x= sampledate,
+      y = d18o_offset,
+      pch = as.factor(sampledepth),
+      fill = as.factor(sampledepth)
+    ),
+    size = 6
+  ) +
+  scale_shape_manual(values = c(22,23,24), name = "Sample Depth (cm)") +
+  scale_fill_viridis(discrete = TRUE, name = "Sample Depth (cm)")+
+  theme_figure()+
+  theme(
+    axis.text.x = element_blank(),
+    axis.title.x = element_blank(),
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5)
+  )
+  
+
+print(Briggsdale_d18o_22)
+
+
+Brigssdale_d2h_22 <- sept22 %>% 
+  filter(sampledate < "2022-10-10") %>% 
+  ggplot()+
+  ylab(latex2exp::TeX('$\\delta^2H VSMOW$'))+
+  geom_errorbar(aes(
+    x = sampledate,
+    ymax = d2H_offset - 3.6,
+    ymin = d2H_offset + 3.6,
+    width = 0)) +
+  geom_point(
+    aes(
+      x= sampledate,
+      y = d2H_offset,
+      pch = as.factor(sampledepth),
+      fill = as.factor(sampledepth)
+    ),
+    size = 6
+  ) +
+  scale_shape_manual(values = c(22,23,24), name = "Sample Depth (cm)") +
+  scale_fill_viridis(discrete = TRUE, name = "Sample Depth (cm)")+
+  theme_figure() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.title.x = element_blank(),
+    legend.position = "none",
+  )
+
+print(Brigssdale_d2h_22)
+
+
+Briggsdale_dexcess_22 <- sept22 %>% 
+  filter(sampledate < "2022-10-10") %>% 
+  ggplot()+
+  ylab("d-excess")+
+  xlab("Sample Date")+
+  geom_errorbar(aes(
+    x = sampledate,
+    ymax = dexcess + 3.5,
+    ymin = dexcess - 3.5,
+    width = 0
+  )) + 
+  geom_point(
+    aes(
+      x= sampledate,
+      y = dexcess,
+      pch = as.factor(sampledepth),
+      fill = as.factor(sampledepth)
+    ),
+    size = 6
+  ) +
+  scale_shape_manual(values = c(22,23,24), name = "Sample Depth (cm)") +
+  scale_fill_viridis(discrete = TRUE, name = "Sample Depth (cm)")+
+  theme_figure()+
+  #scale_y_continuous(breaks=c(-62, -58, -54))+
+  theme(
+    axis.text.x = element_text(size = 14, angle = 45,  hjust=1),
+    axis.title.x = element_blank(),
+    legend.text = element_text(size = 14),
+    legend.title = element_text(size = 14)
+  )
+
+print(Briggsdale_dexcess_22)
+
+
+ggarrange(Briggsdale_d18o_22,Brigssdale_d2h_22,Briggsdale_dexcess_22)
+
 ```
+
+
+```{r}
+Brigssdale_july2022 <- Brigssdale_july2022 %>% 
+  rename(
+    d2H_offset = "dD_offset"
+  )
+
+Brigssdale_july2022$sampledate <- as.Date(Brigssdale_july2022$sampledate)
+
+
+
+allB <- bind_rows(Brigssdale_july2022, sept22)
+
+crossplt_all <- allB %>% 
+  #get rid of bad 75 cm samples from June
+  #filter(d18o_offset<0) %>% 
+  #filter(d18o_offset != -5.7) %>% 
+  #these data are distinctly weird and occured on a cold day where dew point and air temp were close
+  #filter(sampledate != "2022-09-21") %>% 
+  ggplot()+
+    geom_abline(intercept = 10, slope = 8, size = 2, linetype = "longdash")+
+  geom_errorbar(aes(
+    x = d18o_offset,
+    ymax = d2H_offset - 3.6,
+    ymin = d2H_offset + 3.6,
+    width = 0)) +
+  geom_errorbarh(aes(
+    y = d2H_offset,
+    xmax = d18o_offset - 0.9,
+    xmin = d18o_offset + 0.9,
+    height = 0)) +
+  geom_point(
+    aes(
+      x = d18o_offset, 
+      y = d2H_offset, 
+      pch = factor(sampledepth),
+      color = factor(sampledate)),
+    size = 6
+  )+
+  #scale_shape_manual(values = c(22, 23,24), name = "Sample Depth (cm)") +
+  scale_color_viridis(discrete = TRUE, option = "magma", name = "Sample Date") +
+  ylab(latex2exp::TeX('$\\delta^2H (VSMOW)$'))+
+  xlab(latex2exp::TeX('$\\delta^{18}O (VSMOW)$')) +
+  theme_figure()
+
+crossplt_all
+
+
+```
+
+```{r}
+finaltbl <- allB %>% 
+  mutate(site = "Briggsdale") %>% 
+  dplyr::select(
+    site, 
+    sampledate,
+    sampledepth,
+    d18o_offset,
+    d2H_offset,
+    dexcess
+  ) %>% 
+  rename(
+    "Site" = site,
+    "Sample Date" = sampledate,
+    "Sample Depth (cm)" = sampledepth,
+    "d18O (VSMOW)" = d18o_offset,
+    "d2H (VSMOW)" = d2H_offset,
+    "d-excess ()" = dexcess
+  )
+
+write.csv(finaltbl, "output/BriggsdaleResults_ch3.csv")
+```
+
+
+
+
+
+
+
 
 
 
