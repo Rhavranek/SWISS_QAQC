@@ -51,8 +51,31 @@ soil_temps_july <- tibble(
   Flask = c(3:16),
   Temp_C = c(25.1,23.0,22,25.9,23.6,22,24.3,23.0,22,23.4,22.4,22, 24.0,22.9)
 )
+
+soil_temps_October <- tibble(
+  Flask = c(2:13),
+  Temp_C = c(23.3,21.8,20.55,16.7,19.0,19.3,18.9,18.9,18.8,15.56,16.0,16.9),
+  sampledate = c(
+    "2022-09-18","2022-09-18","2022-09-18",
+    "2022-09-24","2022-09-24","2022-09-24",
+    "2022-09-30","2022-09-30","2022-09-30",
+    "2022-10-06","2022-10-06","2022-10-06")
+)
   
 ```
+October data:
+*I estimated the 25 cm temperature with 15 cm data from CoAgMet. 
+*I estimated the 50 cm temperature manually. 
+
+From the data logger:  
+75 cm: 
+9-18-22: 20.55°C, 
+9-24-22: 19.3°C, 
+9-30-22: 18.8°C, 
+10-6-22: 16.9°C, 
+10-12-22: 16.1°C
+
+
 
 # First deployment
 ## August 10, 2022
@@ -147,7 +170,7 @@ flasks_0812 <- data_0812 %>%
 ```
 
 
-# Correct July Data
+## Correct July Data
 1. Add in the column of soil temperature data
 2. Using soil temp, convert vapor values to liquid water values
 3. Using the 08/22 Calibration from the calibrations.rmd. 
@@ -162,8 +185,6 @@ Brigssdale_july2022 <- bind_rows(flasks_0810,flasks_0811,flasks_0812) %>%
     d18O_corr = round( ((d18O_liq - 0.3336484) / 1.0072042),1),
     d2H_corr = round( ((d2H_liq - -7.408711) / 1.008137), 1)) %>% 
   SWISS_offset ()
-
-
 ```
 
 
@@ -241,7 +262,7 @@ Brigssdale_july2022 %>%
   mutate(
     Site = "Briggsdale"
   ) %>% 
-    dplyr::select(Site, sampledate, sampledepth, Flask, T, d18o_offset, SD_18O_out, dD_offset, SD_2H_out) %>% 
+    dplyr::select(Site, sampledate, sampledepth, Flask, Temp_C, d18O_offset, SD_18O_out, dD_offset, SD_2H_out) %>% 
       arrange(Flask) %>% 
         rename(Date = sampledate, Depth = sampledepth, AnalyticalError = SD_18O_out) %>% 
         write.csv("output/BriggsdaleJulyData.csv")
@@ -318,30 +339,64 @@ write.csv(Brigssdale_july2022, "output/BriggsdaleResults_July2022.csv")
 
 
 
-# September 2022
-```{r}
-sept22 <- read_excel("data/Lindt_Septh2022.xlsx")
+# October 2022
+Measured flasks in order 16 -> 2. Flasks 16, 15, 14 didn't have a signal because the dry air tank had emptied itself 
+Exclude flask 7 -> the measurement was very variable. Time window matters too much
+Exclude flask 5, drifts 1.5 per mil over the first 3 minutes
 
-sept22 <- sept22 %>% 
+Its not surprising to me that the data from 09-24-22 were bad -> there was a cold snap on the 22-23. There is definitely something in conditions during sampling effecting how well a sample comes out. Its most pronounced in the Siebert samples. 
+
+
+filter data between 9 am and 6 pm mountain time
+```{r}
+Oct22 <- tbl %>% filter(DATE == "2022-10-17" | DATE == "2022-10-18") %>% 
+  BoulderTime() %>% 
+  filter(MDT > "2022-10-17 08:00" & MDT < "2022-10-17 17:00") %>% 
+  h2o_batches()
+
+#check out the data
+h2o_batch_plt(Oct22)
+
+Oct22 %>% 
+  filter(MDT> "2022-10-17 11:05" & MDT < "2022-10-17 15:30") %>% 
+  filter(H2O > 5000) %>% 
+    d18O_three_minute_start()
+
+#this one looks bad 
+flask7_Oct22 <- Oct22 %>% 
+  filter(MDT > "2022-10-17 13:40:30" & MDT < "2022-10-17 13:53") %>% 
+  d180_time_plt()
+
+#pull together data
+flasks_Oct22 <-  Oct22 %>% 
+  filter(MDT> "2022-10-17 11:05" & MDT < "2022-10-17 15:30") %>% 
+  filter(H2O > 5000) %>% 
+  filter(H2O_Batch != 460) %>% #excludes flask 7
+  filter(H2O_Batch != 549) %>% # excludes flask 5
+  flask_first3minutes() %>% 
   mutate(
-    sampledate = ymd(sampledate),
-    T = c(16,16,17,17.3,17.5,18.3,18.8,19.0,19.8,19.3,19.6,20.1,20.6,20.8,21.3),
-    d18O_rothfuss = 11.45 - 0.0795*T +1.0012*d18O,
-    d2H_rothfuss =104.96 - 1.0342*T + 1.0724*d2H,
-    
-    d18O_vsmow = (d18O_rothfuss - 0.711) / 1.018,
-    d2H_vsmow = (d2H_rothfuss - -0.4566) / 1.0297,
+    Flask = c(13:8,6,4,3,2)
+  ) %>% 
+  left_join(soil_temps_October, by = "Flask") %>% 
+  liq_rothfuss2013() %>% 
+  mutate(
+    d18O_vsmow = (d18O_liq - 0.711) / 1.018,
+    d2H_vsmow = (d2H_liq - -0.4566) / 1.0297,
     
     d18o_offset =  round(d18O_vsmow - 0.9, 1),
     d2H_offset =  round(d2H_vsmow - 2.6,1),
     
-    dexcess = d2H_offset - 8*d18o_offset
+    dexcess = d2H_offset - 8*d18o_offset,
+    SWISS = "Lindt",
+    site = "Briggsdale",
+    sampledepth = c(75,50,25,75,50,25,50,75,50,25)
   )
 ```
 
+
+
 ```{r}
-Briggsdale_d18o_22 <- sept22 %>% 
-  filter(sampledate < "2022-10-10") %>% 
+Briggsdale_d18o_22 <- flasks_Oct22 %>% 
   ggplot()+
   ylab(latex2exp::TeX('$\\delta^{18}O VSMOW$'))+
   ggtitle("Briggsdale, CO")+
@@ -373,7 +428,7 @@ Briggsdale_d18o_22 <- sept22 %>%
 print(Briggsdale_d18o_22)
 
 
-Brigssdale_d2h_22 <- sept22 %>% 
+Brigssdale_d2h_22 <- flasks_Oct22 %>% 
   filter(sampledate < "2022-10-10") %>% 
   ggplot()+
   ylab(latex2exp::TeX('$\\delta^2H VSMOW$'))+
@@ -403,7 +458,7 @@ Brigssdale_d2h_22 <- sept22 %>%
 print(Brigssdale_d2h_22)
 
 
-Briggsdale_dexcess_22 <- sept22 %>% 
+Briggsdale_dexcess_22 <- flasks_Oct22 %>% 
   filter(sampledate < "2022-10-10") %>% 
   ggplot()+
   ylab("d-excess")+
@@ -438,21 +493,24 @@ print(Briggsdale_dexcess_22)
 
 
 ggarrange(Briggsdale_d18o_22,Brigssdale_d2h_22,Briggsdale_dexcess_22)
-
 ```
 
 
 ```{r}
-Brigssdale_july2022 <- Brigssdale_july2022 %>% 
+Brigssdale_july <- Brigssdale_july2022 %>% 
   rename(
+    d18O_vsmow = "d18O_corr",
+    d2H_vsmow = "d2H_corr",
+    d18o_offset = "d18O_offset",
     d2H_offset = "dD_offset"
-  )
+  ) %>% 
+  filter(sampledepth != 25)
 
-Brigssdale_july2022$sampledate <- as.Date(Brigssdale_july2022$sampledate)
+#Brigssdale_july2022$sampledate <- as.Date(Brigssdale_july2022$sampledate)
 
 
 
-allB <- bind_rows(Brigssdale_july2022, sept22)
+allB <- bind_rows(Brigssdale_july, flasks_Oct22)
 
 crossplt_all <- allB %>% 
   #get rid of bad 75 cm samples from June
@@ -502,6 +560,7 @@ finaltbl <- allB %>%
     d2H_offset,
     dexcess
   ) %>% 
+  arrange(sampledate, sampledepth) %>% 
   rename(
     "Site" = site,
     "Sample Date" = sampledate,
