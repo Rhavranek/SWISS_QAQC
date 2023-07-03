@@ -59,6 +59,8 @@ tbl <- readRDS(file.path("data", "2021Data.RDS")) %>%
 ```
 
 # Standard values
+1 standrad deviation on d18O for the standards is ~0.05
+1 SD on d2H for the standards is ~ 0.15
 ```{r}
 stds <- tibble(
   std = c("KFW", "KBW", "KAW", "KGW", "BDI_080222","Ygrette4", "H2_080322", "H072022", "2019DI_Gallon"),
@@ -639,7 +641,6 @@ all_0822 <- bind_rows(stds_080522, stds_080922, stds_081022, stds_081122, stds_0
   left_join(stds, by = "std")
 
 
-
 #d18O correction
 d18O_lm_0822 <- lm(d18O_liq ~ d18o_known, all_0822 %>% filter(H2O_Batch !=397)) 
 
@@ -668,7 +669,28 @@ all_0822 <- all_0822 %>%
     d18O_corr = round(( (d18O_liq - d18O_lm_0822$coefficients[1])/d18O_lm_0822$coefficients[2]),1),
     dD_corr = round(( (d2H_liq - dD_lm_0822$coefficients[1])/dD_lm_0822$coefficients[2]),1),
   )
+
+all_0822 %>% 
+  filter(std == "BDI_080222") %>% 
+  ggplot()+
+  aes(x = d18O_corr, y = dD_corr) +
+  geom_point() +
+  # geom_errorbarh(aes(
+  #   y = dD_corr, 
+  #   xmin = d18O_corr - 0.5, 
+  #   xmax = d18O_corr + 0.5)) +
+  # geom_errorbar(aes(
+  #   x = d18O_corr, 
+  #   ymin = dD_corr - 2.0, 
+  #   ymax = dD_corr + 2.0)) +
+  geom_hline(yintercept = -124.9)+
+  geom_vline(xintercept = -17.00)
+
 ```
+
+
+
+
 ## Equations transferred to 
 d18O_corr = (d18O_liq - 0.3336484) / 1.0072042
 d2H_corr = (d2H_liq - -7.408711) / 1.008137 
@@ -785,6 +807,13 @@ all_0818 <- full_join(stds_0818, stds, by = "std")
 
 
 ```
+
+```{r}
+
+```
+
+
+
 
 
 ### linear regression
