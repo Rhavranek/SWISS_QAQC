@@ -15,6 +15,8 @@ editor_options:
 ---
 The purpose of this markdown is to provide a place to do the data reduction on the vapor calibrations. 
 
+** Note: Lubridate uses your computer's timezone to do the data filtering (And plots it in the correct timezone). So, the timezone for each of the filters needs to be updated if you are using this code outside of MDT. 
+
 #Set up 
 ```{r setup, echo = TRUE, message=FALSE, warning=FALSE}
 # load libraries
@@ -33,6 +35,7 @@ setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS
 source(file.path ("scripts", "plotting_functions.R"))
 source(file.path ("scripts", "PicarroData_BreakUp.R"))
 source(file.path ("scripts", "Rachels_custom_plots.R"))
+source(file.path ("scripts", "corrections.R"))
 
 # global knitting options for automatic saving of all plots as .png and .pdf
 knitr::opts_chunk$set(
@@ -333,16 +336,32 @@ Between August 5 - 12 we measured two SWISS pulled from the field, and so we als
 * Light 8/3/22 #1 -> L1_080322 
 
 ## August 5, 2022
+
+July 2, 2023 - Changed the time zone on the cut data to match notes. If running this in Colorado, re-update times.  
 ```{r}
 data_080522 <- tbl %>% 
   filter(DATE == "2022-08-05") %>% 
     BoulderTime() %>% 
-      filter (MDT > "2022-08-05 14:42" & MDT < "2022-08-05 15:30") %>% 
+      filter (MDT > "2022-08-05 13:42" & MDT < "2022-08-05 14:30") %>% 
         h2o_batches()
 
 waterConcentration_plt(data_080522)
 h2o_batch_plt(data_080522)
 h2O_FirstThreeMinutes(data_080522)
+
+d2h <- data_080522 %>% 
+  ggplot()+
+  aes(x = MDT, y = Delta_D_H)+
+  geom_point()
+
+d2h
+
+data_080522 %>% 
+  filter(MDT > "2022-08-05 13:45" & MDT < "2022-08-05 13:57")%>% 
+  ggplot()+
+  aes(x = MDT, y = Delta_D_H)+
+  geom_point()
+
 
 stds_080522 <- data_080522 %>% 
   filter (H2O_Batch != 54) %>% 
@@ -353,24 +372,27 @@ stds_080522 <- data_080522 %>%
        Analyst = "Haley"
   )
 ```
+These averages are the same for d18O, but about 0.5 per mil lighter than haley's average. Definite downward trend in d2H value, so window matters. I would choose 14:50 - 14:55 
+
+
 
 ## August 9, 2022 probe stds
 12:30 - 4:00
 2 x ygrette4
   The first ygrette has a definite trend. Going to do that one by hand 
 
-2 x BDI0800322
+3 x BDI0800322
 2 x Heavy2_080322
 
 ```{r}
 data_080922 <- tbl %>% 
   filter (DATE == "2022-08-09") %>% 
   BoulderTime() %>% 
-  filter (MDT > "2022-08-09 12:00" & MDT < "2022-08-09 16:00") %>% 
+  filter (MDT > "2022-08-09 11:00" & MDT < "2022-08-09 15:00") %>% 
   h2o_batches()
 
 ygrette <- data_080922 %>% 
-  filter (MDT >"2022-08-09 12:45" & MDT < "2022-08-09 12:50") %>% 
+  filter (MDT >"2022-08-09 11:45" & MDT < "2022-08-09 11:50") %>% 
   flask_out_ave() %>% 
   mutate(
      std = c("Ygrette4"),
@@ -379,8 +401,10 @@ ygrette <- data_080922 %>%
   )
 
 
-h2o_batch_plt(data_080922 %>% filter(H2O_Batch >179))
-d180_time_plt(data_080922 %>% filter(H2O_Batch >179))
+h2o_batch_plt(data_080922 %>% filter(MDT > "2022-08-09 12:25:30"))
+# the first plataeu is Ygrette4 #2, then three DIs and 2 Heavy's 
+
+d180_time_plt(data_080922 %>% filter(MDT > "2022-08-09 12:25:30"))
 h2O_FirstThreeMinutes(data_080922 %>% filter(H2O_Batch >179 & H2O > 15000))
 
 stds_080922 <- data_080922 %>% 
@@ -431,8 +455,6 @@ d2H_vsmow = (d2H_rothfuss - -0.4566) / 1.0297
 
 
 
-
-
 ## August 9 2022 vaporizer 
 - Phlox 
 - Started at approx. 17:54:00 
@@ -442,21 +464,37 @@ d2H_vsmow = (d2H_rothfuss - -0.4566) / 1.0297
 data_080922 <- tbl %>% 
   filter(DATE == "2022-08-09" | DATE == "2022-08-10") %>% 
   BoulderTime() %>% 
-  filter (MDT > "2022-08-09 17:45:00" & MDT < "2022-08-09 20:00:00")
+  filter (MDT > "2022-08-09 16:45:00" & MDT < "2022-08-09 19:00:00")
 
 waterConcentration_plt(data_080922)
 d180_time_plt(data_080922)
 ```
 
 ## August 10 
+
+Standard Name: Ygrette #4 (Light)
+Sampled Time Frame: 11:04-11:07
+
+Standard Name: Benson DI Aug 2, 2022
+Sampled Time Frame: 11:51-11:54
+
+Standard Name: Benson DI Aug 2, 2022
+Approx. Start and End Time: 15:45-16:14
+
+Standard Name: Benson DI Aug 2, 2022
+Approx. Start and End Time: 16:17-16:25
+
+
 ```{r}
 firstround_081022 <- tbl %>% 
   filter (DATE == "2022-08-10") %>% 
   BoulderTime() %>% 
-  filter(MDT > "2022-08-10 10:47" & MDT < "2022-08-10 12:00") %>% 
+  filter(MDT > "2022-08-10 9:55" & MDT < "2022-08-10 11:00") %>% 
   h2o_batches()
 
 h2o_batch_plt(firstround_081022)
+d180_time_plt(firstround_081022)
+d2H_time_plt(firstround_081022)
 h2O_FirstThreeMinutes(firstround_081022)
 
 stds_081022 <- firstround_081022 %>% 
@@ -468,11 +506,19 @@ stds_081022 <- firstround_081022 %>%
      Analyst = "Haley"
   )
 
-secondbatch <- firstround_081022 <- tbl %>% 
+secondbatch <-  tbl %>% 
   filter (DATE == "2022-08-10") %>% 
   BoulderTime() %>% 
-    filter(MDT > "2022-08-10 16:00" & MDT < "2022-08-10 16:26") %>% 
-      h2o_batches() %>% 
+    filter(MDT > "2022-08-10 15:00" & MDT < "2022-08-10 15:26") %>% 
+      h2o_batches() 
+
+
+secondbatch %>% h2o_batch_plt()
+secondbatch %>% d180_time_plt()
+secondbatch %>% h2O_FirstThreeMinutes()
+
+
+DI_0822 <- secondbatch %>% 
         flask_first3minutes() %>% 
         mutate(
           std = c("BDI_080222", "BDI_080222"),
@@ -482,16 +528,38 @@ secondbatch <- firstround_081022 <- tbl %>%
 
 
 stds_081022 <- stds_081022 %>% 
-  bind_rows(secondbatch)
+  bind_rows(DI_0822)
 ```
 
 
 ## August 11
+Standard Name: Benson DI Aug 2, 2022
+Approx. Start and End Time: 9:41-9:52
+batch 68
+
+Standard Name: Benson DI Aug 2, 2022
+Approx. Start and End Time: 10:24-10:34
+batch 134
+
+Standard Name: Benson DI Aug 2, 2022 (same liquid that was measured before measuring the flasks)
+Approx. Start and End Time: 14:28-14:41
+batch 399
+Not stable - remove 
+
+Standard Name: Light 8/3/22 #1
+Approx. Start and End Time: 14:56-15:06
+batch 482
+
+Standard Name: Heavy Aug 3, 2022 #2
+Approx. Start and End Time: 15:19-15:29
+batch 564
+
+
 ```{r}
 data_081122 <- tbl %>% 
   filter (DATE == "2022-08-11") %>% 
     BoulderTime() %>% 
-      filter(MDT > "2022-08-11 9:30") %>% 
+      filter(MDT > "2022-08-11 8:30") %>% 
         h2o_batches() %>% 
           filter(H2O_Batch == 68 | H2O_Batch == 134 | H2O_Batch == 399 | H2O_Batch == 482 | H2O_Batch == 564)
 
@@ -507,12 +575,31 @@ stds_081122 <- data_081122 %>%
     )
 ```
 
+
+
+
 ## August 12 
+
+Standard Name: Light 8/3/22 #1
+Approx. Start and End Time: 10:28-10:38
+batch 51
+
+Standard Name: Benson DI Aug 2, 2022
+Approx. Start and End Time: 11:00-11:10
+Sampled Time Frame: 11:05-11:08
+batch 126
+
+
+Standard Name: Heavy Aug 3, 2022 #2
+Approx. Start and End Time: 11:33-11:43
+batch 206 
+
+
 ```{r}
 data_081222 <- tbl %>% 
   filter(DATE == "2022-08-12") %>% 
     BoulderTime() %>% 
-      filter(MDT > "2022-08-12 10:20" & MDT < "2022-08-12 15:15") %>% 
+      filter(MDT > "2022-08-12 9:20" & MDT < "2022-08-12 14:15") %>% 
         h2o_batches() %>% 
           filter(H2O_Batch == 51 | H2O_Batch == 126 | H2O_Batch ==206 | H2O_Batch == 463  | H2O_Batch == 623)
 
@@ -521,7 +608,7 @@ data_081222 <- tbl %>%
 batch545 <- tbl %>% 
   filter(DATE == "2022-08-12") %>% 
     BoulderTime() %>% 
-      filter(MDT > "2022-08-12 14:39:00" & MDT < "2022-08-12 14:42:01") %>% flask_out_ave() %>% 
+      filter(MDT > "2022-08-12 13:39:00" & MDT < "2022-08-12 13:42:01") %>% flask_out_ave() %>% 
         mutate(
           std = c("BDI_080222"),
           T = 23,
@@ -539,33 +626,47 @@ stds_081222 <- data_081222 %>%
 stds_081222 <- stds_081222 %>% filter(H2O_Batch != 206)
 ```
 
-# Briggsdale Correction
+# Correction for July Briggsdale data 
+These flasks and standards were measured 08/10 - 08/12, we included 08/09 for posterity 
 ```{r}
-all_0812 <- bind_rows(stds_081022, stds_081122, stds_081222) %>% 
+all_0822 <- bind_rows(stds_080922, stds_081022, stds_081122, stds_081222) %>% 
   liq_rothfuss2013() %>% 
   left_join(stds, by = "std")
 
-soconfunsed <- all_0812 %>% 
-  ggplot()+
-  aes(x = d18o_known, y = d18O_liq)+
+
+
+#d18O correction
+d18O_lm_0822 <- lm(d18O_liq ~ d18o_known, all_0822 %>% filter(H2O_Batch !=397)) 
+
+d18O_unknowns<- all_0822 %>% ggplot()+
+  aes(x = d18o_known, y = d18O_liq) +
   geom_point() +
-  geom_abline(aes(slope = 1.005, intercept = 0.3055))
+  #geom_smooth(method = lm)+
+  geom_abline(slope = d18O_lm_0822$coefficients[2], intercept = d18O_lm_0822$coefficients[1])
 
-ggplotly(soconfunsed)
+d18O_unknowns
 
-d18O_lm_0812 <- lm(d18O_liq ~ d18o_known, all_0812) 
-dD_lm_0812 <- lm(d2H_liq ~ d2H_known, all_0812)
+#d2H correction
+dD_lm_0822 <- lm(d2H_liq ~ d2H_known, all_0822 %>% filter(H2O_Batch !=397))
+
+d2H_unknowns <-  all_0822 %>% ggplot()+
+  aes(x = d2H_known, y = d2H_liq) +
+  geom_point() +
+  #geom_smooth(method = lm)+
+  geom_abline(slope = dD_lm_0822$coefficients[2], intercept = dD_lm_0822$coefficients[1])
+
+d2H_unknowns
 
 
-all_0812 <- all_0812 %>% 
+all_0822 <- all_0822 %>% 
   mutate(
-    d18O_corr = round(( (d18O_liq - 0.3055)/1.005),1),
-    dD_corr = round(( (d2H_liq - -9.5209)/0.9878),1),
+    d18O_corr = round(( (d18O_liq - d18O_lm_0822$coefficients[1])/d18O_lm_0822$coefficients[2]),1),
+    dD_corr = round(( (d2H_liq - dD_lm_0822$coefficients[1])/dD_lm_0822$coefficients[2]),1),
   )
 ```
 ## Equations transferred to 
-d18O_corr = (d18O_out - -8.994) / 1.000
-d2H_corr = (d2H_out - -80.7073) / 0.92
+d18O_corr = (d18O_liq - 0.3276101) / 1.0067558
+d2H_corr = (d2H_out - -7.408472) / 1.009117
 
 
 ## August 16 
