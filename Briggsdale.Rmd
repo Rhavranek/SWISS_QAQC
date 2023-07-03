@@ -150,15 +150,17 @@ flasks_0812 <- data_0812 %>%
 # Correct July Data
 1. Add in the column of soil temperature data
 2. Using soil temp, convert vapor values to liquid water values
-3. Using the 08/22 Calibration from the calibrations.rmd
+3. Using the 08/22 Calibration from the calibrations.rmd. 
+d18O_corr = (d18O_liq - 0.3336484) / 1.0072042. 
+d2H_corr = (d2H_liq - -7.408711) / 1.008137. 
 4. Apply the SWISS offset correction 
 ```{r}
 Brigssdale_july2022 <- bind_rows(flasks_0810,flasks_0811,flasks_0812) %>% 
   left_join(soil_temps_july, by = "Flask") %>% 
   liq_rothfuss2013() %>% 
   mutate(
-    d18O_corr = round( ((d18O_liq - 0.3276101) / 1.0067558),1),
-    d2H_corr = round( ((d2H_liq + 7.408472) / 1.009117), 1)) %>% 
+    d18O_corr = round( ((d18O_liq - 0.3336484) / 1.0072042),1),
+    d2H_corr = round( ((d2H_liq - -7.408711) / 1.008137), 1)) %>% 
   SWISS_offset ()
 
 
@@ -273,8 +275,8 @@ crossplt <- Brigssdale_july2022 %>%
   scale_fill_viridis(discrete = TRUE, option = "magma", name = "Sample Date") +
   ylab(latex2exp::TeX('$\\delta^2H (VSMOW)$'))+
   xlab(latex2exp::TeX('$\\delta^{18}O (VSMOW)$')) +
-  scale_x_continuous(limits = c(-15, -7))+
-  scale_y_continuous(limits = c(-80, -50))+
+  #scale_x_continuous(limits = c(-15, -7))+
+  #scale_y_continuous(limits = c(-80, -50))+
   theme_figure()
 
 crossplt
