@@ -243,7 +243,7 @@ d18O_three_minute_start <-  function(df){
       row = row_number(),
       totalrows= n()
     ) %>% 
-    filter(totalrows>100 & row > 120 & row < 335) 
+    filter(totalrows>100 & row > 270 & row < 485) 
   
   plt_groups <- groups %>% 
     ggplot()+
