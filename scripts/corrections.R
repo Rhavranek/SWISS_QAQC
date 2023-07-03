@@ -13,7 +13,8 @@ liq_rothfuss2013 <- function(df){
 SWISS_offset <- function(df){
   offset <- df %>% mutate(
    d18O_offset = d18O_corr - 1.0,
-   dD_offset = d2H_corr - 2.6
+   dD_offset = d2H_corr - 2.6,
+   dexcess = dD_offset - 8*d18O_offset
   )
   return(offset)
 }
