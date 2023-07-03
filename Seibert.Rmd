@@ -90,7 +90,7 @@ flask13 <- data_071822_firstbatch %>%
   filter (MDT > "2022-07-18 12:09:00" & MDT < "2022-07-18 12:16:00") %>% 
   flask_out_ave() %>% 
   mutate(Flask = 13,
-        T = 23)
+        T = 21.5)
 
 flask11 <-  data_071822_firstbatch %>% 
   #filter (MDT > "2022-07-18 13:52:00" & MDT < "2022-07-18 13:55:00") %>% 
@@ -104,7 +104,7 @@ Flasks071822 <-  data_071822_firstbatch %>%
   filter(H2O_Batch == 88 | H2O_Batch == 181 | H2O_Batch == 226 | H2O_Batch == 271) %>% 
   flask_first3minutes %>% 
   mutate(Flask = c(12,10,9,8),
-         T = c(23.3, 23.0, 21.8, 23.2)) %>% 
+         T = c(23.3, 21.0, 21.8, 23.2)) %>% 
   bind_rows(flask13, flask11) %>% 
   mutate(sampledate = ifelse(Flask > 10, "22-07-04", "22-06-29")) %>% 
   mutate(sampledepth = ifelse(Flask == 13 | Flask == 10, 75, 
@@ -165,7 +165,7 @@ flasks_071922 <- data_071922 %>%
   flask_first3minutes() %>% 
   mutate(
     Flask = c(7,4,5),
-    T = c(23,23,24.0),
+    T = c(20.5,19.4,24.0),
     sampledate = ifelse(Flask > 4, "22-06-24", "22-06-19"),
     sampledepth = ifelse(Flask == 5, 25, 75)
     )
@@ -206,7 +206,7 @@ seibert_firstround <- Flasks071822 %>% bind_rows(flasks_071922)    %>%
   
 
 seibert_firstround%>% 
-  filter(sampledepth < 75) %>% 
+  #filter(sampledepth < 75) %>% 
   mutate(
     Site = "Seibert"
   ) %>% 
@@ -284,12 +284,12 @@ seibert_d2h <- seibert_firstround %>%
   theme_figure()+
   #scale_y_continuous(breaks=c(-62, -58, -54))+
   theme(
-    axis.text.x = element_blank(),
-    #axis.text.x = element_text(size = 14, angle = 45,  hjust=1),
+    #axis.text.x = element_blank(),
+    axis.text.x = element_text(size = 14, angle = 45,  hjust=1),
     axis.title.x = element_blank(),
-    legend.position = "none",
-    #legend.text = element_text(size = 14),
-    #legend.title = element_text(size = 14)
+    #legend.position = "none",
+    legend.text = element_text(size = 14),
+    legend.title = element_text(size = 14)
   )
 
 print(seibert_d2h)
@@ -336,17 +336,16 @@ print(seibert_dexcess)
 
 
 
-
-
-
 ```{r Seibert July data}
-ggarrange(seibert_d18o, seibert_d2h)
+ ggarrange(seibert_d18o, seibert_d2h)
+#ggsave(doubleplot, "Seibert_printed032023.pdf")
+
 ggarrange(seibert_d18o, seibert_d2h, seibert_dexcess)
 ```
 
 ```{r}
 crossplt <- seibert_firstround %>% 
-  filter(sampledepth < 75) %>% 
+  #filter(sampledepth < 75) %>% 
   ggplot()+
     geom_abline(intercept = 10, slope = 8, size = 2, linetype = "longdash")+
   geom_errorbar(aes(
@@ -402,7 +401,7 @@ Sept22 <- Sept22 %>%
 On September 21, 2022 there was a large cold front that came in. At the time of sampling, dew point was 2-5°C below air temperature. 
 ```{r}
 seibert_d18o_22 <- Sept22 %>% 
-  filter(Exlude != TRUE) %>% 
+  #filter(Exlude != TRUE, na.RM = TRUE) %>% 
   ggplot()+
   ylab(latex2exp::TeX('$\\delta^{18}O VSMOW$'))+
   ggtitle("Seibert, CO")+
