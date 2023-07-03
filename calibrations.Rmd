@@ -329,6 +329,7 @@ d2H_vsmow = (d2H_rothfuss - -.4987) / 1.0236
 
 
 
+
 # August 2022
 Between August 5 - 12 we measured two SWISS pulled from the field, and so we also tried to measure our own standards in the meantime. Additionally, I tried to do a 'valco' run using the vaporizer system, but that run was unsuccessful. For these, we have some new standards:
 * Benson DI 080222 -> BDI_080222
@@ -337,7 +338,12 @@ Between August 5 - 12 we measured two SWISS pulled from the field, and so we als
 
 ## August 5, 2022
 
-July 2, 2023 - Changed the time zone on the cut data to match notes. If running this in Colorado, re-update times.  
+July 2, 2023 - 
+Notes on code changes:
+- Changed the time zone on the cut data to match notes. If running this in Colorado, re-update times.  
+- Re-examined the calibration applied on the August 2022 data. Rather than keeping them separate, I combined all of the standards run between August 5 - August 12 as a pooled group. I did this in part because I primarily just ran DI water, and there was no discernible drift (within the uncertainty of the probes) . 
+
+
 ```{r}
 data_080522 <- tbl %>% 
   filter(DATE == "2022-08-05") %>% 
@@ -420,36 +426,35 @@ stds_080922 <- data_080922 %>%
 
 ## Oglala Stds
 ```{r}
-oglalastds <- bind_rows(stds_080522, stds_080922) %>% 
-  left_join(stds, by = "std") %>% 
-  mutate(
-    d18O_rothfuss = 11.45 - 0.0795*T +1.0012*d18O_out,
-    d2H_rothfuss =104.96 - 1.0342*T + 1.0724*d2H_out
-  )
-
-d18O_lm_080522 <- lm(d18O_rothfuss ~ d18o_known, oglalastds) 
-d2H_lm_080522 <- lm (d2H_rothfuss ~ d2H_known, oglalastds)
-
-oglalastds <- oglalastds %>% 
-  mutate(
-    d18O_vsmow = (d18O_rothfuss - 0.711) / 1.018,
-    d2H_vsmow = (d2H_rothfuss - -0.4566) / 1.0297
-  )
-
-oglalastd_plt <- oglalastds %>% 
-  ggplot()+
-  aes(x = d18O_vsmow, y = d2H_vsmow, color= std)+
-  geom_errorbar(aes(ymin = d2H_vsmow - 2, ymax = d2H_vsmow + 2))+
-  geom_errorbarh(aes(xmin = d18O_vsmow - 0.5, xmax = d18O_vsmow + 0.5))+
-  geom_point() +
-  geom_point(data = oglalastds, aes
-             (x = d18o_known, y = d2H_known), color = "black")
-
-ggplotly(oglalastd_plt)
+# oglalastds <- bind_rows(stds_080522, stds_080922) %>% 
+#   left_join(stds, by = "std") %>% 
+#   mutate(
+#     d18O_rothfuss = 11.45 - 0.0795*T +1.0012*d18O_out,
+#     d2H_rothfuss =104.96 - 1.0342*T + 1.0724*d2H_out
+#   )
+# 
+# d18O_lm_080522 <- lm(d18O_rothfuss ~ d18o_known, oglalastds) 
+# d2H_lm_080522 <- lm (d2H_rothfuss ~ d2H_known, oglalastds)
+# 
+# oglalastds <- oglalastds %>% 
+#   mutate(
+#     d18O_vsmow = (d18O_rothfuss - 0.711) / 1.018,
+#     d2H_vsmow = (d2H_rothfuss - -0.4566) / 1.0297
+#   )
+# 
+# oglalastd_plt <- oglalastds %>% 
+#   ggplot()+
+#   aes(x = d18O_vsmow, y = d2H_vsmow, color= std)+
+#   geom_errorbar(aes(ymin = d2H_vsmow - 2, ymax = d2H_vsmow + 2))+
+#   geom_errorbarh(aes(xmin = d18O_vsmow - 0.5, xmax = d18O_vsmow + 0.5))+
+#   geom_point() +
+#   geom_point(data = oglalastds, aes
+#              (x = d18o_known, y = d2H_known), color = "black")
+# 
+# ggplotly(oglalastd_plt)
 
 ```
-
-### Equations:
+Equations:
 d18O_vsmow = (d18O_rothfuss - 0.711) / 1.018,
 d2H_vsmow = (d2H_rothfuss - -0.4566) / 1.0297  
 
@@ -629,7 +634,7 @@ stds_081222 <- stds_081222 %>% filter(H2O_Batch != 206)
 # Correction for July Briggsdale data 
 These flasks and standards were measured 08/10 - 08/12, we included 08/09 for posterity 
 ```{r}
-all_0822 <- bind_rows(stds_080922, stds_081022, stds_081122, stds_081222) %>% 
+all_0822 <- bind_rows(stds_080522, stds_080922, stds_081022, stds_081122, stds_081222) %>% 
   liq_rothfuss2013() %>% 
   left_join(stds, by = "std")
 
@@ -665,8 +670,8 @@ all_0822 <- all_0822 %>%
   )
 ```
 ## Equations transferred to 
-d18O_corr = (d18O_liq - 0.3276101) / 1.0067558
-d2H_corr = (d2H_out - -7.408472) / 1.009117
+d18O_corr = (d18O_liq - 0.3336484) / 1.0072042
+d2H_corr = (d2H_liq - -7.408711) / 1.008137 
 
 
 ## August 16 
