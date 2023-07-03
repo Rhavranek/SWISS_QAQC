@@ -46,6 +46,12 @@ knitr::opts_chunk$set(
 ```{r load data}
 tbl <- readRDS(file.path("data", "2021Data.RDS")) %>% 
   bind_rows(readRDS(file.path("data","2022Data.RDS")))
+
+soil_temps_july <- tibble(
+  Flask = c(3:16),
+  Temp_C = c(25.1,23.0,22,25.9,23.6,22,24.3,23.0,22,23.4,22.4,22, 24.0,22.9)
+)
+  
 ```
 
 # First deployment
@@ -83,6 +89,9 @@ flasks_0810 <- data_0810 %>%
     Analyst = "Haley"
   )
 ```
+
+
+
 
 ## August 11 
 
@@ -137,41 +146,24 @@ flasks_0812 <- data_0812 %>%
     )
 ```
 
+
+# Correct July Data
+1. Add in the column of soil temperature data
+2. Using soil temp, convert vapor values to liquid water values
+3. Using the 08/22 Calibration from the calibrations.rmd
+4. Apply the SWISS offset correction 
 ```{r}
-Brigssdale_july2022 <- bind_rows(flasks_0810,flasks_0811,flasks_0812) %>%
- 
+Brigssdale_july2022 <- bind_rows(flasks_0810,flasks_0811,flasks_0812) %>% 
+  left_join(soil_temps_july, by = "Flask") %>% 
+  liq_rothfuss2013() %>% 
   mutate(
-    T = c(22.9,24.0,23,22.4,23.4,23,23,24.3,23,23.6,25.9,23,23,25.1,23), #estimate until we dig up the loggers
-     #transfer to liquid values
-    d18O_liq = round((11.45 - 0.0795*T +1.0012*d18O_out),1),
-    d2H_liq =round((104.96 - 1.0342*T + 1.0724*d2H_out),1),
-    
-    #transfer to VSMWOW
-    d18O_corr = round(( (d18O_liq - 0.3055)/1.005),1),
-    dD_corr = round(( (d2H_liq - -9.5209)/0.9878),1),
-    
-    # apply swiss offset correction
-    d18o_offset = d18O_corr - 1.0,
-    dD_offset = dD_corr - 2.6,
-    
-    dexcess = dD_offset - 8*d18o_offset
-  ) 
-```
+    d18O_corr = round( ((d18O_liq - 0.3276101) / 1.0067558),1),
+    d2H_corr = round( ((d2H_liq + 7.408472) / 1.009117), 1)) %>% 
+  SWISS_offset ()
 
 
-```{r}
-# Brigssdale_july2022 <- Brigssdale_july2022 %>% 
-#   mutate(
-#     d18O_off_first = d18O_out - 1.0,
-#     dD_off_first = d2H_out - 2.6, 
-#     
-#     d18O_thenroth = round((11.45 - 0.0795*T +1.0012*d18O_off_first),1),
-#     d2H_thenroth = round((104.96 - 1.0342*T + 1.0724*dD_off_first),1),
-#     
-#     vsmow_last_d180 = round(( (d18O_thenroth - 0.3055)/1.005),1),
-#     vsmow_last_d2H = round(( (d2H_thenroth - -9.5209)/0.9878),1)
-#   )
 ```
+
 
 
 ```{r}
@@ -182,13 +174,13 @@ Brigssdale_july2022_plt <- Brigssdale_july2022 %>%
   ggtitle("Briggsdale, CO")+
   geom_errorbar(aes(
     x = sampledate,
-    ymax = d18o_offset - 0.9,
-    ymin = d18o_offset + 0.9,
+    ymax = d18O_offset - 0.9,
+    ymin = d18O_offset + 0.9,
     width = 0)) +
   geom_point(
     aes(
       x= sampledate,
-      y = d18o_offset,
+      y = d18O_offset,
       pch = as.factor(sampledepth),
       fill = as.factor(sampledepth)
     ),
@@ -256,22 +248,22 @@ Brigssdale_july2022 %>%
 
 ```{r}
 crossplt <- Brigssdale_july2022 %>% 
-  #filter(sampledepth > 25) %>% 
+  filter(sampledepth > 25) %>% 
   ggplot()+
   geom_abline(intercept = 10, slope = 8, size = 2, linetype = "longdash")+
   geom_errorbar(aes(
-    x = d18o_offset,
+    x = d18O_offset,
     ymax = dD_offset - 3.6,
     ymin = dD_offset + 3.6,
     width = 0)) +
   geom_errorbarh(aes(
     y = dD_offset,
-    xmax = d18o_offset - 0.9,
-    xmin = d18o_offset + 0.9,
+    xmax = d18O_offset - 0.9,
+    xmin = d18O_offset + 0.9,
     height = 0)) +
   geom_point(
     aes(
-      x = d18o_offset, 
+      x = d18O_offset, 
       y = dD_offset, 
       pch = factor(sampledepth),
       fill = factor(sampledate)),
@@ -281,7 +273,7 @@ crossplt <- Brigssdale_july2022 %>%
   scale_fill_viridis(discrete = TRUE, option = "magma", name = "Sample Date") +
   ylab(latex2exp::TeX('$\\delta^2H (VSMOW)$'))+
   xlab(latex2exp::TeX('$\\delta^{18}O (VSMOW)$')) +
-  scale_x_continuous(limits = c(-15, -7.55))+
+  scale_x_continuous(limits = c(-15, -7))+
   scale_y_continuous(limits = c(-80, -50))+
   theme_figure()
 
