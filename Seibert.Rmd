@@ -501,8 +501,11 @@ print(seibert_dexcess_22)
 ggarrange(seibert_d18o_22,seibert_d2h_22)
 ```
 
+# Plot all data
+Read in NEON data, remove spurious soil water data
 ```{r}
-Seibert_precip <- read.csv("data/Precipitation_data/NEONsite_nearSiebert_precip.csv")
+Seibert_precip <- read.csv("data/Precipitation_data/NEONsite_nearSiebert_precip.csv")%>% 
+  mutate(month = month(Collection_Date))
 
 seibert_firstround$sampledate <- as.Date(seibert_firstround$sampledate)
 
@@ -514,9 +517,12 @@ Sept_use <- Sept22 %>%
   filter(sampledate != "2022-09-21")
 
 allseibert <- bind_rows(first_round_use, Sept_use)
+```
 
+```{r}
 crossplt_all <- allseibert %>% 
   ggplot()+
+  annotate("rect", xmax = -8.3, xmin = -9.9, ymax =40, ymin = -200, alpha = 0.5, fill = "#7F5FA8") +
     geom_abline(intercept = 10, slope = 8, size = 1, linetype = 3) +
     geom_abline(intercept = 6.392381, slope = 8.029944, size = 1) +  
     geom_point(data = Seibert_precip, aes(x = d18O, y = d2H), shape = 23, fill = "#cecece" ) +
@@ -547,9 +553,49 @@ crossplt_all <- allseibert %>%
   theme_figure()
 
 crossplt_all
-
-
 ```
+
+```{r}
+crossplt_all2 <- allseibert %>% 
+  ggplot()+
+  annotate("rect", xmax = -8.3, xmin = -9.9, ymax =40, ymin = -200, alpha = 0.5, fill = "#7F5FA8") +
+    geom_abline(intercept = 10, slope = 8, size = 1, linetype = 3) +
+    geom_abline(intercept = 6.392381, slope = 8.029944, size = 1) +  
+    geom_point(data = Seibert_precip, aes(x = d18O, y = d2H, fill = month), shape = 23) +
+    scale_fill_viridis(option = "turbo") +
+    
+  geom_errorbar(aes(
+    x = d18o_offset,
+    ymax = d2H_offset - 3.6,
+    ymin = d2H_offset + 3.6,
+    width = 0)) +
+  geom_errorbarh(aes(
+    y = d2H_offset,
+    xmax = d18o_offset - 0.9,
+    xmin = d18o_offset + 0.9,
+    height = 0)) +
+  geom_point(
+    aes(
+      x = d18o_offset, 
+      y = d2H_offset, 
+      pch = factor(sampledepth),
+      color = factor(sampledate)),
+    size = 5
+  )+
+  #scale_shape_manual(values = c(22, 23,24), name = "Sample Depth (cm)") +
+  scale_color_viridis(discrete = TRUE, option = "magma", name = "Sample Date") +
+  ylab(latex2exp::TeX('$\\delta^2H (VSMOW)$'))+
+  xlab(latex2exp::TeX('$\\delta^{18}O (VSMOW)$')) +
+  scale_y_continuous(limits = c(-200, 40), expand = c(0,0))+
+  scale_x_continuous(limits = c(-25, 5), expand = c(0,0))+
+  theme_figure()
+
+crossplt_all2
+```
+
+
+
+
 
 ```{r}
 finaltbl <- allseibert %>% 
