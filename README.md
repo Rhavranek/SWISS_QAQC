@@ -1,15 +1,17 @@
-# Template
+#Repo Description 
 
-This is a project template. To use it, click on the green `Use this template` button, select your organization (e.g. `KopfLab`) as the owner (you can transfer it to your account at any point when it's ready to be made public), give it an informative `Repository name` that starts with your initials, and select `Private` to keep the data and analyses within the lab until they are ready for publication. Then hit `Create repository from template` and wait a few seconds for the repository to get generated. In your brand new repository, hit the green `Clone or download` button, and then `Open in Desktop` to synchronize the new repository with your own computer via [GitHub Desktop](https://desktop.github.com/) (you can also do this by command-line if you're familiar with Git).
+There is a lot going on in this repository, because it hosts all of the SWISS data that I (Rachel Havranek) produced in 2021 and 2022. In this repository there is an R markdown for the QA/QC of each individual SWISS unit (e.g. Toblerone, Rosti, Meringue). The R markdown file named "offset" has all of the plots and calculations I used to create the 'offset' correction described in Havranek et al., 2023, HESS. The R markdown file named "dryairtests" plots all of the data from dry air tests done, and makes the appropriate figures in Havranek et al., 2023. The R markdown file named "calibrations" is where I reduce the data for standards run both through the probes and standards run using the furnace in INSTAAR. Those calibrations are then put into "scripts/corrections.R" and used to correct the data into VSMOW/SLAP in other R markdown files. There is also an R markdown file dedicated to each of the 3 field sites where SWISS units were deployed (Oglala, Briggsdale, and Seibert). 
 
-# Making it public
 
-To make your entire repository public, go to your repository settings, scroll down to the `Danger Zone` and click on `Make Public`. If you do this, everything in your repository that is synched to github will be publicly available. The `Danger Zone` is also where you can transfer ownership if you want to move your repository out of an organization and into your own account. 
 
-# Generating a website for your repo
+#Scripts Descriptions
 
-Alternatively (or in addition), you can make the rendered versions (i.e. HTML files) of your notebooks easily available to the public as a GitHub-hosted (=free) website. This is nice if you want to let people see your fully compiled RMarkdown and Jupyter notebook reports. For an example of what this looks like for this template repository, go to https://www.kopflab.org/project_template/.
+"plotting_functions.R" comes from the Kopf lab at CU Boulder, and is primarily used to make uniform figures
+"table_functions.R" also comes from the Kopf lab and is used to make publication tables
+"Rachels_custom_plots.R" has functions that I wrote for plots that I would want to make over and over again (like d18O over a time period, investigating if my averaging period is stable, etc.)
+"PicarroData_BreakUP.R" has functions that I wrote that automatically cut up a long time series (e.g. 24 hours) and group data by flask, and then can take differnt subsets of those groups to average the Picarro data
+"Eriks_functions.R" are functions that Erik Oerter wrote for the IsoWagon (Oerter et al., 2016) that I have modelled some of my functions off of
+"Corrections.R" are calculated corrections for moving data into VSMOW/SLAP and applying the offset correction described in Havranek et al., 2023. 
 
-To generate the HTML files, go into the `docs` folder and knit the `docs.Rmd` markdown file (this may or may not work on Windows, sorry). Note that if you are using Jupyter notebooks in a python virtual environment, you have to set the `py_venv` variable in the `docs.Rmd` file. Rendered files of your reports are only (re)generated if they do not yet exist or if the source notebook that created them has changed in any way. If you want to force regeneration of a rendered HTML file, simply delete it from the `docs` directory and re-knit the `docs.Rmd` markdown file. You can also manually add additional HTML files and provide links or other materials in the `index.Rmd` file. 
 
-To then make the contents of the `docs` directory publicly available (works both in private and public repos!): go to your repository settings and scroll down to `Github Pages` and select `master branch /docs folder` in the `Source` dropdown (this will not affect the rest of your repository, only the `docs` folder, the rest will stay private unless you make the entire repository public). The page will reload and when you scroll back down to the `Github Pages` settings it will show you at what webaddress the contents of your docs directory will be available (for example, http:// http://www.kopflab.org/YOUR_REPOSITORY_NAME/ if your repository is in this organization). Please note that it usually takes a few minutes for the page to be ready when you first switch this on so check back later if the page does not load immediately.
+
