@@ -46,14 +46,25 @@ knitr::opts_chunk$set(
 tbl <- readRDS(file.path("data", "2021Data.RDS")) %>% 
   bind_rows(readRDS(file.path("data","2022Data.RDS")))
 
+#Soil temp logger at 25 cm failed, estimated soil temp of 22C 
 soil_temps_july <- tibble(
   Flask = c(3:16),
-  Temp_C = c(25.1,23.0,22,25.9,23.6,22,24.3,23.0,22,23.4,22.4,22, 24.0,22.9)
+  Temp_C = c(
+    25.1,23.0,
+    22,25.9,23.6,
+    22,24.3,23.0,
+    22,23.4,22.4,
+    22, 24.0,22.9)
 )
+
 
 soil_temps_October <- tibble(
   Flask = c(2:13),
-  Temp_C = c(23.3,21.8,20.55,16.7,19.0,19.3,18.9,18.9,18.8,15.56,16.0,16.9),
+  Temp_C = c(
+    23.3,21.8,20.55,
+    16.7,19.0,19.3,
+    18.9,18.9,18.8,
+    15.56,16.0,16.9),
   sampledate = c(
     "2022-09-18","2022-09-18","2022-09-18",
     "2022-09-24","2022-09-24","2022-09-24",
@@ -507,8 +518,6 @@ Brigssdale_july <- Brigssdale_july2022 %>%
 
 #Brigssdale_july2022$sampledate <- as.Date(Brigssdale_july2022$sampledate)
 
-
-
 allB <- bind_rows(Brigssdale_july, flasks_Oct22)
 
 crossplt_all <- allB %>% 
@@ -545,26 +554,35 @@ crossplt_all
 
 ```
 
-Note to Rachel: add in the clumped box
+
+# Plot all 2022 data
 
 ```{r}
 precip1 <- read_csv("data/Precipitation_data/Near Briggsdale Isomap Precip.csv")
 precip2 <- read_csv("data/Precipitation_data/NEON_Briggsdale_precip.csv")
 
 precip <- bind_rows(precip1, precip2) %>% 
-  mutate(month = month(Collection_Date))
+  mutate(month = month(Collection_Date),
+         season = ifelse(month == 1 | month == 2 | month == 12, "DJF",
+                    ifelse(month == 3 | month == 4 | month == 5, "MAM", 
+                      ifelse(month == 6 | month == 7 | month == 8, "JJA", "SON")
+         )))
+
+
+
 
 SW_precip <- allB %>% 
   ggplot()+
+  # this value is brought in manually from clumped rmd
   annotate("rect", xmax = -8.6, xmin = -10.2, ymax =40, ymin = -200, alpha = 0.5, fill = "#40ADD3") + 
+  
   #Meteoric water lines and precipitation
     geom_abline(intercept = 10, slope = 8, size = 1, linetype = 3)+
     geom_abline(intercept = -1.543251, slope = 7.523888, size = 1, linetype = 1 ) +
-    geom_point(data = precip, aes(x = d18O, y = d2H, fill = month),shape = 24 ) +
-    scale_fill_viridis(option = "turbo") +
+    geom_point(data = precip, aes(x = d18O, y = d2H, fill = season),shape = 23, size =1.5 ) +
+    scale_fill_viridis(option = "turbo", discrete = TRUE) +
 
   #Soil Water data
-    
     geom_errorbar(aes(
       x = d18o_offset,
       ymax = d2H_offset - 3.6,
@@ -583,6 +601,7 @@ SW_precip <- allB %>%
         color = factor(sampledate)),
       size = 5
     )+
+  
   #scale_shape_manual(values = c(22, 23,24), name = "Sample Depth (cm)") +
   scale_color_viridis(discrete = TRUE, option = "magma", name = "Sample Date") +
   ylab(latex2exp::TeX('$\\delta^2H (VSMOW)$'))+
@@ -600,8 +619,8 @@ SW_precip2  <- allB %>%
   #Meteoric water lines and precipitation
     geom_abline(intercept = 10, slope = 8, size = 1, linetype = 3)+
     geom_abline(intercept = -1.543251, slope = 7.523888, size = 1, linetype = 1 ) +
-    geom_point(data = precip, aes(x = d18O, y = d2H,), shape = 23, fill = "#cecece" ) +
-    
+    geom_point(data = precip, aes(x = d18O, y = d2H, shape = factor(season)), size = 2 ) +
+    scale_shape_manual(values = c(22,23,24,1,20,4,5))+
 
   #Soil Water data
     
@@ -620,11 +639,11 @@ SW_precip2  <- allB %>%
         x = d18o_offset, 
         y = d2H_offset, 
         pch = factor(sampledepth),
-        color = factor(sampledate)),
+        fill = factor(sampledate)),
       size = 5
     )+
   #scale_shape_manual(values = c(22, 23,24), name = "Sample Depth (cm)") +
-  scale_color_viridis(discrete = TRUE, option = "magma", name = "Sample Date") +
+  scale_fill_viridis(discrete = TRUE, option = "magma", name = "Sample Date") +
   ylab(latex2exp::TeX('$\\delta^2H (VSMOW)$'))+
   xlab(latex2exp::TeX('$\\delta^{18}O (VSMOW)$')) +
   scale_y_continuous(limits = c(-200, 40), expand = c(0,0))+
@@ -664,7 +683,7 @@ finaltbl <- allB %>%
 write.csv(finaltbl, "output/BriggsdaleResults_ch3.csv")
 ```
 
-what is going on with GIT?!
+
 
 
 
