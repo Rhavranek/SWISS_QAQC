@@ -23,7 +23,7 @@ library(data.table)
 library(plotly)
 #library(fs)
 library(gridExtra)
-library(egg)ß
+library(egg)
 library(readxl)
 
 setwd("/Volumes/Havranek External Hard Drive /NSF EAR 2023385/QAQC_bySWISS/SWISS_QAQC/")
