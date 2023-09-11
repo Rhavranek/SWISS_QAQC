@@ -61,42 +61,42 @@ Picked up from the field on August 1
 
 ## August 5, 2022
 
-This was a box we
+July 6, 2023 -> adjusted time zone to run in pacific time zone
 ```{r}
 data_080522 <- tbl %>% 
   filter(DATE == "2022-08-05") %>% 
     BoulderTime() %>% 
-      filter(MDT > "2022-08-05 10:30" & MDT < "2022-08-05 14:30") %>% 
+      filter(MDT > "2022-08-05 9:30" & MDT < "2022-08-05 13:30") %>% 
         h2o_batches()
 
 h2o_batch_plt(data_080522)
 
 flask16 <- data_080522 %>% 
-  filter(MDT > "2022-08-05 10:44" & MDT < "2022-08-05 10:49") %>% flask_out_ave() %>% mutate(Flask = 16) 
+  filter(MDT > "2022-08-05 9:44" & MDT < "2022-08-05 9:49") %>% flask_out_ave() %>% mutate(Flask = 16) 
 
 flask15 <- data_080522 %>%  
-  filter(MDT > "2022-08-05 11:09" & MDT < "2022-08-05 11:14") %>% 
+  filter(MDT > "2022-08-05 10:09" & MDT < "2022-08-05 10:14") %>% 
   flask_out_ave() %>% mutate(Flask = 15)
 
 flask14 <- data_080522 %>% filter(H2O_Batch == 176)%>%  
-  filter(MDT > "2022-08-05 11:41" & MDT < "2022-08-05 11:46") %>%
+  filter(MDT > "2022-08-05 10:41" & MDT < "2022-08-05 10:46") %>%
   flask_out_ave() %>% mutate(Flask = 14)
 
 flask13 <- data_080522 %>% filter(H2O_Batch==215) %>%  flask_first3minutes() %>% mutate(Flask = 13)
 
-flask12 <- data_080522 %>% filter(H2O_Batch == 249) %>% filter(MDT > "2022-08-05 12:23" & MDT < "2022-08-05 12:28") %>%
+flask12 <- data_080522 %>% filter(H2O_Batch == 249) %>% filter(MDT > "2022-08-05 11:23" & MDT < "2022-08-05 11:28") %>%
   flask_out_ave() %>% mutate(Flask = 12)
 
-flask11 <- data_080522 %>% filter(H2O_Batch == 352) %>% filter(MDT > "2022-08-05 13:00" & MDT < "2022-08-05 13:05") %>%
+flask11 <- data_080522 %>% filter(H2O_Batch == 352) %>% filter(MDT > "2022-08-05 12:00" & MDT < "2022-08-05 12:05") %>%
   flask_out_ave() %>% mutate(Flask = 11)
 
-flask10 <- data_080522 %>% filter(H2O_Batch == 387) %>% filter(MDT > "2022-08-05 13:18" & MDT < "2022-08-05 13:23") %>%
+flask10 <- data_080522 %>% filter(H2O_Batch == 387) %>% filter(MDT > "2022-08-05 12:18" & MDT < "2022-08-05 12:23") %>%
   flask_out_ave() %>% mutate(Flask = 10)
 
-flask9 <- data_080522 %>% filter(H2O_Batch == 426) %>% filter(MDT > "2022-08-05 13:45" & MDT < "2022-08-05 13:50") %>%
+flask9 <- data_080522 %>% filter(H2O_Batch == 426) %>% filter(MDT > "2022-08-05 12:45" & MDT < "2022-08-05 12:50") %>%
   flask_out_ave() %>% mutate(Flask = 9)
 
-flask8 <- data_080522 %>% filter(H2O_Batch == 537) %>% filter(MDT > "2022-08-05 14:20" & MDT < "2022-08-05 14:25") %>%
+flask8 <- data_080522 %>% filter(H2O_Batch == 537) %>% filter(MDT > "2022-08-05 13:20" & MDT < "2022-08-05 13:25") %>%
   flask_out_ave() %>% mutate(Flask = 8)
 
 flasks_0805 <- bind_rows(flask16, flask15, flask14, flask13, flask12, flask11, flask10, flask9, flask8) %>% 
@@ -110,11 +110,12 @@ flasks_0805 <- bind_rows(flask16, flask15, flask14, flask13, flask12, flask11, f
 ```
 
 ## August 8, 2022
+July 6, 2023 updated time zones
 ```{r}
 data_080822 <- tbl %>% 
   filter(DATE == "2022-08-08") %>% 
   BoulderTime() %>% 
-  filter(MDT > "2022-08-08 16:15" & MDT < "2022-08-08 17:15") %>% 
+  filter(MDT > "2022-08-08 15:15" & MDT < "2022-08-08 16:15") %>% 
   h2o_batches()
 
 h2o_batch_plt(data_080822)
@@ -134,7 +135,7 @@ flasks_0808 <- data_080822 %>%
 data_0809 <- tbl %>% 
   filter(DATE == "2022-08-09") %>% 
   BoulderTime() %>% 
-  filter(MDT> "2022-08-09 09:57" & MDT < "2022-08-09 10:47") %>% 
+  filter(MDT> "2022-08-09 08:57" & MDT < "2022-08-09 9:47") %>% 
   h2o_batches()
 
 h2o_batch_plt(data_0809)
@@ -148,15 +149,16 @@ flasks0809 <-  data_0809 %>% filter(H2O >10000) %>% flask_first3minutes() %>%
 ```
 
 ## Combine and plot
+Updated the correction on July 6, 2023
 ```{r}
 oglala_firstround <- bind_rows(flasks_0805, flasks_0808, flasks0809) %>% 
   mutate(
     T = c(22,22.8,23, 22,22.8,23, 22,23,25, 21.3,22.8,25, 21.5,22.8,23),#temps from data logger! estimated for 7-9 and 7-14 becuase the temp logger was corrupted 
-    d18O_rothfuss = 11.45 - 0.0795*T +1.0012*d18O_out,
-    d2H_rothfuss =104.96 - 1.0342*T + 1.0724*d2H_out,
+    d18O_liq = 11.45 - 0.0795*T +1.0012*d18O_out,
+    d2H_liq =104.96 - 1.0342*T + 1.0724*d2H_out,
     
-    d18O_vsmow = (d18O_rothfuss - 0.711) / 1.018,
-    d2H_vsmow = (d2H_rothfuss - -0.4566) / 1.0297, 
+    d18O_vsmow = round( ((d18O_liq - 0.3336484) / 1.0072042),1),
+    d2H_vsmow = round( ((d2H_liq - -7.408711) / 1.008137), 1),
     
     
     d18o_offset =  d18O_vsmow - 0.9,
@@ -172,8 +174,10 @@ oglala_firstround %>%
   ) %>% 
     dplyr::select(Site, sampledate, sampledepth, Flask, T, d18o_offset, SD_18O_out, d2H_offset, SD_2H_out) %>% 
       arrange(Flask) %>% 
-        rename(Date = sampledate, Depth = sampledepth, AnalyticalError = SD_18O_out) %>% 
-        write.csv("output/OglalaJuneData.csv")
+        rename(Date = sampledate, Depth = sampledepth, AnalyticalError = SD_18O_out) 
+
+# %>% 
+#         write.csv("output/OglalaJuneData.csv")
 
 ```
 
@@ -444,12 +448,26 @@ all2022 <- bind_rows(oglala_firstround, Sept22)
 ```
 
 
+```{r}
+O_stream <- read.csv("data/Precipitation_data/1687210317-data.csv") %>% 
+  mutate(month = month(Collection_Date)) %>% 
+  filter(d18O < 900) %>% 
+  filter(Type != "Lake") %>% 
+  mutate(month = month(Collection_Date))
+
+```
+
 
 
 ```{r}
 crossplt_0922 <- all2022 %>%
   ggplot()+
-  geom_abline(intercept = 10, slope = 8, size = 2, linetype = "longdash")+
+  annotate("rect", xmax = -8.6, xmin = -10.2, ymax =40, ymin = -200, alpha = 0.5, fill = "#D53E3E") +
+  geom_abline(intercept = -7.346027 , slope = 7.189599, size = 1, linetype = 1 ) +
+  geom_abline(intercept = 10, slope = 8, size = 1, linetype = 3) +
+  geom_point(data = O_stream, aes(x = d18O, y = d2H,), shape = 23, fill = "#cecece" ) +
+  
+  
   geom_errorbar(aes(
     x = d18o_offset,
     ymax = d2H_offset - 3.6,
@@ -467,12 +485,14 @@ crossplt_0922 <- all2022 %>%
       pch = factor(sampledepth),
       color = factor(sampledate),
       shape = factor(sampledepth)),
-    size = 6
+    size = 5
   )+
   #scale_shape_manual(values = c(22, 23,24), name = "Sample Depth (cm)") +
   scale_color_viridis(discrete = TRUE, option = "magma", name = "Sample Date") +
   ylab(latex2exp::TeX('$\\delta^2H (VSMOW)$'))+
   xlab(latex2exp::TeX('$\\delta^{18}O (VSMOW)$')) +
+  scale_y_continuous(limits = c(-200, 40), expand = c(0,0))+
+  scale_x_continuous(limits = c(-25, 5), expand = c(0,0))+
   theme_figure()
 
 crossplt_0922
