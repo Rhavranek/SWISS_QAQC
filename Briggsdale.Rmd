@@ -623,7 +623,6 @@ SW_precip2  <- allB %>%
     scale_shape_manual(values = c(22,23,24,1,20,4,5))+
 
   #Soil Water data
-    
     geom_errorbar(aes(
       x = d18o_offset,
       ymax = d2H_offset - 3.6,
@@ -642,6 +641,7 @@ SW_precip2  <- allB %>%
         fill = factor(sampledate)),
       size = 5
     )+
+  
   #scale_shape_manual(values = c(22, 23,24), name = "Sample Depth (cm)") +
   scale_fill_viridis(discrete = TRUE, option = "magma", name = "Sample Date") +
   ylab(latex2exp::TeX('$\\delta^2H (VSMOW)$'))+
@@ -653,10 +653,6 @@ SW_precip2  <- allB %>%
 SW_precip2
 
 ```
-
-
-
-
 
 
 ```{r}
